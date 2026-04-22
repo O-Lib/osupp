@@ -768,5 +768,123 @@ class TestDecode(unittest.TestCase):
         curve = slider.path.borrowed_curve(bufs)
         self.assertEqual(curve.dist(), 1.0)
 
+    def test_undefined_ar_inherits_od(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "undefined-approach-rate.osu"
+        if not path.exists():
+             self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        self.assertEqual(map_obj.approach_rate, 1.0)
+        self.assertEqual(map_obj.overall_difficulty, 1.0)
+
+    def test_ar_before_od(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "approach-rate-before-overall-difficulty.osu"
+        if not path.exists():
+             self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        self.assertEqual(map_obj.approach_rate, 9.0)
+        self.assertEqual(map_obj.overall_difficulty, 1.0)
+
+    def test_ar_after_od(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "approach-rate-after-overall-difficulty.osu"
+        if not path.exists():
+             self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        self.assertEqual(map_obj.approach_rate, 9.0)
+        self.assertEqual(map_obj.overall_difficulty, 1.0)
+
+    def test_adjacent_implicit_catmull_segments_merged(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "adjacent-catmull-segments.osu"
+        if not path.exists():
+            self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        hit_objects = map_obj.hit_objects
+
+        slider = hit_objects[0].kind
+        self.assertIsInstance(slider, HitObjectSlider)
+
+        # Em Python, control_points é uma lista mutável
+        control_points = slider.path.control_points
+
+        self.assertEqual(len(control_points), 6)
+
+        # Filtrar os pontos que têm path_type definido
+        # Criamos uma nova lista com os pontos filtrados
+        filtered_control_points = [point for point in control_points if point.path_type is not None]
+
+        self.assertEqual(len(filtered_control_points), 1)
+        self.assertEqual(filtered_control_points[0].path_type.kind, SplineType.Catmull)
+
+    def test_duplicate_initial_catmull_point_merged(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "catmull-duplicate-initial-controlpoint.osu"
+        if not path.exists():
+            self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        hit_objects = map_obj.hit_objects
+
+        slider = hit_objects[0].kind
+        self.assertIsInstance(slider, HitObjectSlider)
+
+        control_points = slider.path.control_points
+
+        self.assertEqual(len(control_points), 4)
+        self.assertEqual(control_points[0].path_type.kind, SplineType.Catmull)
+        self.assertEqual(control_points[0].pos, Pos.new(0.0, 0.0))
+        self.assertIsNone(control_points[1].path_type)
+        self.assertNotEqual(control_points[1].pos, Pos.new(0.0, 0.0))
+
+    def test_nan_control_points(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "nan-control-points.osu"
+        if not path.exists():
+             self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        control_points = map_obj.control_points
+
+        self.assertEqual(len(control_points.timing_points), 1)
+        self.assertEqual(len(control_points.difficulty_points), 2)
+
+        def beat_len_at(time):
+            p = control_points.timing_point_at(time)
+            return p.beat_len if p else TimingPoint.DEFAULT_BEAT_LEN
+
+        def slider_velocity_at(time):
+            p = control_points.difficulty_point_at(time)
+            return p.slider_velocity if p else DifficultyPoint.DEFAULT_SLIDER_VELOCITY
+
+        def generate_ticks_at(time):
+            p = control_points.difficulty_point_at(time)
+            return p.generate_ticks if p else DifficultyPoint.DEFAULT_GENERATE_TICKS
+
+        self.assertEqual(beat_len_at(1000.0), 500.0)
+
+        self.assertEqual(slider_velocity_at(2000.0), 1.0)
+        self.assertEqual(slider_velocity_at(3000.0), 1.0)
+
+        self.assertEqual(generate_ticks_at(2000.0), False)
+        self.assertEqual(generate_ticks_at(3000.0), True)
+
+    def test_sample_point_leniency(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "sample-point-leniency.osu"
+        if not path.exists():
+             self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        hit_objects = map_obj.hit_objects
+
+        self.assertEqual(len(hit_objects), 1)
+        hit_object = hit_objects[0]
+
 if __name__ == "__main__":
     unittest.main()
