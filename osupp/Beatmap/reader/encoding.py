@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Union
-from u16_iter import U16BeInterator, U16LeInterator
+from .u16_iter import U16BeInterator, U16LeInterator
 
 class Encoding(Enum):
     UTF8 = 1

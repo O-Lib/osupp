@@ -346,8 +346,8 @@ class TestDecode(unittest.TestCase):
         expected_colors = [
             Color.new(142, 199, 255, 255),
             Color.new(255, 128, 128, 255),
-            Color.new(128, 255, 255, 255),
             Color.new(128, 255, 128, 255),
+            Color.new(128, 255, 255, 255),
             Color.new(255, 187, 255, 255),
             Color.new(255, 177, 140, 255),
             Color.new(100, 100, 100, 255),
@@ -885,6 +885,22 @@ class TestDecode(unittest.TestCase):
 
         self.assertEqual(len(hit_objects), 1)
         hit_object = hit_objects[0]
+
+        for sample in hit_object.samples:
+            self.assertEqual(sample.volume, 70)
+
+    def test_new_combo_after_break(self):
+        resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
+        path = resources_dir / "break-between-objects.osu"
+        if not path.exists():
+             self.skipTest(f"File {path} not found")
+
+        map_obj = Beatmap.from_path(path)
+        hit_objects = map_obj.hit_objects
+
+        self.assertTrue(hit_objects[0].new_combo)
+        self.assertTrue(hit_objects[1].new_combo)
+        self.assertFalse(hit_objects[2].new_combo)
 
 if __name__ == "__main__":
     unittest.main()

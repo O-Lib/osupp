@@ -1,5 +1,5 @@
 from typing import Type, TypeVar
-from parse_number import ParseNumber
+from .parse_number import ParseNumber
 
 N = TypeVar("N", bound=ParseNumber)
 

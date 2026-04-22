@@ -1,5 +1,5 @@
 from typing import TypeVar, Generic, BinaryIO
-from encoding import Encoding
+from .encoding import Encoding
 import io
 
 R = TypeVar("R", bound=BinaryIO)

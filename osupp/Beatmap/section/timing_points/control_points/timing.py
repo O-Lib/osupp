@@ -1,5 +1,35 @@
 from dataclasses import dataclass
 
+@dataclass(frozen=True)
+class TimeSignature:
+    numerator: int
+
+    @classmethod
+    def new(cls, numerator: int) -> "TimeSignature":
+        if numerator <= 0:
+            raise TimeSignatureError()
+        return cls(numerator)
+
+    @classmethod
+    def try_from(cls, numerator: int) -> "TimeSignature":
+        return cls.new(numerator)
+
+    @classmethod
+    def new_simple_triple(cls) -> "TimeSignature":
+        return cls(3)
+
+    @classmethod
+    def new_simple_quadruple(cls) -> "TimeSignature":
+        return cls(4)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TimeSignature):
+            return NotImplemented
+        return self.numerator == other.numerator
+
+    def __repr__(self) -> str:
+        return f"TimeSignature({self.numerator})"
+
 @dataclass
 class TimingPoint:
     time: float
@@ -49,36 +79,6 @@ class TimingPoint:
         if not isinstance(other, TimingPoint):
             return NotImplemented
         return self.time >= other.time
-
-@dataclass(frozen=True)
-class TimeSignature:
-    numerator: int
-
-    @classmethod
-    def new(cls, numerator: int) -> "TimeSignature":
-        if numerator <= 0:
-            raise TimeSignatureError()
-        return cls(numerator)
-
-    @classmethod
-    def try_from(cls, numerator: int) -> "TimeSignature":
-        return cls.new(numerator)
-
-    @classmethod
-    def new_simple_triple(cls) -> "TimeSignature":
-        return cls(3)
-
-    @classmethod
-    def new_simple_quadruple(cls) -> "TimeSignature":
-        return cls(4)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, TimeSignature):
-            return NotImplemented
-        return self.numerator == other.numerator
-
-    def __repr__(self) -> str:
-        return f"TimeSignature({self.numerator})"
 
 class TimeSignatureError(Exception):
     def __init__(self):

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Type
 
 K = TypeVar('K')
 
@@ -11,7 +11,7 @@ class KeyValue(Generic[K]):
     value: str
 
     @classmethod
-    def parse (cls, s: str, key_type: Type[K] = str) -> KeyValue[K]:
+    def parse (cls, s: str, key_type: Type[K] = str) -> "KeyValue[K]":
         parts = s.split(':', 1)
 
         if len(parts) == 1:

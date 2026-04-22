@@ -1,7 +1,7 @@
-from control_points.difficulty import DifficultyPoint
-from control_points.effect import EffectPoint
-from control_points.sample import SamplePoint
-from control_points.timing import(
+from .control_points.difficulty import DifficultyPoint
+from .control_points.effect import EffectPoint
+from .control_points.sample import SamplePoint
+from .control_points.timing import(
 TimeSignature,
 TimeSignatureError,
 TimingPoint

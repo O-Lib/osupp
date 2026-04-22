@@ -4,10 +4,10 @@ import bisect
 from abc import ABC, abstractmethod
 import math
 
-from control_points.timing import TimingPoint
-from control_points.difficulty import DifficultyPoint
-from control_points.sample import SamplePoint
-from control_points.effect import EffectPoint
+from .control_points.timing import TimingPoint
+from .control_points.difficulty import DifficultyPoint
+from .control_points.sample import SamplePoint
+from .control_points.effect import EffectPoint
 
 from . import ParseEffectFlagsError, EffectFlags, TimeSignature, TimeSignatureError
 
@@ -16,7 +16,7 @@ from section.hit_objects.hit_sample import ParseSampleBankError, SampleBank
 
 from utils import ParseNumber, ParseNumberError, StrExtra, MAX_PARSE_VALUE
 from beatmap import Beatmap
-from ..hit_objects import SampleBank
+from section.hit_objects import SampleBank
 
 
 @dataclass

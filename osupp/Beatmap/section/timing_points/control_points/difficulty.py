@@ -2,8 +2,7 @@ import bisect
 from dataclasses import dataclass
 import math
 
-from section.timing_points import ControlPoints
-
+from section.timing_points.decode import ControlPoints
 
 @dataclass
 class DifficultyPoint:
