@@ -47,9 +47,8 @@ class Decoder(Generic[R]):
             if extra_byte:
                 self.read_buf.extend(extra_byte)
 
-        return self.curr_line()
+        self.decode_buf = self.encoding.decode(bytes(self.read_buf), [])
+        return self.decode_buf
 
     def curr_line(self) -> str:
-        decoded = self.encoding.decode(bytes(self.read_buf), [])
-
-        return decoded.rstrip('\r\n ')
+        return self.decode_buf.rstrip('\r\n ')

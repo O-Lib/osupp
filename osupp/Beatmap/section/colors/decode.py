@@ -59,7 +59,7 @@ class Colors:
         if not trimmed or ':' not in trimmed:
             return
 
-        kv = KeyValue.parse(trimmed)
+        kv = KeyValue.parse(trimmed, str)
         if not kv:
             return
 
@@ -110,7 +110,7 @@ class ColorsKey:
             return cls(is_combo=False, name=s)
 
 class ParseColorsError(Exception):
-    def __init__(self, message: str, source: Exception):
+    def __init__(self, message: str, source: Optional[Exception] = None):
         super().__init__(message)
         self.__cause__ = source
 
@@ -119,7 +119,7 @@ class ParseColorsError(Exception):
         return cls("color specified in incorret format (should be R,G,B or R,G,B,A")
 
     @classmethod
-    def number(cls, source: Exception) -> "ParseNumberError":
+    def number(cls, source: Exception) -> "ParseColorsError":
         return cls("failed to parse number", source)
 
 def handle_int_error(err: ValueError) -> ParseColorsError:

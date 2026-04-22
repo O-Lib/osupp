@@ -66,7 +66,7 @@ class Events:
         try:
             if event_type == EventType.Sprite:
                 if not state.background_file and len(parts) > 3:
-                    state.background_file = cls._clean_filename(parts[3])
+                    state.background_file = cls.clean_filename(parts[3])
 
             elif event_type == EventType.Video:
                 video_extensions = {".mp4", ".mov", ".avi", ".flv", ".mpg", ".wmv", ".m4v"}
@@ -127,7 +127,7 @@ class ParseEventsError(Exception):
             self.__cause__ = source
 
     @classmethod
-    def from_event_type(cls, err: Exception) -> "ParseEventTypeError":
+    def from_event_type(cls, err: Exception) -> "ParseEventsError":
         return cls("failed to parse event type", err)
 
     @classmethod
@@ -135,5 +135,5 @@ class ParseEventsError(Exception):
         return cls("invalid line")
 
     @classmethod
-    def from_number(cls, err: Exception) -> "ParseNumberError":
+    def from_number(cls, err: Exception) -> "ParseEventsError":
         return cls("failed to parse number", err)

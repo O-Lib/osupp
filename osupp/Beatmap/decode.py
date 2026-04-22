@@ -164,12 +164,12 @@ def parse_version(reader: "Decoder") -> Tuple[Optional[int], UseCurrentLine]:
         return None, UseCurrentLine(True)
 
 def parse_first_section(reader: "Decoder", use_curr_line: UseCurrentLine) -> Optional[Section]:
-    if use_curr_line.value:
-        section = Section.try_from_line(reader.curr_line())
-        if section is not None:
-            return section
+    current_line_section = Section.try_from_line(reader.curr_line())
+    if current_line_section is not None:
+        return current_line_section
 
     while True:
+        line = reader.read_line()
         if line is not None:
             section = Section.try_from_line(line)
             if section is not None:
@@ -184,7 +184,7 @@ class SectionFlow:
         self.section = section
         self.break_loop = break_loop
 
-def parse_section(reader: Decoder, state: S, f, cls: Type[DecodeBeatmap]) -> SectionFlow:
+def parse_section(reader: Decoder, state: S, f: Any, cls: Type[DecodeBeatmap]) -> SectionFlow:
     while True:
         try:
             line = reader.read_line()
@@ -200,7 +200,7 @@ def parse_section(reader: Decoder, state: S, f, cls: Type[DecodeBeatmap]) -> Sec
                 return SectionFlow(section=next_section)
 
             try:
-                f(state, line)
+                f(cls, state, line)
             except Exception as err:
                 logging.getLogger("osupp_beatmap").error(f"Failed to process line {line!r}: {err}")
                 log_error_cause(err)

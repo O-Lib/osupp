@@ -247,7 +247,7 @@ class SampleBankInfo:
                 volume=self.volume
             )
 
-            sample.is_layered = (sound_types.value != HitSoundType.NONE and
+            sample.is_layered = (sound_type.value != HitSoundType.NONE and
                                  not sound_type.has_flag(HitSoundType.NORMAL))
             sound_types.append(sample)
 

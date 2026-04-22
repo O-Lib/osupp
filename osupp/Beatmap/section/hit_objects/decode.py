@@ -1,6 +1,6 @@
 from section.difficulty import Difficulty, DifficultyState, ParseDifficultyError
 from section.events import BreakPeriod, Events, EventsState, ParseEventsError
-from section.general import CountdownType, GameMode
+from section.general import CountdownType, GameMode, GeneralState
 from section.hit_objects import PathType, CurveBuffers, BASE_SCORING_DIST, HitObject, HitObjectCircle, HitObjectHold, HitObjectKind, HitObjectSlider, HitObjectSpinner, HitObjectType, ParseHitObjectTypeError, PathControlPoint, SliderPath
 from section.timing_points import ControlPoints, DifficultyPoint, ParseTimingPointsError, SamplePoint, TimingPoint, TimingPoints, TimingPointsState
 from utils import Pos, ParseNumber, ParseNumberError, StrExtra
@@ -47,40 +47,48 @@ class HitObjects:
     # HitObjects específicos
     hit_objects: List['HitObject'] = field(default_factory=list)
 
-    def parse_general(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_general(cls, state: 'HitObjectsState', line: str) -> None:
         try:
-            TimingPoints.parse_general(self.timing_points, line)
+            TimingPoints.parse_general(state.timing_points, line)
         except Exception as e:
             raise ParseHitObjectsError.timing_points(e)
 
-    def parse_editor(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_editor(cls, state: 'HitObjectsState', line: str) -> None:
         pass
 
-    def parse_metadata(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_metadata(cls, state: 'HitObjectsState', line: str) -> None:
         pass
 
-    def parse_difficulty(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_difficulty(cls, state: 'HitObjectsState', line: str) -> None:
         try:
-            Difficulty.parse_difficulty(self.difficulty, line)
+            Difficulty.parse_difficulty(state.difficulty, line)
         except Exception as e:
             raise ParseHitObjectsError.difficulty(e)
 
-    def parse_events(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_events(cls, state: 'HitObjectsState', line: str) -> None:
         try:
-            Events.parse_events(self.events, line)
+            Events.parse_events(state.events, line)
         except Exception as e:
             ParseHitObjectsError.events(e)
 
-    def parse_timing_points(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_timing_points(cls, state: 'HitObjectsState', line: str) -> None:
         try:
-            TimingPoints.parse_timing_points(self.timing_points, line)
+            TimingPoints.parse_timing_points(state.timing_points, line)
         except Exception as e:
             raise ParseHitObjectsError.timing_points(e)
 
-    def parse_colors(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_colors(cls, state: 'HitObjectsState', line: str) -> None:
         pass
 
-    def parse_hit_objects(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_hit_objects(cls, state: 'HitObjectsState', line: str) -> None:
         line = line.split('//')[0].strip()
         if not line:
             return
@@ -94,7 +102,7 @@ class HitObjects:
             y = float(parts[1])
             pos = Pos(
                 float(int(max(-MAX_COORDINATE_VALUE, min(x, MAX_COORDINATE_VALUE)))),
-                float(int(max(-MAX_COORDINATE_VALUE, min(x, MAX_COORDINATE_VALUE))))
+                float(int(max(-MAX_COORDINATE_VALUE, min(y, MAX_COORDINATE_VALUE))))
             )
 
             start_time_raw = float(parts[2])
@@ -105,8 +113,9 @@ class HitObjects:
         except ValueError as e:
             raise ParseHitObjectsError.number(e)
 
+        new_combo = hit_object_type.has_flag(HitObjectType.NEW_COMBO)
         combo_offset = (hit_object_type.value & HitObjectType.COMBO_OFFSET) >> 4
-        hit_object_type &= ~HitObjectType.NEW_COMBO
+        hit_object_type &= ~(HitObjectType.NEW_COMBO | HitObjectType.COMBO_OFFSET)
 
         try:
             sound_type = HitObjectType(int(parts[4]))
@@ -168,15 +177,15 @@ class HitObjects:
 
             node_samples = [bi.convert_sound_type(st) for bi, st in zip(node_bank_infos, node_sounds_types)]
 
-            self.convert_path_str(points_str, pos)
-            control_points = list(self.curve_points)
-            self.curve_points.clear()
+            state.convert_path_str(points_str, pos)
+            control_points = list(state.curve_points)
+            state.curve_points.clear()
 
             kind = HitObjectSlider(
                 pos=pos,
-                new_combo=self.first_object or self.last_object_was_spinner() or new_combo,
+                new_combo=state.first_object or state.last_object_was_spinner() or new_combo,
                 combo_offset=combo_offset if new_combo else 0,
-                path=SliderPath(self.timing_points.mode, control_points, length),
+                path=SliderPath(state.timing_points.mode, control_points, length),
                 node_samples=node_samples,
                 repeat_count=repeat_count,
                 velocity=1.0
@@ -223,16 +232,19 @@ class HitObjects:
             samples=bank_info.convert_sound_type(sound_type)
         )
 
-        self.last_object = hit_object_type
-        self.hit_objects.append(result)
+        state.last_object = hit_object_type
+        state.hit_objects.append(result)
 
-    def parse_variables(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_variables(cls, state: 'HitObjectsState', line: str) -> None:
         pass
 
-    def parse_catch_the_beat(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_catch_the_beat(cls, state: 'HitObjectsState', line: str) -> None:
         pass
 
-    def parse_mania(self: 'HitObjectsState', line: str) -> None:
+    @classmethod
+    def parse_mania(cls, state: 'HitObjectsState', line: str) -> None:
         pass
 
 class ParseHitObjectsError(Exception):
@@ -291,9 +303,6 @@ class HitObjectsState:
     hit_objects: List[HitObject] = field(default_factory=list)
     point_split: List[str] = field(default_factory=list)
 
-    def difficulty_ref(self):
-        return self.difficulty.difficulty
-
     @property
     def first_object(self) -> bool:
         return self.last_object is None
@@ -338,7 +347,7 @@ class HitObjectsState:
         if first:
             self.vertices.append(PathControlPoint(Pos(0, 0)))
 
-        for p_str in points[1]:
+        for p_str in points[1:]:
             self.vertices.append(self._read_point(p_str, offset))
 
         if end_point:
@@ -368,7 +377,7 @@ class HitObjectsState:
             raise ParseHitObjectsError.invalid_line()
 
     def _is_linear(self, p0: Pos, p1: Pos, p2: Pos) -> bool:
-        return abs((p1.y - p0.y) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.y - p0.y)) < 1e-5
+        return abs((p1.y - p0.y) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.y - p0.y)) < 1e-3
 
     def _build_curve_points(self, path_type: PathType, has_end_point: bool):
         start_idx = 0
@@ -380,7 +389,7 @@ class HitObjectsState:
             if end_idx >= limit:
                 break
 
-            if self.vertices[end_idx].pos != self.vertices[end_idx - 1].pos:
+            if self.vertices[end_idx].pos == self.vertices[end_idx - 1].pos:
                 continue
             if path_type == PathType.catmull and end_idx > 1:
                 continue

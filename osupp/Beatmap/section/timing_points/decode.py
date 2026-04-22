@@ -16,6 +16,8 @@ from section.hit_objects.hit_sample import ParseSampleBankError, SampleBank
 
 from utils import ParseNumber, ParseNumberError, StrExtra, MAX_PARSE_VALUE
 from beatmap import Beatmap
+from ..hit_objects import SampleBank
+
 
 @dataclass
 class TimingPoints:
@@ -137,12 +139,12 @@ class TimingPoints:
             if len(parts) > 3 and parts[3].strip():
                 try:
                     val = int(parts[3])
-                    sample_set = SampleBank(val) if val > 0 else SampleBank.Normal
+                    sample_set = SampleBank(val) if val > 0 else SampleBank.NORMAL
                 except:
                     pass
 
-            if sample_set == SampleBank.None_:
-                sample_set = SampleBank.Normal
+            if sample_set == SampleBank.NONE:
+                sample_set = SampleBank.NORMAL
 
             custom_sample_bank = int(parts[4]) if len(parts) > 4 and parts[4].strip() else 0
 
@@ -301,6 +303,9 @@ class TimingPointsState:
             pending_sample_point=None,
             control_points=ControlPoints.default()
         )
+
+    def to_result(self) -> 'TimingPoints':
+        return self.timing_points
 
     @property
     def mode(self) -> GameMode:

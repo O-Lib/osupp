@@ -1,6 +1,6 @@
 from typing import Optional
 
-from utils import KeyValue, ParseNumberError
+from utils import KeyValue
 
 from dataclasses import dataclass
 from enum import Enum
@@ -43,7 +43,7 @@ class Metadata:
 
     @classmethod
     def parse_metadata(cls, state: "MetadataState", line: str) -> None:
-        kv = KeyValue.parse(line)
+        kv = KeyValue.parse(line, str)
         if kv is None:
             return
 
@@ -153,5 +153,5 @@ class ParseMetadataError(Exception):
         return "failed to parse metadata"
 
     @classmethod
-    def from_number(cls, err: Exception) -> "ParseNumberError":
+    def from_number(cls, err: Exception) -> "ParseMetadataError":
         return cls("Number", err)

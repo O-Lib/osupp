@@ -27,16 +27,17 @@ class Color:
     def parse(cls, s: str) -> "Color":
         parts = [p.strip() for p in s.split(',')]
 
-        if len(parts) != 3:
+        if len(parts) < 3 or len(parts) > 4:
             raise ParseColorsError.incorrect_color()
 
         try:
             r = int(parts[0])
             g = int(parts[1])
             b = int(parts[2])
+            a = int(parts[3]) if len(parts) == 4 else 255
 
-            return cls.new(r, g, b, 255)
-        except ValueError as e:
+            return cls.new(r, g, b, a)
+        except (ValueError, IndexError) as e:
             raise ParseColorsError.incorrect_color() from e
 
     @classmethod

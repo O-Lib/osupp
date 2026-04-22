@@ -79,7 +79,7 @@ class SliderEventsIter:
                     continue
 
             elif self.state == SliderEventsIterState.LastTick:
-                total_duration = float(self.span_counts) * self.span_duration
+                total_duration = float(self.span_count) * self.span_duration
                 final_span_idx = self.span_count - 1
                 final_span_start_time = self.start_time + (float(final_span_idx) * self.span_duration)
 

@@ -14,7 +14,7 @@ class EffectFlags:
     def parse(cls, s: str) -> "EffectFlags":
         try:
             value = int(float(s))
-            return cls(flags=value)
+            return cls(value)
         except ValueError as e:
             raise EffectFlagsError(e)
 
@@ -33,7 +33,7 @@ class EffectFlags:
         return self.value
 
     def has_flag(self, flag: int) -> bool:
-        return (self.flags & flag) != 0
+        return (self.value & flag) != 0
 
     def __int__(self) -> int:
         return self.value

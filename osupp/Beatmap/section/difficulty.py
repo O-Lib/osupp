@@ -44,7 +44,7 @@ class Difficulty:
     def parse_difficulty(cls, state: "DifficultyState", line: str) -> None:
         clean_line = line.split('//')[0].strip()
 
-        kv = KeyValue.parse(clean_line)
+        kv = KeyValue.parse(clean_line, str)
         if kv is None:
             return
 
@@ -135,8 +135,8 @@ class ParseDifficultyError(Exception):
         return "failed to parse difficulty"
 
     @classmethod
-    def from_number(cls, err: Exception) -> ParseNumberError:
-        return cls("Number, err")
+    def from_number(cls, err: Exception) -> ParseDifficultyError:
+        return cls("Number", err)
 
 @dataclass
 class DifficultyState:

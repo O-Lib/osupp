@@ -33,7 +33,7 @@ class DifficultyPoint:
         )
 
     def check_already_existing(self, control_points: "ControlPoints") -> bool:
-        existing = control_points.difficulty_points_at(self.time)
+        existing = control_points.difficulty_point_at(self.time)
         if existing is not None:
             return self.is_redundant(existing)
 

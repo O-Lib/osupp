@@ -57,7 +57,7 @@ class General:
     def parse_general(cls, state: "GeneralState", line: str) -> None:
         clean_line = line.split('//')[0].strip()
 
-        kv = KeyValue.parse(clean_line)
+        kv = KeyValue.parse(clean_line, str)
         if kv is None:
             return
 
@@ -80,7 +80,7 @@ class General:
             elif key_enum == GeneralKey.SampleSet:
                 try:
                     state.default_sample_bank = int(value)
-                except Exception as e:
+                except ValueError as e:
                     raise ParseGeneralError.from_sample_bank(e)
 
             elif key_enum == GeneralKey.SampleVolume:
@@ -201,17 +201,17 @@ class ParseGeneralError(Exception):
         return messages.get(self.kind, "failed to parse general section")
 
     @classmethod
-    def from_countdown_type(cls, err: Exception) -> "ParseCountdownTypeError":
+    def from_countdown_type(cls, err: Exception) -> "ParseGeneralError":
         return cls("CountdownType", err)
 
     @classmethod
-    def from_mode(cls, err: Exception) -> "ParseGameModeError":
+    def from_mode(cls, err: Exception) -> "ParseGeneralError":
         return cls("Mode", err)
 
     @classmethod
-    def from_number(cls, err: Exception) -> "ParseNumberError":
+    def from_number(cls, err: Exception) -> "ParseGeneralError":
         return cls("Number", err)
 
     @classmethod
-    def from_sample_bank(cls, err: Exception) -> "ParseSampleBankError":
+    def from_sample_bank(cls, err: Exception) -> "ParseGeneralError":
         return cls("SampleBank", err)

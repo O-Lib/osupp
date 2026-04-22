@@ -79,17 +79,17 @@ class Beatmap:
     @staticmethod
     def from_path(path: Union[str, Path]) -> "Beatmap":
         from decode import from_path
-        return from_path(path)
+        return from_path(Beatmap, path)
 
     @staticmethod
     def from_bytes(bytes_data: bytes) -> "Beatmap":
         from decode import from_bytes
-        return from_bytes(bytes_data)
+        return from_bytes(Beatmap, bytes_data)
 
     @staticmethod
     def from_str(s: str) -> "Beatmap":
         from decode import from_str
-        return from_str(s)
+        return from_str(Beatmap, s)
 
     @classmethod
     def default(cls) -> "Beatmap":
@@ -286,11 +286,11 @@ class Beatmap:
         pass
 
 class ParseBeatmapError(Exception):
-    def __init__(self, kind: str, soruce: Exception):
+    def __init__(self, kind: str, source: Exception):
         self.kind = kind
-        self.soruce = soruce
+        self.source = source
         super().__init__(self.get_message)
-        self.__cause__ = soruce
+        self.__cause__ = source
 
     def get_message(self) -> str:
         if self.kind == "Colors":

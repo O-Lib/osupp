@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import bisect
 
-from section.hit_objects.hit_samples import HitSampleInfo, HitSampleInfoName, SampleBank
+from section.hit_objects.hit_samples import HitSampleInfo, HitSampleInfoName, SampleBank, HitSampleDefaultName
 
 from section.timing_points import ControlPoints
 
@@ -13,7 +13,7 @@ class SamplePoint:
     sample_volume: int
     custom_sample_bank: int
 
-    DEFAULT_SAMPLE_BANK: SampleBank = SampleBank.Normal
+    DEFAULT_SAMPLE_BANK: SampleBank = SampleBank.NORMAL
     DEFAULT_SAMPLE_VOLUME: int = 100
     DEFAULT_CUSTOM_SAMPLE_BANK: int = 0
 
@@ -67,7 +67,7 @@ class SamplePoint:
         )
 
     def apply(self, sample: "HitSampleInfo") -> None:
-        if sample.name.is_default():
+        if isinstance(sample.name, HitSampleDefaultName):
             if sample.custom_sample_bank == 0:
                 sample.custom_sample_bank = self.custom_sample_bank
 

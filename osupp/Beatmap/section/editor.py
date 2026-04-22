@@ -146,5 +146,5 @@ class ParseEditorError(Exception):
         return "failed to parse editor"
 
     @classmethod
-    def from_number(cls, err: Exception) -> "ParseNumberError":
+    def from_number(cls, err: Exception) -> "ParseEditorError":
         return cls("Number", err)
