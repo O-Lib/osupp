@@ -10,6 +10,8 @@ from hit_samples import HitSoundType, ParseHitSoundTypeError, ParseSampleBankInf
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+MAX_COORDINATE_VALUE = 131072
+
 class HitObjects:
     # General
     audio_file: str = ""
@@ -44,6 +46,194 @@ class HitObjects:
 
     # HitObjects específicos
     hit_objects: List['HitObject'] = field(default_factory=list)
+
+    def parse_general(self: 'HitObjectsState', line: str) -> None:
+        try:
+            TimingPoints.parse_general(self.timing_points, line)
+        except Exception as e:
+            raise ParseHitObjectsError.timing_points(e)
+
+    def parse_editor(self: 'HitObjectsState', line: str) -> None:
+        pass
+
+    def parse_metadata(self: 'HitObjectsState', line: str) -> None:
+        pass
+
+    def parse_difficulty(self: 'HitObjectsState', line: str) -> None:
+        try:
+            Difficulty.parse_difficulty(self.difficulty, line)
+        except Exception as e:
+            raise ParseHitObjectsError.difficulty(e)
+
+    def parse_events(self: 'HitObjectsState', line: str) -> None:
+        try:
+            Events.parse_events(self.events, line)
+        except Exception as e:
+            ParseHitObjectsError.events(e)
+
+    def parse_timing_points(self: 'HitObjectsState', line: str) -> None:
+        try:
+            TimingPoints.parse_timing_points(self.timing_points, line)
+        except Exception as e:
+            raise ParseHitObjectsError.timing_points(e)
+
+    def parse_colors(self: 'HitObjectsState', line: str) -> None:
+        pass
+
+    def parse_hit_objects(self: 'HitObjectsState', line: str) -> None:
+        line = line.split('//')[0].strip()
+        if not line:
+            return
+
+        parts = line.split(',')
+        if len(parts) < 5:
+            raise ParseHitObjectsError.invalid_line()
+
+        try:
+            x = float(parts[0])
+            y = float(parts[1])
+            pos = Pos(
+                float(int(max(-MAX_COORDINATE_VALUE, min(x, MAX_COORDINATE_VALUE)))),
+                float(int(max(-MAX_COORDINATE_VALUE, min(x, MAX_COORDINATE_VALUE))))
+            )
+
+            start_time_raw = float(parts[2])
+            start_time = start_time_raw
+
+            raw_type = int(parts[3])
+            hit_object_type = HitObjectType(raw_type)
+        except ValueError as e:
+            raise ParseHitObjectsError.number(e)
+
+        combo_offset = (hit_object_type.value & HitObjectType.COMBO_OFFSET) >> 4
+        hit_object_type &= ~HitObjectType.NEW_COMBO
+
+        try:
+            sound_type = HitObjectType(int(parts[4]))
+        except ValueError as e:
+            raise ParseHitObjectsError.hit_object_type(e)
+
+        bank_info = SampleBankInfo()
+
+        if hit_object_type.has_flag(HitObjectType.CIRCLE):
+            if len(parts) > 5:
+                bank_info.read_custom_sample_banks(parts[5].split(':'), is_slider=False)
+
+            kind = HitObjectCircle(
+                pos=pos,
+                new_combo=state.first_object or state.last_object_was_spinner() or new_combo,
+                combo_offset=combo_offset if new_combo else 0
+            )
+
+        elif hit_object_type.has_flag(HitObjectType.SLIDER):
+            if len(parts) < 7:
+                raise ParseHitObjectsError.invalid_line()
+
+            points_str = parts[5]
+            try:
+                repeat_count = int(parts[6])
+                if repeat_count > 9000:
+                    raise ParseHitObjectsError.invalid_repeat_count(repeat_count)
+                repeat_count = max(0, repeat_count - 1)
+            except ValueError as e:
+                raise ParseHitObjectsError.number(e)
+
+            length = None
+            if len(parts) > 7:
+                new_len = float(parts[7])
+                if abs(new_len) >= 1e-7:
+                    length = max(0.0, new_len)
+
+            next_8 = parts[8] if len(parts) > 8 else None
+            next_9 = parts[9] if len(parts) > 9 else None
+
+            if len(parts) > 10:
+                bank_info.read_custom_sample_banks(parts[10].split(':'), is_slider=True)
+
+            nodes = repeat_count + 2
+            node_bank_infos = [bank_info.copy() for _ in range(nodes)]
+
+            if next_9 and next_9.strip():
+                for i, (b_info, s_set) in enumerate(zip(node_bank_infos, next_9.split('|'))):
+                    b_info.read_custom_sample_banks(s_set.split(':'), is_slider=False)
+
+            node_sounds_types = [sound_type for _ in range(nodes)]
+            if next_8 and next_8.strip():
+                for i, s_val in enumerate(next_8.split('|')):
+                    if i< nodes:
+                        try:
+                            node_sounds_types[i] = HitSoundType(int(s_val))
+                        except ValueError:
+                            node_sounds_types[i] = HitSoundType.NONE
+
+            node_samples = [bi.convert_sound_type(st) for bi, st in zip(node_bank_infos, node_sounds_types)]
+
+            self.convert_path_str(points_str, pos)
+            control_points = list(self.curve_points)
+            self.curve_points.clear()
+
+            kind = HitObjectSlider(
+                pos=pos,
+                new_combo=self.first_object or self.last_object_was_spinner() or new_combo,
+                combo_offset=combo_offset if new_combo else 0,
+                path=SliderPath(self.timing_points.mode, control_points, length),
+                node_samples=node_samples,
+                repeat_count=repeat_count,
+                velocity=1.0
+            )
+
+        elif hit_object_type.has_flag(HitObjectType.SPINNER):
+            try:
+                end_time_raw = float(parts[5])
+                duration = max(0.0, end_time_raw, start_time)
+            except (ValueError, IndexError):
+                raise ParseHitObjectsError.invalid_line()
+
+            if len(parts) > 6:
+                bank_info.read_custom_sample_banks(parts[6].split(':'), is_slider=False)
+
+            kind = HitObjectSpinner(
+                pos=Pos(256.0, 192.0),
+                duration=duration,
+                new_combo=new_combo
+            )
+
+        elif hit_object_type.has_flag(HitObjectType.HOLD):
+            end_time = max(start_time, start_time_raw)
+            if len(parts) > 5 and parts[5]:
+                ss = parts[5].split(':')
+                try:
+                    end_time = max(start_time, float(ss[0]))
+                    if len(ss) > 1:
+                        bank_info.read_custom_sample_banks(ss[1:], is_slider=False)
+                except ValueError:
+                    raise ParseHitObjectsError.invalid_line()
+
+            kind = HitObjectHold(
+                pos_x=pos,
+                duration=end_time - start_time
+            )
+
+        else:
+            raise ParseHitObjectsError.unknown_hit_object_type(hit_object_type)
+
+        result = HitObject(
+            start_time=start_time,
+            kind=kind,
+            samples=bank_info.convert_sound_type(sound_type)
+        )
+
+        self.last_object = hit_object_type
+        self.hit_objects.append(result)
+
+    def parse_variables(self: 'HitObjectsState', line: str) -> None:
+        pass
+
+    def parse_catch_the_beat(self: 'HitObjectsState', line: str) -> None:
+        pass
+
+    def parse_mania(self: 'HitObjectsState', line: str) -> None:
+        pass
 
 class ParseHitObjectsError(Exception):
     def __init__(self, message: str, source: Exception = None):
@@ -217,3 +407,116 @@ class HitObjectsState:
             if force_new_combo and hasattr(h.kind, "new_combo"):
                 h.kind.new_combo = True
             force_new_combo = False
+
+    @classmethod
+    def create(cls, version: int) -> "HitObjectsState":
+        return cls(
+            last_object=None,
+            curve_points=[],
+            vertices=[],
+            point_split=[],
+            events=EventsState.create(version),
+            timing_points=TimingPointsState.create(version),
+            difficulty=DifficultyState.create(version),
+            hit_objects=[]
+        )
+
+def get_precision_adjusted_beat_len(
+        slider_velocity: float,
+        beat_len: float,
+        mode: GameMode
+) -> float:
+    slider_velocity_as_beat_len = -100.0 / slider_velocity
+    if slider_velocity_as_beat_len < 0.0:
+        val = -slider_velocity_as_beat_len
+
+        if mode == GameMode.Osu or mode == GameMode.Catch:
+            bpm_multiplier = max(10.0, min(val, 10000.0)) / 100.0
+        elif mode == GameMode.Taiko or mode == GameMode.Mania:
+            bpm_multiplier = max(10.0, min(val, 1000.0)) / 100.0
+        else:
+            bpm_multiplier = 1.0
+
+    else:
+        bpm_multiplier = 1.0
+
+    return beat_len * bpm_multiplier
+
+def finalize_hit_objects(state: HitObjectsState) -> HitObjects:
+    CONTROL_POINT_LENIENCY = 5.0
+
+    difficulty = state.difficulty.to_result()
+    timing_points = state.timing_points.to_result()
+    events = state.events
+
+    hit_objects = state.hit_objects
+    hit_objects.sort(key=lambda h: h.start_time)
+
+    HitObjectsState.post_process_breaks(hit_objects, events)
+
+    bufs = CurveBuffers()
+
+    for h in hit_objects:
+        if isinstance(h.kind, HitObjectSlider):
+            slider = h.kind
+
+            tp = timing_points.control_points.timing_point_at(h.start_time)
+            beat_len = tp.beat_len if tp else TimingPoint.DEFAULT_BEAT_LEN
+
+            dp = timing_points.control_points.difficulty_point_at(h.start_time)
+            slider_velocity = dp.slider_velocity if dp else DifficultyPoint.DEFAULT_SLIDER_VELOCITY
+
+            slider.velocity = (
+                BASE_SCORING_DIST * difficulty.slider_multiplier /
+                get_precision_adjusted_beat_len(
+                    slider_velocity,
+                    beat_len,
+                    timing_points.mode
+                )
+            )
+
+            duration = slider.duration_with_bufs(bufs)
+            span_count = float(slider.span_count())
+
+            for i, node_samples in enumerate(slider.node_samples):
+                time = h.start_time + 1 * duration / span_count + CONTROL_POINT_LENIENCY
+                sample_point = timing_points.control_points.sample_point_at(time)
+
+                for sample in node_samples:
+                    if sample_point:
+                        sample_point.apply(sample)
+
+        end_time = h.end_time_with_bufs(bufs)
+
+        sample_point = timing_points.control_points.sample_point_at(end_time + CONTROL_POINT_LENIENCY)
+
+        for sample in h.samples:
+            if sample_point:
+                sample_point.apply(sample)
+
+    return HitObjects(
+        audio_file=timing_points.audio_file,
+        audio_lead_in=timing_points.audio_lead_in,
+        preview_time=timing_points.preview_time,
+        default_sample_bank=timing_points.default_sample_bank,
+        default_sample_volume=timing_points.default_sample_volume,
+        stack_leniency=timing_points.stack_leniency,
+        mode=timing_points.mode,
+        letterbox_in_breaks=timing_points.letterbox_in_breaks,
+        special_style=timing_points.special_style,
+        widescreen_storyboard=timing_points.widescreen_storyboard,
+        epilepsy_warning=timing_points.epilepsy_warning,
+        samples_match_playback_rate=timing_points.samples_match_playback_rate,
+        countdown=timing_points.countdown,
+        countdown_offset=timing_points.countdown_offset,
+        hp_drain_rate=difficulty.hp_drain_rate,
+        circle_size=difficulty.circle_size,
+        overall_difficulty=difficulty.overall_difficulty,
+        approach_rate=difficulty.approach_rate,
+        slider_multiplier=difficulty.slider_multiplier,
+        slider_tick_rate=difficulty.slider_tick_rate,
+        background_file=events.background_file,
+        breaks=events.breaks,
+        control_points=timing_points.control_points,
+        hit_objects=hit_objects
+    )
