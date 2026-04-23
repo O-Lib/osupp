@@ -152,7 +152,7 @@ class HitObjects:
             raise ParseHitObjectsError.hit_object_type(e)
 
         bank_info = SampleBankInfo()
-        kind: Union[HitObjectCircle, HitObjectCircle, HitObjectSpinner, HitObjectHold]
+        kind: HitObjectCircle | HitObjectCircle | HitObjectSpinner | HitObjectHold
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
@@ -200,7 +200,7 @@ class HitObjects:
                 ):
                     b_info.read_custom_sample_banks(s_set.split(":"), False)
 
-            node_sounds_types: List[HitSoundType] = [sound_type for _ in range(nodes)]
+            node_sounds_types: list[HitSoundType] = [sound_type for _ in range(nodes)]
             if next_8 and next_8.strip():
                 for i, s_val in enumerate(next_8.split("|")):
                     if i < nodes:
