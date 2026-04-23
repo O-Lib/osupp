@@ -1,17 +1,24 @@
+from __future__ import annotations
+from dataclasses import dataclass, field
+from typing import List, Optional, TYPE_CHECKING
+
 from section.difficulty import Difficulty, DifficultyState, ParseDifficultyError
 from section.events import BreakPeriod, Events, EventsState, ParseEventsError
 from section.general import CountdownType, GameMode, GeneralState
-from section.hit_objects import PathType, CurveBuffers, BASE_SCORING_DIST, HitObject, HitObjectCircle, HitObjectHold, HitObjectKind, HitObjectSlider, HitObjectSpinner, HitObjectType, ParseHitObjectTypeError, PathControlPoint, SliderPath
+from .slider import PathType, SliderPath, CurveBuffers, HitObjectSlider, PathControlPoint
+from .mod import BASE_SCORING_DIST, HitObject, HitObjectKind, HitObjectType, ParseHitObjectTypeError
+from .circle import HitObjectCircle
+from .hold import HitObjectHold
+from .spinner import HitObjectSpinner
 from section.timing_points import ControlPoints, DifficultyPoint, ParseTimingPointsError, SamplePoint, TimingPoint, TimingPoints, TimingPointsState
 from utils import Pos, ParseNumber, ParseNumberError, StrExtra
-from beatmap import Beatmap
-from hit_samples import HitSoundType, ParseHitSoundTypeError, ParseSampleBankInfoError, SampleBank, SampleBankInfo
-
-from dataclasses import dataclass, field
-from typing import List, Optional
+if TYPE_CHECKING:
+    from beatmap import Beatmap
+from .hit_samples import HitSoundType, ParseHitSoundTypeError, ParseSampleBankInfoError, SampleBank, SampleBankInfo
 
 MAX_COORDINATE_VALUE = 131072
 
+@dataclass
 class HitObjects:
     # General
     audio_file: str = ""
@@ -46,6 +53,10 @@ class HitObjects:
 
     # HitObjects específicos
     hit_objects: List['HitObject'] = field(default_factory=list)
+
+    @classmethod
+    def default(cls) -> "HitObjects":
+        return cls()
 
     @classmethod
     def parse_general(cls, state: 'HitObjectsState', line: str) -> None:

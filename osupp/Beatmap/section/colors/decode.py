@@ -4,7 +4,7 @@ from section import UnknownKeyError
 from utils import KeyValue, ParseNumberError, StrExtra
 from beatmap import Beatmap
 from utils.parse_number import InvalidInteger
-from . import Color, CustomColor
+from .mod import Color, CustomColor
 
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -30,31 +30,31 @@ class Colors:
         beatmap.custom_colors = self.custom_colors
 
     @staticmethod
-    def parse_general(state: ColorsState, line: str):
+    def parse_general(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_editor(state: ColorsState, line: str):
+    def parse_editor(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_metadata(state: ColorsState, line: str):
+    def parse_metadata(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_difficulty(state: ColorsState, line: str):
+    def parse_difficulty(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_events(state: ColorsState, line: str):
+    def parse_events(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_timing_points(state: ColorsState, line: str):
+    def parse_timing_points(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_colors(state: ColorsState, line: str):
+    def parse_colors(state: 'ColorsState', line: str):
         trimmed = StrExtra.trim_comment(line)
         if not trimmed or ':' not in trimmed:
             return
@@ -82,20 +82,22 @@ class Colors:
                 state.custom_colors.append(CustomColor(name=name, color=color))
 
     @staticmethod
-    def parse_hit_objects(state: ColorsState, line: str):
+    def parse_hit_objects(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_variables(state: ColorsState, line: str):
+    def parse_variables(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_catch_the_beat(state: ColorsState, line: str):
+    def parse_catch_the_beat(state: 'ColorsState', line: str):
         pass
 
     @staticmethod
-    def parse_mania(state: ColorsState, line: str):
+    def parse_mania(state: 'ColorsState', line: str):
         pass
+
+ColorsState = Colors
 
 class ColorsKey:
     def __init__(self, is_combo: bool, name: Optional[str] = None):
@@ -125,8 +127,6 @@ class ParseColorsError(Exception):
 def handle_int_error(err: ValueError) -> ParseColorsError:
     num_err = ParseNumberError(InvalidInteger, err)
     return ParseColorsError.number(num_err)
-
-ColorsState = Colors
 
 def create(version: int) -> ColorsState:
     return Colors.default()

@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 import bisect
+from typing import TYPE_CHECKING
 
 from section.hit_objects.hit_samples import HitSampleInfo, HitSampleInfoName, SampleBank, HitSampleDefaultName
 
-from section.timing_points import ControlPoints
+if TYPE_CHECKING:
+    from section.timing_points import ControlPoints
 
 
 @dataclass

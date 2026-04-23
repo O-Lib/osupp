@@ -1,75 +1,8 @@
 from utils import ParseNumber, ParseNumberError, StrExtra
 
 from enum import Enum, auto, IntEnum
+from dataclasses import dataclass
 from typing import Optional, Union, List, Iterator
-
-class HitSampleDefaultName(Enum):
-    NORMAL = auto()
-    WHISTLE = auto()
-    FINISH = auto()
-    CLAP = auto()
-
-    def to_lowercase_str(self) -> str:
-        mapping = {
-            HitSampleDefaultName.NORMAL: "hitnormal",
-            HitSampleDefaultName.WHISTLE: "hitwhistle",
-            HitSampleDefaultName.FINISH: "hitfinish",
-            HitSampleDefaultName.CLAP: "hitclap",
-        }
-        return mapping[self]
-
-    def __str__(self) -> str:
-        return self.to_lowercase_str()
-
-class HitSampleInfo:
-    HIT_NORMAL = HitSampleDefaultName.NORMAL
-    HIT_WHISTLE = HitSampleDefaultName.WHISTLE
-    HIT_FINISH = HitSampleDefaultName.FINISH
-    HIT_CLAP = HitSampleDefaultName.CLAP
-
-    name: Union[HitSampleDefaultName, str]
-    bank: SampleBank
-    suffix: Optional[int]
-    volume: int
-    custom_sample_bank: int
-    bank_specified: bool
-    is_layered: bool = False
-
-    def __init__(
-            self,
-            name: Union[HitSampleDefaultName, str],
-            bank: Optional[SampleBank] = None,
-            custom_sample_bank: int = 0,
-            volume: int = 100,
-    ):
-        self.name = name
-        self.bank = bank if bank is not None else SampleBank.NORMAL
-        self.suffix = custom_sample_bank if custom_sample_bank >= 2 else None
-        self.volume = volume
-        self.custom_sample_bank = custom_sample_bank
-        self.bank_specified = bank is not None
-        self.is_layered = False
-
-    def lookup_name(self) -> 'LookupName':
-        return LookupName(self)
-
-class LookupName:
-    def __init__(self, sample_info: 'HitSampleInfo'):
-        self.sample_info = sample_info
-
-    def __str__(self) -> str:
-        info = self.sample_info
-
-        if isinstance(info.name, str):
-            return info.name
-
-        bank_str = str(info.bank).capitalize()
-        name_str = info.name.to_lowercase_str()
-
-        if info.suffix is not None:
-            return f"Gameplay/{bank_str}-{name_str}{info.suffix}"
-
-        return f"Gameplay/{bank_str}-{name_str}"
 
 class SampleBank(IntEnum):
     NONE = 0
@@ -120,6 +53,78 @@ class SampleBank(IntEnum):
 
     def __str__(self) -> str:
         return self.to_lowercase_str()
+
+class HitSampleDefaultName(Enum):
+    NORMAL = auto()
+    WHISTLE = auto()
+    FINISH = auto()
+    CLAP = auto()
+
+    def to_lowercase_str(self) -> str:
+        mapping = {
+            HitSampleDefaultName.NORMAL: "hitnormal",
+            HitSampleDefaultName.WHISTLE: "hitwhistle",
+            HitSampleDefaultName.FINISH: "hitfinish",
+            HitSampleDefaultName.CLAP: "hitclap",
+        }
+        return mapping[self]
+
+    def __str__(self) -> str:
+        return self.to_lowercase_str()
+
+class HitSampleInfoName(Enum):
+    Default = HitSampleDefaultName
+    File = str
+
+class HitSampleInfo:
+    HIT_NORMAL = HitSampleDefaultName.NORMAL
+    HIT_WHISTLE = HitSampleDefaultName.WHISTLE
+    HIT_FINISH = HitSampleDefaultName.FINISH
+    HIT_CLAP = HitSampleDefaultName.CLAP
+
+    name: Union[HitSampleDefaultName, str]
+    bank: SampleBank
+    suffix: Optional[int]
+    volume: int
+    custom_sample_bank: int
+    bank_specified: bool
+    is_layered: bool = False
+
+    def __init__(
+            self,
+            name: Union[HitSampleDefaultName, str],
+            bank: Optional[SampleBank] = None,
+            custom_sample_bank: int = 0,
+            volume: int = 100,
+    ):
+        self.name = name
+        self.bank = bank if bank is not None else SampleBank.NORMAL
+        self.suffix = custom_sample_bank if custom_sample_bank >= 2 else None
+        self.volume = volume
+        self.custom_sample_bank = custom_sample_bank
+        self.bank_specified = bank is not None
+        self.is_layered = False
+
+    def lookup_name(self) -> 'LookupName':
+        return LookupName(self)
+
+class LookupName:
+    def __init__(self, sample_info: 'HitSampleInfo'):
+        self.sample_info = sample_info
+
+    def __str__(self) -> str:
+        info = self.sample_info
+
+        if isinstance(info.name, str):
+            return info.name
+
+        bank_str = str(info.bank).capitalize()
+        name_str = info.name.to_lowercase_str()
+
+        if info.suffix is not None:
+            return f"Gameplay/{bank_str}-{name_str}{info.suffix}"
+
+        return f"Gameplay/{bank_str}-{name_str}"
 
 class ParseSampleBankError(ValueError):
     def __init__(self):

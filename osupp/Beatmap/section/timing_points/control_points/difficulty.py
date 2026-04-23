@@ -1,8 +1,11 @@
+from __future__ import annotations
 import bisect
 from dataclasses import dataclass
 import math
+from typing import TYPE_CHECKING
 
-from section.timing_points.decode import ControlPoints
+if TYPE_CHECKING:
+    from section.timing_points.decode import ControlPoints
 
 @dataclass
 class DifficultyPoint:

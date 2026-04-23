@@ -9,15 +9,48 @@ from .control_points.difficulty import DifficultyPoint
 from .control_points.sample import SamplePoint
 from .control_points.effect import EffectPoint
 
-from . import ParseEffectFlagsError, EffectFlags, TimeSignature, TimeSignatureError
+from .effect_flags import ParseEffectFlagsError, EffectFlags
+from .control_points.timing import TimeSignature, TimeSignatureError
 
 from section.general import CountdownType, GameMode, General, GeneralState, ParseGeneralError
-from section.hit_objects.hit_sample import ParseSampleBankError, SampleBank
+from section.hit_objects.hit_samples import ParseSampleBankError, SampleBank
 
 from utils import ParseNumber, ParseNumberError, StrExtra, MAX_PARSE_VALUE
 from beatmap import Beatmap
-from section.hit_objects import SampleBank
 
+@dataclass
+class ControlPoints:
+    timing_points: List[TimingPoint] = field(default_factory=list)
+    difficulty_points: List[DifficultyPoint] = field(default_factory=list)
+    effect_points: List[EffectPoint] = field(default_factory=list)
+    sample_points: List[SamplePoint] = field(default_factory=list)
+
+    @classmethod
+    def default(cls) -> "ControlPoints":
+        return cls()
+
+    def find_at(self, points: List, time: float):
+        if not points:
+            return None
+
+        idx = bisect.bisect_right(points, time, key=lambda p: p.time)
+        return points[idx - 1] if idx > 0 else None
+
+    def difficulty_point_at(self, time: float) -> Optional[DifficultyPoint]:
+        return self.find_at(self.difficulty_points, time)
+
+    def effect_point_at(self, time: float) -> Optional[EffectPoint]:
+        return self.find_at(self.effect_points, time)
+
+    def sample_point_at(self, time: float) -> Optional[SamplePoint]:
+        return self.find_at(self.sample_points, time)
+
+    def timing_point_at(self, time: float) -> Optional[TimingPoint]:
+        return self.find_at(self.timing_points, time)
+
+    def add(self, point) -> None:
+        if not point.check_already_existing(self):
+            point.add_to(self)
 
 @dataclass
 class TimingPoints:
@@ -204,40 +237,6 @@ class TimingPoints:
     @staticmethod
     def parse_mania(state: "TimingPointsState", line: str):
         pass
-
-@dataclass
-class ControlPoints:
-    timing_points: List[TimingPoint] = field(default_factory=list)
-    difficulty_points: List[DifficultyPoint] = field(default_factory=list)
-    effect_points: List[EffectPoint] = field(default_factory=list)
-    sample_points: List[SamplePoint] = field(default_factory=list)
-
-    @classmethod
-    def default(cls) -> "ControlPoints":
-        return cls()
-
-    def find_at(self, points: List, time: float):
-        if not points:
-            return None
-
-        idx = bisect.bisect_right(points, time, key=lambda p: p.time)
-        return points[idx - 1] if idx > 0 else None
-
-    def difficulty_point_at(self, time: float) -> Optional[DifficultyPoint]:
-        return self.find_at(self.difficulty_points, time)
-
-    def effect_point_at(self, time: float) -> Optional[EffectPoint]:
-        return self.find_at(self.effect_points, time)
-
-    def sample_point_at(self, time: float) -> Optional[SamplePoint]:
-        return self.find_at(self.sample_points, time)
-
-    def timing_point_at(self, time: float) -> Optional[TimingPoint]:
-        return self.find_at(self.timing_points, time)
-
-    def add(self, point) -> None:
-        if not point.check_already_existing(self):
-            point.add_to(self)
 
 class ControlPoint(ABC):
     @abstractmethod

@@ -1,12 +1,14 @@
 from section.general import GameMode
 from utils import Pos
-from path_type import SplineType
-from path import PathControlPoint
+from .path_type import SplineType
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 import bisect
 import math
+
+if TYPE_CHECKING:
+    from .path import PathControlPoint
 
 BEZIER_TOLERANCE = 0.25
 CATMULL_DETAIL = 50
@@ -121,7 +123,7 @@ class BorrowedCurve:
     def new(
             cls,
             mode: 'GameMode',
-            points: List[PathControlPoint],
+            points: List["PathControlPoint"],
             expected_len: Optional[float],
             bufs: 'CurveBuffers',
     ) -> "BorrowedCurve":

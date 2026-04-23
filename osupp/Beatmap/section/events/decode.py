@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from section.events import BreakPeriod, EventType, ParseEventTypeError
+from .mod import BreakPeriod, EventType, ParseEventTypeError
 from utils import ParseNumber, ParseNumberError, StrExtra
 from beatmap import Beatmap
 
@@ -11,7 +11,7 @@ class Events:
     breaks: List[BreakPeriod] = field(default_factory=list)
 
     @classmethod
-    def default(cls) -> Events:
+    def default(cls) -> "Events":
         return cls()
 
     def into_beatmap(self, beatmap: "Beatmap") -> None:

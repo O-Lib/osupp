@@ -1,10 +1,19 @@
 from section.general import GameMode
 from utils import Pos
-from curve import BorrowedCurve, Curve, CurveBuffers
-from path_type import PathType
+from .curve import BorrowedCurve, Curve, CurveBuffers
+from .path_type import PathType
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
+
+@dataclass
+class PathControlPoint:
+    pos: Pos = field(default_factory=Pos)
+    path_type: Optional[PathType] = None
+
+    @classmethod
+    def new(cls, pos: Pos) -> "PathControlPoint":
+        return cls(pos=pos)
 
 @dataclass
 class SliderPath:
@@ -69,12 +78,3 @@ class SliderPath:
         if not isinstance(other, SliderPath):
             return False
         return self.control_points == other.control_points
-
-@dataclass
-class PathControlPoint:
-    pos: Pos = field(default_factory=Pos)
-    path_type: Optional[PathType] = None
-
-    @classmethod
-    def new(cls, pos: Pos) -> "PathControlPoint":
-        return cls(pos=pos)

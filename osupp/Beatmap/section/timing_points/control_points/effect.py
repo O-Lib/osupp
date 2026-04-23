@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 import bisect
+from typing import TYPE_CHECKING
 
-from section.timing_points import ControlPoints
+if TYPE_CHECKING:
+    from section.timing_points import ControlPoints
 
 @dataclass
 class EffectPoint:

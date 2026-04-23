@@ -1,18 +1,20 @@
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from enum import Enum
 
-from section.general import GameMode, CountdownType, ParseCountdownTypeError, ParseGameModeError
+
+from .mod import GameMode, CountdownType, ParseGameModeError, ParseCountdownTypeError
 from section.hit_objects.hit_samples import ParseSampleBankError, SampleBank
 from utils import KeyValue, ParseNumber, ParseNumberError, StrExtra
 from beatmap import Beatmap
 
-@classmethod
+@dataclass
 class General:
     audio_file: str = ""
     audio_lead_in: float = 0.0
     preview_time: int = -1
-    default_sample_bank: SampleBank
+    default_sample_bank: SampleBank = 0
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
     mode: GameMode = GameMode.default()

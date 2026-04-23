@@ -135,7 +135,7 @@ class ParseDifficultyError(Exception):
         return "failed to parse difficulty"
 
     @classmethod
-    def from_number(cls, err: Exception) -> ParseDifficultyError:
+    def from_number(cls, err: Exception) -> "ParseDifficultyError":
         return cls("Number", err)
 
 @dataclass

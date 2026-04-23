@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-from .decode import EffectFlagsError
-
 
 @dataclass(frozen=True)
 class EffectFlags:
@@ -16,7 +14,7 @@ class EffectFlags:
             value = int(float(s))
             return cls(value)
         except ValueError as e:
-            raise EffectFlagsError(e)
+            raise ParseEffectFlagsError(e)
 
     @classmethod
     def from_int(cls, flags: int) -> "EffectFlags":

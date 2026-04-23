@@ -1,8 +1,8 @@
 from utils import Pos
-from path import PathControlPoint, SliderPath
-from section.hit_objects.hit_samples import HitSampleInfo, CurveBuffers
-from curve import Curve, CurveBuffers, CircularArcProperties
-from path_type import PathType, SplineType
+from .path import PathControlPoint, SliderPath
+from section.hit_objects.hit_samples import HitSampleInfo
+from .curve import Curve, CurveBuffers, CircularArcProperties
+from .path_type import PathType, SplineType
 
 from typing import List, Optional
 
@@ -15,7 +15,7 @@ __all__ = [
     "CircularArcProperties",
     "PathType",
     "SplineType",
-    "HitObjectSlider"
+    "HitObjectSlider",
 ]
 
 class HitObjectSlider:

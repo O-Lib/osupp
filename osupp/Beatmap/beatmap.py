@@ -1,7 +1,7 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, TYPE_CHECKING, Union
-
-from section.timing_points import TimingPoints
+from pathlib import Path
+from typing import List, TYPE_CHECKING, Union, Optional
 
 if TYPE_CHECKING:
     from section.colors import Color, Colors, ColorsState, CustomColor, ParseColorsError
@@ -9,10 +9,11 @@ if TYPE_CHECKING:
     from section.events import BreakPeriod
     from section.general import CountdownType, GameMode
     from section.hit_objects import (
-    SampleBank, HitObject, HitObjects,HitObjectsState, ParseHitObjectsError
+        SampleBank, HitObject, HitObjects, HitObjectsState, ParseHitObjectsError
     )
     from section.metadata import Metadata, MetadataState, ParseMetadataError
-    from section.timing_points import ControlPoints
+    from section.timing_points import ControlPoints, TimingPoints
+
 from format_version import LATEST_FORMAT_VERSION
 
 @dataclass
@@ -23,7 +24,7 @@ class Beatmap:
     audio_file: str = ""
     audio_lead_in: float = 0.0
     preview_time: int = 0
-    default_sample_bank: "SampleBank" = field(default_factory=lambda: SampleBank.Normal)
+    default_sample_bank: "SampleBank" = field(default_factory=lambda: SampleBank.NORMAL)
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
     mode: "GameMode" = field(default_factory=lambda: GameMode.Osu)
@@ -64,7 +65,7 @@ class Beatmap:
 
     #Events
     background_file: str = ""
-    breaks: List["BreakPeriod"] = field(default_factory=list)
+    breaks: List[BreakPeriod] = field(default_factory=list)
 
     #TimingPoints
     control_points: "ControlPoints" = field(default_factory=lambda: ControlPoints())
@@ -93,6 +94,10 @@ class Beatmap:
 
     @classmethod
     def default(cls) -> "Beatmap":
+        from section.editor import Editor
+        from section.metadata import Metadata
+        from section.colors import Colors
+        from section.hit_objects.decode import HitObjects
         editor = Editor.default()
         metadata = Metadata.default()
         colors = Colors.default()
@@ -289,7 +294,7 @@ class ParseBeatmapError(Exception):
     def __init__(self, kind: str, source: Exception):
         self.kind = kind
         self.source = source
-        super().__init__(self.get_message)
+        super().__init__(self.get_message())
         self.__cause__ = source
 
     def get_message(self) -> str:
