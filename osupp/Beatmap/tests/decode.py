@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from typing import Any
 
 from osupp.Beatmap import Beatmap
 from osupp.Beatmap.section.colors import Color

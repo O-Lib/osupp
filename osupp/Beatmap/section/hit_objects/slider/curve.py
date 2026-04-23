@@ -122,7 +122,7 @@ class Curve:
 @dataclass
 class BorrowedCurve:
     _path: list[Pos]
-    _lenghts: list[float]
+    _lengths: list[float]
 
     @classmethod
     def new(
