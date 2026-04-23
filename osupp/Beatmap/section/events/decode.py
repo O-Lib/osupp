@@ -1,9 +1,28 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from .mod import BreakPeriod, EventType, ParseEventTypeError
-from utils import ParseNumber, ParseNumberError, StrExtra
+from .mod import BreakPeriod, EventType
+from utils import StrExtra
 from beatmap import Beatmap
+
+class ParseEventsError(Exception):
+    def __init__(self, message: str, source: Exception = None):
+        self.source = source
+        super().__init__(message)
+        if source:
+            self.__cause__ = source
+
+    @classmethod
+    def from_event_type(cls, err: Exception) -> "ParseEventsError":
+        return cls("failed to parse event type", err)
+
+    @classmethod
+    def invalid_line(cls) -> "ParseEventsError":
+        return cls("invalid line")
+
+    @classmethod
+    def from_number(cls, err: Exception) -> "ParseEventsError":
+        return cls("failed to parse number", err)
 
 @dataclass
 class Events:
@@ -47,7 +66,7 @@ class Events:
 
     @classmethod
     def parse_events(cls, state: "EventsState", line: str) -> None:
-        clean_line = line.split('//')[0].strip()
+        clean_line = StrExtra.trim_comment(line).strip()
         if not clean_line:
             return
 
@@ -61,7 +80,7 @@ class Events:
         try:
             event_type = EventType.from_str(raw_type)
         except Exception as e:
-            raise ParseEventsError.from_event_type(e)
+            return
 
         try:
             if event_type == EventType.Sprite:
@@ -80,13 +99,16 @@ class Events:
                 state.background_file = cls.clean_filename(raw_params)
 
             elif event_type == EventType.Break:
-                start_time = float(raw_start)
-                end_time = max(start_time, float(raw_params))
+                try:
+                    start_time = float(raw_start)
+                    end_time = float(raw_params)
 
-                state.breaks.append(BreakPeriod(
-                    start_time=start_time,
-                    end_time=end_time
-                ))
+                    state.breaks.append(BreakPeriod(
+                        start_time=start_time,
+                        end_time=max(start_time, end_time)
+                    ))
+                except ValueError:
+                    raise ParseEventsError.from_number(ValueError("Invalid break times"))
 
             elif event_type in (EventType.Color, EventType.Sample, EventType.Animation):
                 pass
@@ -118,22 +140,3 @@ class Events:
         pass
 
 EventsState = Events
-
-class ParseEventsError(Exception):
-    def __init__(self, message: str, source: Exception = None):
-        self.source = source
-        super().__init__(message)
-        if source:
-            self.__cause__ = source
-
-    @classmethod
-    def from_event_type(cls, err: Exception) -> "ParseEventsError":
-        return cls("failed to parse event type", err)
-
-    @classmethod
-    def invalid_line(cls) -> "ParseEventsError":
-        return cls("invalid line")
-
-    @classmethod
-    def from_number(cls, err: Exception) -> "ParseEventsError":
-        return cls("failed to parse number", err)

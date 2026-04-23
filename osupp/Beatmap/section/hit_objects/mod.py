@@ -78,17 +78,10 @@ class HitObjectType:
         kind_bits = 0
         obj = hit_object.kind
 
-        if isinstance(obj, HitObjectCircle):
+        if isinstance(obj, (HitObjectCircle, HitObjectSlider)):
             kind_bits |= (obj.combo_offset << 4)
             if obj.new_combo:
-                kind_bits |= cls.NEW_COMBO
-            kind_bits |= cls.CIRCLE
-
-        elif isinstance(obj, HitObjectSlider):
-            kind_bits |= (obj.combo_offset << 4)
-            if obj.new_combo:
-                kind_bits |= cls.NEW_COMBO
-            kind_bits |= cls.SLIDER
+                kind_bits |= 4
 
         elif isinstance(obj, HitObjectSpinner):
             if obj.new_combo:

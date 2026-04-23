@@ -41,17 +41,13 @@ class PathType:
         if not input_str:
             return cls(SplineType.Catmull)
 
-        first_char = input_str[0]
+        first_char = input_str[0].upper()
         rest = input_str[1:]
 
         if first_char == 'B':
-            if rest:
-                try:
-                    degree = int(rest)
-                    if degree > 0:
-                        return cls.new_b_spline(degree)
-                except ValueError:
-                    pass
+            if rest.isdigit():
+                degree = int(rest)
+                return cls.new_b_spline(degree)
             return cls(SplineType.BSpline)
         elif first_char == 'L':
             return cls(SplineType.Linear)

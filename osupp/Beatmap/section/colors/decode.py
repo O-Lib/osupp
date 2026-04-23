@@ -1,6 +1,3 @@
-import utils
-from decode import DecodeBeatmap, DecodeState
-from section import UnknownKeyError
 from utils import KeyValue, ParseNumberError, StrExtra
 from beatmap import Beatmap
 from utils.parse_number import InvalidInteger
@@ -8,6 +5,19 @@ from .mod import Color, CustomColor
 
 from dataclasses import dataclass, field
 from typing import List, Optional
+
+class ParseColorsError(Exception):
+    def __init__(self, message: str, source: Optional[Exception] = None):
+        super().__init__(message)
+        self.__cause__ = source
+
+    @classmethod
+    def incorrect_color(cls) -> "ParseColorsError":
+        return cls("color specified in incorret format (should be R,G,B or R,G,B,A")
+
+    @classmethod
+    def number(cls, source: Exception) -> "ParseColorsError":
+        return cls("failed to parse number", source)
 
 @dataclass
 class Colors:
@@ -65,21 +75,20 @@ class Colors:
 
         try:
             color = Color.parse(kv.value)
-        except Exception as e:
-            raise ParseColorsError.incorret_color() from e
+            key = ColorsKey.parse(kv.key)
 
-        key = ColorsKey.parse(kv.key)
-
-        if key.is_combo:
-            state.custom_combo_colors.append(color)
-        else:
-            name = key.name
-
-            existing = next((c for c in state.custom_colors if c.name == name), None)
-            if existing:
-                existing.color = color
+            if key.is_combo:
+                state.custom_combo_colors.append(color)
             else:
-                state.custom_colors.append(CustomColor(name=name, color=color))
+                name = key.name
+
+                existing = next((c for c in state.custom_colors if c.name == name), None)
+                if existing:
+                    existing.color = color
+                else:
+                    state.custom_colors.append(CustomColor(name=name, color=color))
+        except Exception as e:
+            raise ParseColorsError.incorrect_color() from e
 
     @staticmethod
     def parse_hit_objects(state: 'ColorsState', line: str):
@@ -110,19 +119,6 @@ class ColorsKey:
             return cls(is_combo=True)
         else:
             return cls(is_combo=False, name=s)
-
-class ParseColorsError(Exception):
-    def __init__(self, message: str, source: Optional[Exception] = None):
-        super().__init__(message)
-        self.__cause__ = source
-
-    @classmethod
-    def incorret_color(cls) -> "ParseColorsError":
-        return cls("color specified in incorret format (should be R,G,B or R,G,B,A")
-
-    @classmethod
-    def number(cls, source: Exception) -> "ParseColorsError":
-        return cls("failed to parse number", source)
 
 def handle_int_error(err: ValueError) -> ParseColorsError:
     num_err = ParseNumberError(InvalidInteger, err)

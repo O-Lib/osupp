@@ -12,8 +12,12 @@ from .slider import (
     SplineType,
     Curve,
     CurveBuffers,
+    SliderEvent,
+    SliderEventType,
+    SliderEventsIter,
+    SliderEventsIterState
     )
-from .hit_samples import HitSampleInfo, HitSoundType, SampleBank
+from .hit_samples import HitSampleInfo, HitSoundType, SampleBank, SampleBankInfo, HitSampleInfoName, ParseSampleBankError, HitSampleDefaultName, ParseSampleBankInfoError, ParseHitSoundTypeError, ParseNumberError
 from .mod import BASE_SCORING_DIST, HitObject, HitObjectKind, HitObjectType, ParseHitObjectTypeError
 
 __all__ = [
@@ -37,5 +41,16 @@ __all__ = [
     "HitSampleInfo",
     "HitSoundType",
     "SampleBank",
-    "BASE_SCORING_DIST"
+    "BASE_SCORING_DIST",
+    "HitSampleDefaultName",
+    "HitSampleInfoName",
+    "ParseHitSoundTypeError",
+    "SliderEvent",
+    "SampleBankInfo",
+    "SliderEventType",
+    "SliderEventsIterState",
+    "SliderEventsIter",
+    "ParseSampleBankInfoError",
+    "ParseSampleBankError",
+    "ParseNumberError"
 ]

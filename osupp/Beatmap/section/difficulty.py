@@ -56,27 +56,27 @@ class Difficulty:
 
         try:
             if key_enum == DifficultyKey.HPDrainRate:
-                state.difficulty.hp_drain_rate = float(value)
+                state.difficulty.hp_drain_rate = ParseNumber.parse(value)
 
             elif key_enum == DifficultyKey.CircleSize:
-                state.difficulty.circle_size = float(value)
+                state.difficulty.circle_size = ParseNumber.parse(value)
 
             elif key_enum == DifficultyKey.OverallDifficulty:
-                od = float(value)
+                od = ParseNumber.parse(value)
                 state.difficulty.overall_difficulty = od
                 if not state.has_approach_rate:
                     state.difficulty.approach_rate = od
 
             elif key_enum == DifficultyKey.ApproachRate:
-                state.difficulty.approach_rate = float(value)
+                state.difficulty.approach_rate = ParseNumber.parse(value)
                 state.has_approach_rate = True
 
             elif key_enum == DifficultyKey.SliderMultiplier:
-                val = float(value)
+                val = ParseNumber.parse(value)
                 state.difficulty.slider_multiplier = max(0.4, min(3.6, val))
 
             elif key_enum == DifficultyKey.SliderTickRate:
-                val = float(value)
+                val = ParseNumber.parse(value)
                 state.difficulty.slider_tick_rate = max(0.5, min(8.0, val))
 
         except ValueError as e:
@@ -115,7 +115,7 @@ class DifficultyKey(Enum):
     CircleSize = "CircleSize"
     OverallDifficulty = "OverallDifficulty"
     ApproachRate = "ApproachRate"
-    SliderMultipler = "SliderMultiplier"
+    SliderMultiplier = "SliderMultiplier"
     SliderTickRate = "SliderTickRate"
 
     @classmethod
@@ -144,7 +144,7 @@ class DifficultyState:
     has_approach_rate: bool
 
     @classmethod
-    def create(cls, version: int) -> "DifficultyState":
+    def create(cls, _version: int) -> "DifficultyState":
         return cls(
             difficulty=Difficulty.default(),
             has_approach_rate=False

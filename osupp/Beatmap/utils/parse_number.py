@@ -1,18 +1,21 @@
 import math
 from typing import Protocol, TypeVar, runtime_checkable, Type, Union
 
-MAX_PARSE_VALUE: int = 2_147_483_647
+MAX_PARSE_VALUE: int = 2147483647 #2,147,483,647
 
 T = TypeVar("T", bound="ParseNumber")
+V = Union[int, float]
+
+# ------------------------------------------------------------------
 
 @runtime_checkable
 class ParseNumber(Protocol):
     @classmethod
-    def parse(cls: Type[T], s: str) -> Union[int, float]:
+    def parse(cls: Type[T], s: str) -> V:
         ...
 
     @classmethod
-    def parse_with_limits(cls: Type[T], s: str, limit: Union[int, float]) -> Union[int, float]:
+    def parse_with_limits(cls: Type[T], s: str, limit: V) -> V:
        ...
 
 # ------------------------------------------------------------------
@@ -24,8 +27,12 @@ class Int32:
 
     @classmethod
     def parse_with_limits(cls, s: str, limit: int) -> int:
+        s_stripped = s.strip()
+        if not s_stripped or 'nan' in s_stripped.lower():
+            raise InvalidInteger(ValueError("Cannot convert NaN or empty string to Int32"))
+
         try:
-            n = int(s.strip())
+            n = int(s_stripped)
         except ValueError as e:
             raise InvalidInteger(e)
 
@@ -45,8 +52,12 @@ class Float32:
 
     @classmethod
     def parse_with_limits(cls, s:str, limit: float) -> float:
+        s_stripped = s.strip()
+        if not s_stripped or 'nan' in s_stripped.lower():
+            raise InvalidInteger(ValueError("Cannot convert NaN or empty string to Int32"))
+
         try:
-            n = float(s.strip())
+            n = float(s_stripped)
         except ValueError as e:
             raise InvalidFloat(e)
 
@@ -68,8 +79,12 @@ class Float64:
 
     @classmethod
     def parse_with_limits(cls, s: str, limit: float) -> float:
+        s_stripped = s.strip()
+        if not s_stripped or 'nan' in s_stripped.lower():
+            raise InvalidInteger(ValueError("Cannot convert NaN or empty string to Int32"))
+
         try:
-            n = float(s.strip())
+            n = float(s_stripped)
         except ValueError as e:
             raise InvalidFloat(e)
 

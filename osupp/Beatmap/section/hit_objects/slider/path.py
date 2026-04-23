@@ -46,7 +46,7 @@ class SliderPath:
     @_expected_dist.setter
     def _expected_dist(self, value: Optional[float]):
         self.clear_curve()
-        self._expected_dist = value
+        self.expected_dist = value
 
     def get_curve(self) -> Curve:
         if self.curve is not None:

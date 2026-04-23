@@ -25,15 +25,12 @@ class Pos:
 
     def normalize(self) -> Pos:
         l = self.length()
-        if l == 0:
+        if l < 1e-7:
             return Pos(0.0, 0.0)
 
         scale = 1.0 / l
         return Pos(self.x * scale, self.y * scale)
 
-    # ------------------------------------------------------------------
-    
-    #Operações Matemáticas
     def __add__(self, rhs: Pos) -> Pos:
         return Pos.new(self.x + rhs.x, self.y + rhs.y)
 
@@ -58,6 +55,9 @@ class Pos:
             )
         return NotImplemented
 
+    def __rmul__(self, lhs: float) -> Pos:
+        return self.__mul__(lhs)
+
     def __imul__(self, rhs: float) -> Pos:
         if isinstance(rhs, (int, float)):
             self.x *= rhs
@@ -79,12 +79,9 @@ class Pos:
             self.y /= rhs
             return  self
         return NotImplemented
-    # ------------------------------------------------------------------
 
-    #Formatação
     def __str__(self) -> str:
         return f"({self.x}, {self.y})"
 
     def __repr__(self) -> str:
         return f"Pos(x={self.x}, y={self.y})"
-    # ------------------------------------------------------------------

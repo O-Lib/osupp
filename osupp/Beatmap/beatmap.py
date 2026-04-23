@@ -1,20 +1,28 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, TYPE_CHECKING, Union, Optional
+from typing import List, TYPE_CHECKING, Union, TextIO, Any
+import io
+import math
+import copy
+import bisect
 
+from utils import Pos
 if TYPE_CHECKING:
     from section.colors import Color, Colors, ColorsState, CustomColor, ParseColorsError
-    from section.editor import Editor, EditorState, ParseEditorError
-    from section.events import BreakPeriod
-    from section.general import CountdownType, GameMode
+    from section.editor import Editor, EditorState, ParseEditorError, EditorKey
+    from section.events import BreakPeriod, EventType
+    from section.general import CountdownType, GameMode, GeneralKey
     from section.hit_objects import (
-        SampleBank, HitObject, HitObjects, HitObjectsState, ParseHitObjectsError
-    )
-    from section.metadata import Metadata, MetadataState, ParseMetadataError
-    from section.timing_points import ControlPoints, TimingPoints
-
+        SampleBank, HitObject, HitObjects, HitObjectsState, ParseHitObjectsError, CurveBuffers,
+        HitObjectCircle, HitObjectSlider, BASE_SCORING_DIST, SliderPath, SplineType, HitSampleInfo,
+        HitObjectType, PathType, SliderEvent, SliderEventType, SliderEventsIter, SliderEventsIterState,
+        HitObjectSpinner, HitObjectHold
+)
+    from section.metadata import Metadata, MetadataState, ParseMetadataError, MetadataKey
+    from section.timing_points import ControlPoints, TimingPoints, SamplePoint, EffectFlags, EffectPoint, DifficultyPoint
 from format_version import LATEST_FORMAT_VERSION
+from .encode import ControlPointProperties, ControlPointGroup, add_path_data, get_sample_bank, collect_samples
 
 @dataclass
 class Beatmap:
@@ -289,6 +297,211 @@ class Beatmap:
     @classmethod
     def parse_mania(cls, state: BeatmapState, line: str):
         pass
+
+    def encode_to_path(self, path: str) -> None:
+        with open(path, 'w', enconding='utf-8') as file:
+            self.encode(file)
+
+    def encode_to_string(self) -> str:
+        writer = io.StringIO()
+        self.encode(writer)
+
+    def encode(self, writer: TextIO) -> None:
+        writer.write(f"osu file format v{self.format_version}\n")
+
+        writer.write("\n")
+        self._encode_general(writer)
+
+        writer.write("\n")
+        self._encode_editor(writer)
+
+        writer.write("\n")
+        self._encode_metadata(writer)
+
+        writer.write("\n")
+        self._encode_difficulty(writer)
+
+        writer.write("\n")
+        self._encode_events(writer)
+
+        writer.write("\n")
+        self._encode_timing_points(writer)
+
+        writer.write("\n")
+        self._encode_colors(writer)
+
+        writer.write("\n")
+        self._encode_hit_objects(writer)
+
+    def _encode_general(self, writer: TextIO) -> None:
+        writer.write(
+            "[General]\n"
+            f"{GeneralKey.AudioFilename}: {self.audio_file}\n"
+            f"{GeneralKey.AudioLeadIn}: {self.audio_file}\n"
+            f"{GeneralKey.PreviewTime}: {self.preview_time}\n"
+            f"{GeneralKey.Countdown}: {int(self.countdown)}\n"
+        )
+
+        sample_set = SamplePoint.DEFAULT_SAMPLE_BANK
+        if self.control_points.sample_points:
+            sample_set = self.control_points.sample_points[0].sample_bank
+
+        writer.write(
+            f"{GeneralKey.SampleSet}: {int(sample_set)}\n"
+            f"{GeneralKey.StackLeniency}: {self.stack_leniency}\n"
+            f"{GeneralKey.Mode}: {int(self.mode)}\n"
+            f"{GeneralKey.LetterboxInBreaks}: {int(self.letterbox_in_breaks)}\n"
+        )
+
+        if self.epilepsy_warning:
+            writer.write(f"{GeneralKey.EpilepsyWarning}: 1\n")
+
+        if self.countdown_offset > 0:
+            writer.write(f"{GeneralKey.CountdownOffset}: {self.countdown_offset}\n")
+
+        if self.mode == (GameMode.Mania):
+            writer.write(f"{GeneralKey.SpecialStyle}: {int(self.special_style)}\n")
+
+        writer.write(f"{GeneralKey.WidescreenStoryboard}: {int(self.widescreen_storyboard)}\n")
+
+        if self.sample_match_playback_rate:
+            writer.write(f"{GeneralKey.SamplesMatchPlaybackRate}: 1\n")
+
+    def _encode_editor(self, writer: TextIO) -> None:
+        writer.write("[Editor]\n")
+
+        if self.bookmarks:
+            bookmarks_str = ",".join(str(b) for b in self.bookmarks)
+            writer.write(f"Bookmarks: {bookmarks_str}\n")
+
+        writer.write(
+            f"{EditorKey.DistanceSpacing}: {self.distance_spacing}\n"
+            f"{EditorKey.BeatDivisor}: {self.beat_divisor}\n"
+            f"{EditorKey.GridSize}: {self.grid_size}\n"
+            f"{EditorKey.TimelineZoom}: {self.timeline_zoom}\n"
+        )
+
+    def _encode_metadata(self, writer: TextIO) -> None:
+        writer.write("[Metadata]\n")
+        writer.write(f"{MetadataKey.Title}: {self.title}\n")
+
+        if self.title_unicode:
+            writer.write(f"{MetadataKey.TitleUnicode}: {self.title_unicode}\n")
+
+        writer.write(f"{MetadataKey.Artist}: {self.artist}\n")
+
+        if self.artist_unicode:
+            writer.write(f"{MetadataKey.ArtistUnicode}: {self.artist_unicode}\n")
+
+        writer.write(f"{MetadataKey.Creator}: {self.creator}\n")
+        writer.write(f"{MetadataKey.Version}: {self.version}\n")
+
+        if self.source:
+            writer.write(f"{MetadataKey.Source}: {self.source}\n")
+
+        if self.tags:
+            writer.write(f"{MetadataKey.Tags}: {self.tags}\n")
+
+    def _encode_events(self, writer: TextIO) -> None:
+        writer.write("[Events]\n")
+
+        if self.background_file:
+            writer.write(f"{int(EventType.Break)},0,\"{self.background_file}\",0,0\n")
+
+        for b in self.breaks:
+            writer.write(f"{int(EventType.Break)},{b.start_time},{b.end_time}\n")
+
+    def _encode_timing_points(self, writer: TextIO) -> None:
+
+        def output_control_point_at(writer: TextIO, props: ControlPointProperties, is_timing: bool) -> None:
+            timing_change = "1" if is_timing else "0"
+            writer.write(
+                f"{props.timing_signature},{int(props.sample_bank)},"
+                f"{props.custom_sample_bank},{props.sample_volume}"
+                f"{timing_change},{int(props.effect_flags)}\n"
+            )
+
+        control_points = copy.deepcopy(self.control_points)
+        collect_samples(self, control_points)
+
+        groups = [ControlPointGroup.from_timing(tp) for tp in control_points.timing_points]
+        groups.sort(key=lambda a: a.time)
+
+        times = []
+        for point in control_points.difficulty_points: times.append(point.time)
+        for point in control_points.effect_points: times.append(point.time)
+        for point in control_points.sample_points: times.append(point.time)
+
+        for time in times:
+            group_times = [g.time for g in groups]
+            idx = bisect.bisect_left(group_times, time)
+            if idx >= len(groups) or groups[idx].time != time:
+                groups.insert(idx, ControlPointGroup.new(time))
+
+        writer.write("[TimingPoints]\n")
+        last_props = ControlPointProperties.default()
+
+        for group in groups:
+            props = ControlPointProperties.new(
+                group.time,
+                control_points,
+                last_props,
+                group.timing is not None
+            )
+
+            if group.timing is not None:
+                timing = group.timing
+                writer.write(f"{timing.time},{timing.beat_len},")
+                output_control_point_at(writer, props, True)
+
+                last_props = copy.copy(props)
+                last_props.slider_velocity = 1.0
+
+            if props.is_redundant(last_props):
+                continue
+
+    def _encode_colors(self, writer: TextIO) -> None:
+        writer.write("[Colours]\n")
+
+        for i, color in enumerate(self.custom_combo_colors, start=1):
+            writer.write(f"Combo{i}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n")
+
+        for custom in self.custom_colors:
+            writer.write(f"{custom.name}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n")
+
+    def _encode_hit_objects(self, writer: TextIO) -> None:
+        writer.write("[HitObjects]\n")
+        bufs = CurveBuffers
+
+        for hit_object in self.hit_objects:
+            if isinstance(hit_object.kind, HitObjectCircle):
+                pos = hit_object.kind.pos
+            elif isinstance(hit_object.kind, HitObjectSlider):
+                pos = hit_object.kind.pos
+            elif isinstance(hit_object.kind, HitObjectSpinner):
+                pos = hit_object.kind.pos
+            elif isinstance(hit_object, HitObjectHold):
+                pos = Pos.new(hit_object.pos_x, 192.0)
+            else:
+                pos = Pos.new(0, 0)
+
+            writer.write(
+                f"{pos.x},{pos.y},{hit_object.start_time},"
+                f"{int(HitObjectType.from_hit_object(hit_object))},"
+                f"{int(HitObjectType.from_hit_object(hit_object.samples))},"
+            )
+
+            if isinstance(hit_object.kind, HitObjectCircle):
+                pass
+            elif isinstance(hit_object.kind, HitObjectSlider):
+                add_path_data(writer, hit_object.kind, pos, self.mode, bufs)
+            elif isinstance(hit_object.kind, HitObjectSpinner):
+                writer.write(f"{hit_object.start_time + hit_object.kind.duration},")
+            elif isinstance(hit_object.kind, HitObjectHold):
+                writer.write(f"{hit_object.start_time + hit_object.kind.duration}:")
+
+            get_sample_bank(writer, hit_object.samples, False, self.mode)
+            writer.write("\n")
 
 class ParseBeatmapError(Exception):
     def __init__(self, kind: str, source: Exception):

@@ -1,4 +1,4 @@
-from utils import ParseNumber, ParseNumberError, StrExtra
+from utils import ParseNumberError
 
 from enum import Enum, auto, IntEnum
 from dataclasses import dataclass

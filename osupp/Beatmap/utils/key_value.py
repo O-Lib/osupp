@@ -3,8 +3,6 @@ from typing import Generic, TypeVar, Type
 
 K = TypeVar('K')
 
-# ------------------------------------------------------------------
-
 @dataclass
 class KeyValue(Generic[K]):
     key: K
@@ -21,12 +19,15 @@ class KeyValue(Generic[K]):
             key_raw = parts[0].strip()
             value = parts[1].strip()
 
+        try:
+            parsed_key = key_type(key_raw)
+        except Exception as e:
+            raise ValueError(f"Failed to parse key '{key_raw}' with type {key_type}: {e}")
+
         return cls(
-            key=key_type(key_raw),
+            key=parsed_key,
             value=value
         )
-
-# ------------------------------------------------------------------
 
 class Key:
     def __init__(self, s: str):
@@ -40,5 +41,3 @@ class Key:
 
     def __repr__(self):
         return "Key"
-
-# ------------------------------------------------------------------

@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Union
 from .u16_iter import U16BeInterator, U16LeInterator
 
 class Encoding(Enum):
@@ -25,16 +24,21 @@ class Encoding(Enum):
     def decode(self, src: bytes, dst: list[str]) -> str:
         if self == Encoding.UTF8:
             try:
-                decoded = src.decode('utf-8', errors='replace')
-                return decoded
+                return src.decode('utf-8', errors='replace')
             except Exception:
                 return "\uFFFD"
 
         elif self == Encoding.UTF16LE:
-            return self._decode_utf16(U16LeInterator.new(src), dst)
+            try:
+                return src.decode('utf-16-le', errors='replace')
+            except Exception:
+                return "\uFFFD"
 
         elif self == Encoding.UTF16BE:
-            return self._decode_utf16(U16BeInterator.new(src), dst)
+            try:
+                return src.decode('utf-16-be', errors='replace')
+            except Exception:
+                return "\uFFFD"
 
         return ""
 

@@ -42,10 +42,11 @@ class Decoder(Generic[R]):
 
         self.read_buf.extend(line)
 
-        if self.encoding == Encoding.UTF16LE and self.read_buf.endswith(b"\n"):
-            extra_byte = self.inner.read(1)
-            if extra_byte:
-                self.read_buf.extend(extra_byte)
+        if self.encoding in (Encoding.UTF16LE, Encoding.UTF16BE):
+            if len(self.read_buf) % 2 != 0:
+                extra_bytes = self.inner.read(1)
+                if extra_bytes:
+                    self.read_buf.extend(extra_bytes)
 
         self.decode_buf = self.encoding.decode(bytes(self.read_buf), [])
         return self.decode_buf

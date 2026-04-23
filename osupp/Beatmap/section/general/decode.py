@@ -1,13 +1,44 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 from enum import Enum
 
-
-from .mod import GameMode, CountdownType, ParseGameModeError, ParseCountdownTypeError
-from section.hit_objects.hit_samples import ParseSampleBankError, SampleBank
-from utils import KeyValue, ParseNumber, ParseNumberError, StrExtra
+from .mod import GameMode, CountdownType
+from section.hit_objects.hit_samples import SampleBank
+from utils import KeyValue, StrExtra
 from beatmap import Beatmap
+
+class ParseGeneralError(Exception):
+    def __init__(self, kind: str, source: Exception):
+        self.kind = kind
+        self.source = source
+        super().__init__(self.get_message())
+        self.__cause__ = source
+
+    def get_message(self) -> str:
+        messages = {
+            "CountdownType": "failed to parse countdown type",
+            "Mode": "failed to parse mode",
+            "Number": "failed to parse number",
+            "SampleBank": "failed to parse sample bank",
+        }
+        return messages.get(self.kind, "failed to parse general section")
+
+    @classmethod
+    def from_countdown_type(cls, err: Exception) -> "ParseGeneralError":
+        return cls("CountdownType", err)
+
+    @classmethod
+    def from_mode(cls, err: Exception) -> "ParseGeneralError":
+        return cls("Mode", err)
+
+    @classmethod
+    def from_number(cls, err: Exception) -> "ParseGeneralError":
+        return cls("Number", err)
+
+    @classmethod
+    def from_sample_bank(cls, err: Exception) -> "ParseGeneralError":
+        return cls("SampleBank", err)
 
 @dataclass
 class General:
@@ -71,17 +102,20 @@ class General:
 
         try:
             if key_enum == GeneralKey.AudioFilename:
-                state.audio_file = value.replace('\\', '/')
+                state.audio_file = StrExtra.clean_filename(value)
 
             elif key_enum == GeneralKey.AudioLeadIn:
-                state.audio_lead_in = float(int(value))
+                state.audio_lead_in = float(value)
 
             elif key_enum == GeneralKey.PreviewTime:
                 state.preview_time = int(value)
 
             elif key_enum == GeneralKey.SampleSet:
                 try:
-                    state.default_sample_bank = int(value)
+                    if value.isdigit():
+                        state.default_sample_bank = int(value)
+                    else:
+                        pass
                 except ValueError as e:
                     raise ParseGeneralError.from_sample_bank(e)
 
@@ -185,35 +219,3 @@ class GeneralKey(Enum):
     @classmethod
     def from_str(cls, key: str) -> Optional["GeneralKey"]:
         return cls.__members__.get(key)
-
-class ParseGeneralError(Exception):
-    def __init__(self, kind: str, source: Exception):
-        self.kind = kind
-        self.source = source
-        super().__init__(self.get_message())
-        self.__cause__ = source
-
-    def get_message(self) -> str:
-        messages = {
-            "CountdownType": "failed to parse countdown type",
-            "Mode": "failed to parse mode",
-            "Number": "failed to parse number",
-            "SampleBank": "failed to parse sample bank",
-        }
-        return messages.get(self.kind, "failed to parse general section")
-
-    @classmethod
-    def from_countdown_type(cls, err: Exception) -> "ParseGeneralError":
-        return cls("CountdownType", err)
-
-    @classmethod
-    def from_mode(cls, err: Exception) -> "ParseGeneralError":
-        return cls("Mode", err)
-
-    @classmethod
-    def from_number(cls, err: Exception) -> "ParseGeneralError":
-        return cls("Number", err)
-
-    @classmethod
-    def from_sample_bank(cls, err: Exception) -> "ParseGeneralError":
-        return cls("SampleBank", err)

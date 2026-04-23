@@ -1,4 +1,5 @@
 from __future__ import annotations
+import struct
 
 class DoubleByteInterator:
     __slots__ = ("_bytes", "_index")
@@ -45,12 +46,10 @@ class U16BeInterator:
 
     def __next__(self) -> int:
         pair = next(self._inner, None)
-
         if pair is None:
             raise StopIteration
 
-        b1, b2 = pair
-        return (b1 << 8) | b2
+        return struct.unpack('>H', bytes(pair))[0]
 
     def size_hint(self) -> tuple[int, int | None]:
         return self._inner.size_hint()
@@ -62,7 +61,7 @@ class U16LeInterator:
         self._inner = inner
 
     @classmethod
-    def new(cls, bytes_data: bytes) -> U16BeInterator:
+    def new(cls, bytes_data: bytes) -> U16LeInterator:
         return cls(DoubleByteInterator.new(bytes_data))
 
     def __iter__(self) -> U16LeInterator:
@@ -74,8 +73,7 @@ class U16LeInterator:
         if pair is None:
             raise StopIteration
 
-        b1, b2 = pair
-        return (b2 << 8) | b1
+        return struct.unpack('<H', bytes(pair))[0]
 
     def size_hint(self) -> tuple[int, int | None]:
         return self._inner.size_hint()

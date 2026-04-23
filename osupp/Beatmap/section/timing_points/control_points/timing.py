@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+class TimeSignatureError(Exception):
+    def __init__(self):
+        super().__init__("time signature numerator must be positive")
+
 @dataclass(frozen=True)
 class TimeSignature:
     numerator: int
@@ -21,14 +25,6 @@ class TimeSignature:
     @classmethod
     def new_simple_quadruple(cls) -> "TimeSignature":
         return cls(4)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, TimeSignature):
-            return NotImplemented
-        return self.numerator == other.numerator
-
-    def __repr__(self) -> str:
-        return f"TimeSignature({self.numerator})"
 
 @dataclass
 class TimingPoint:
@@ -79,7 +75,3 @@ class TimingPoint:
         if not isinstance(other, TimingPoint):
             return NotImplemented
         return self.time >= other.time
-
-class TimeSignatureError(Exception):
-    def __init__(self):
-        super().__init__("time signature numerator must be positive")

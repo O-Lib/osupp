@@ -3,8 +3,9 @@ from .path import PathControlPoint, SliderPath
 from section.hit_objects.hit_samples import HitSampleInfo
 from .curve import Curve, CurveBuffers, CircularArcProperties
 from .path_type import PathType, SplineType
+from .event import SliderEvent, SliderEventType, SliderEventsIter, SliderEventsIterState
 
-from typing import List, Optional
+from typing import List
 
 __all__ = [
     "PathControlPoint",
@@ -16,12 +17,17 @@ __all__ = [
     "PathType",
     "SplineType",
     "HitObjectSlider",
+    "SliderEvent",
+    "SliderEventsIterState",
+    "SliderEventsIter",
+    "SliderEventType"
 ]
 
 class HitObjectSlider:
     def __init__(
             self,
             pos: Pos,
+            start_time: float,
             new_combo: bool,
             combo_offset: int,
             path: SliderPath,
@@ -30,6 +36,7 @@ class HitObjectSlider:
             velocity: float,
     ):
         self.pos = pos
+        self.start_time = start_time
         self.new_combo = new_combo
         self.combo_offset = combo_offset
         self.path = path

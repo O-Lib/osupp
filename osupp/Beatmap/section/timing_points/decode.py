@@ -52,6 +52,38 @@ class ControlPoints:
         if not point.check_already_existing(self):
             point.add_to(self)
 
+class ParseTimingPointsError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+class EffectFlagsError(ParseTimingPointsError):
+    def __init__(self, source: Exception):
+        super().__init__(f"failed to parse effect flags: {source}")
+
+class GeneralSectionError(ParseTimingPointsError):
+    def __init__(self, source: Exception):
+        super().__init__(f"failed to parse general section: {source}")
+
+class InvalidLineError(ParseTimingPointsError):
+    def __init__(self):
+        super().__init__("invalid line")
+
+class NumberParseError(ParseTimingPointsError):
+    def __init__(self, source: Exception):
+        super().__init__(f"failed to parse number: {source}")
+
+class SampleBankParseError(ParseTimingPointsError):
+    def __init__(self, source: Exception):
+        super().__init__(f"failed to parse sample bank: {source}")
+
+class TimeSignatureParseError(ParseTimingPointsError):
+    def __init__(self, source: Exception):
+        super().__init__(f"time signature error: {source}")
+
+class TimingControlPointNaNError(ParseTimingPointsError):
+    def __init__(self):
+        super().__init__("beat length cannot be NaN in a timing control point")
+
 @dataclass
 class TimingPoints:
     audio_file: str
@@ -140,13 +172,13 @@ class TimingPoints:
 
     @staticmethod
     def parse_timing_points(state: "TimingPointsState", line: str):
-        line = line.split('//')[0].strip()
+        line = StrExtra.trim_comment(line)
         if not line:
             return
 
         parts = line.split(',')
         if len(parts) < 2:
-            raise InvalidLineError()
+            return
 
         try:
             time = float(parts[0])
@@ -216,7 +248,7 @@ class TimingPoints:
             state.pending_control_points_time = time
 
         except (ValueError, IndexError) as e:
-            raise NumberParseError(e)
+            raise ParseTimingPointsError(e)
 
     @staticmethod
     def parse_colors(state: "TimingPointsState", line: str):
@@ -246,38 +278,6 @@ class ControlPoint(ABC):
     @abstractmethod
     def add_to(self, control_points: "ControlPoints") -> None:
         pass
-
-class ParseTimingPointsError(Exception):
-    def __init__(self, message: str):
-        super().__init__(message)
-
-class EffectFlagsError(ParseTimingPointsError):
-    def __init__(self, source: Exception):
-        super().__init__(f"failed to parse effect flags: {source}")
-
-class GeneralSectionError(ParseTimingPointsError):
-    def __init__(self, source: Exception):
-        super().__init__(f"failed to parse general section: {source}")
-
-class InvalidLineError(ParseTimingPointsError):
-    def __init__(self):
-        super().__init__("invalid line")
-
-class NumberParseError(ParseTimingPointsError):
-    def __init__(self, source: Exception):
-        super().__init__(f"failed to parse number: {source}")
-
-class SampleBankParseError(ParseTimingPointsError):
-    def __init__(self, source: Exception):
-        super().__init__(f"failed to parse sample bank: {source}")
-
-class TimeSignatureParseError(ParseTimingPointsError):
-    def __init__(self, source: Exception):
-        super().__init__(f"time signature error: {source}")
-
-class TimingControlPointNaNError(ParseTimingPointsError):
-    def __init__(self):
-        super().__init__("beat length cannot be NaN in a timing control point")
 
 @dataclass
 class TimingPointsState:

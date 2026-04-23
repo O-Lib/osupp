@@ -1,19 +1,17 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional
 
 from section.difficulty import Difficulty, DifficultyState, ParseDifficultyError
 from section.events import BreakPeriod, Events, EventsState, ParseEventsError
-from section.general import CountdownType, GameMode, GeneralState
+from section.general import CountdownType, GameMode
 from .slider import PathType, SliderPath, CurveBuffers, HitObjectSlider, PathControlPoint
-from .mod import BASE_SCORING_DIST, HitObject, HitObjectKind, HitObjectType, ParseHitObjectTypeError
+from .mod import BASE_SCORING_DIST, HitObject, HitObjectType, ParseHitObjectTypeError
 from .circle import HitObjectCircle
 from .hold import HitObjectHold
 from .spinner import HitObjectSpinner
-from section.timing_points import ControlPoints, DifficultyPoint, ParseTimingPointsError, SamplePoint, TimingPoint, TimingPoints, TimingPointsState
-from utils import Pos, ParseNumber, ParseNumberError, StrExtra
-if TYPE_CHECKING:
-    from beatmap import Beatmap
+from section.timing_points import ControlPoints, DifficultyPoint, ParseTimingPointsError, TimingPoint, TimingPoints, TimingPointsState
+from utils import Pos, ParseNumberError
 from .hit_samples import HitSoundType, ParseHitSoundTypeError, ParseSampleBankInfoError, SampleBank, SampleBankInfo
 
 MAX_COORDINATE_VALUE = 131072

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from utils import KeyValue
+from utils import KeyValue, ParseNumber
 
 from dataclasses import dataclass
 from enum import Enum
@@ -71,11 +71,9 @@ class Metadata:
             elif key_enum == MetadataKey.Tags:
                 state.tags = value
             elif key_enum == MetadataKey.BeatmapID:
-                # state.beatmap_id = value.parse_num()?
-                state.beatmap_id = int(value)
+                state.beatmap_id = ParseNumber.parse(value)
             elif key_enum == MetadataKey.BeatmapSetID:
-                # state.beatmap_set_id = value.parse_num()?
-                state.beatmap_set_id = int(value)
+                state.beatmap_set_id = ParseNumber.parse(value)
         except ValueError as e:
             raise ParseMetadataError.from_number(e)
 
@@ -155,3 +153,14 @@ class ParseMetadataError(Exception):
     @classmethod
     def from_number(cls, err: Exception) -> "ParseMetadataError":
         return cls("Number", err)
+
+@dataclass
+class MetadataState:
+    metadata: Metadata
+
+    @classmethod
+    def create(cls, _version: int) -> "MetadataState":
+        return cls(metadata=Metadata.default())
+
+    def to_result(self) -> Metadata:
+        return self.metadata

@@ -14,6 +14,9 @@ class BreakPeriod:
     def has_effect(self) -> bool:
         return self.duration() >= self.MIN_BREAK_DURATION
 
+class ParseEventTypeError(Exception):
+    def __init__(self):
+        super().__init__("invalid event type")
 
 class EventType(IntEnum):
     Background = 0
@@ -26,24 +29,20 @@ class EventType(IntEnum):
 
     @classmethod
     def from_str(cls, s: str) -> "EventType":
-        if s == "0" or s == "Background":
+        s_lower = s.strip().lower()
+        if s_lower in ("0", "Background"):
             return cls.Background
-        elif s == "1" or s == "Video":
+        elif s_lower in ("1", "Video"):
             return cls.Video
-        elif s == "2" or s == "Break":
+        elif s_lower in ("2", "Break"):
             return cls.Break
-        elif s == "3" or s == "Color" or s == "Colour":
+        elif s_lower in ("3", "Color", "Colour"):
             return cls.Color
-        elif s == "4" or s == "Sprite":
+        elif s_lower in ("4", "Sprite"):
             return cls.Sprite
-        elif s == "5" or s == "Sample":
+        elif s_lower in ("5", "Sample"):
             return cls.Sample
-        elif s == "6" or s == "Animation":
+        elif s_lower in ("6", "Animation"):
             return cls.Animation
         else:
             raise ParseEventTypeError()
-
-
-class ParseEventTypeError(Exception):
-    def __init__(self):
-        super().__init__("invalid event type")

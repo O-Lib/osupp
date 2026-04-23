@@ -1,8 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 from enum import Enum
 
-from utils import KeyValue, ParseNumberError
+from utils import KeyValue, ParseNumber
 from beatmap import Beatmap
 
 @dataclass
@@ -69,17 +69,18 @@ class Editor:
                     except ValueError:
                         continue
                 state.bookmarks = bookmarks
+
             elif key_enum == EditorKey.DistanceSpacing:
-                state.distance_spacing = float(value)
+                state.distance_spacing = ParseNumber.parse(value)
 
             elif key_enum == EditorKey.BeatDivisor:
-                state.beat_divisor = int(value)
+                state.beat_divisor = ParseNumber.parse(value)
 
             elif key_enum == EditorKey.GridSize:
-                state.grid_size = int(value)
+                state.grid_size = ParseNumber.parse(value)
 
             elif key_enum == EditorKey.TimelineZoom:
-                state.timeline_zoom = float(value)
+                state.timeline_zoom = ParseNumber.parse(value)
 
         except ValueError as e:
             raise ParseEditorError.from_number(e)
