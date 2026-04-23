@@ -316,12 +316,12 @@ class Beatmap:
         pass
 
     def encode_to_path(self, path: str) -> None:
-        with open(path, "w", enconding="utf-8") as file:
+        with open(path, "w", encoding="utf-8") as file:
             self.encode(file)
 
     def encode_to_string(self) -> str:
         writer = io.StringIO()
-        self.encode(writer)
+        return self.encode(writer)
 
     def encode(self, writer: TextIO) -> None:
         writer.write(f"osu file format v{self.format_version}\n")
