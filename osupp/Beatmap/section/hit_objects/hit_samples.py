@@ -153,7 +153,7 @@ class HitSoundType:
             n = int(s)
             return cls(n)
         except ValueError as e:
-            raise ParseHitSoundTypeError() from e
+            raise ParseHitSoundTypeError(e) from e
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, int):
@@ -207,8 +207,9 @@ class SampleBankInfo:
     custom_sample_bank: int = 0
 
     def read_custom_sample_banks(self, split: Iterable[str], banks_only: bool = False):
+        it = iter(split)
         try:
-            first = next(split, None)
+            first = next(it, None)
             if not first:
                 return
 
@@ -217,9 +218,9 @@ class SampleBankInfo:
                 SampleBank(bank_val) if bank_val in [0, 1, 2, 3] else SampleBank.NORMAL
             )
 
-            add_bank_str = next(split, None)
+            add_bank_str = next(it, None)
             if add_bank_str is None:
-                raise ParseSampleBankInfoError.missing_info
+                raise ParseSampleBankInfoError.missing_info()
 
             add_bank_val = int(add_bank_str)
             add_bank = (
@@ -237,15 +238,15 @@ class SampleBankInfo:
             if banks_only:
                 return
 
-            next_val = next(split, None)
+            next_val = next(it, None)
             if next_val is not None:
                 self.custom_sample_bank = int(next_val)
 
-            next_val = next(split, None)
+            next_val = next(it, None)
             if next_val is not None:
                 self.volume = max(0, int(next_val))
 
-            self.filename = next(split, None) or None
+            self.filename = next(it, None) or None
         except (ValueError, StopIteration):
             pass
 
