@@ -2,6 +2,7 @@ from enum import Enum, auto
 from dataclasses import dataclass
 from typing import List
 
+
 class SliderEventType(Enum):
     Head = auto()
     Tick = auto()
@@ -9,12 +10,14 @@ class SliderEventType(Enum):
     LastTick = auto()
     Tail = auto()
 
+
 class SliderEventsIterState(Enum):
     Head = auto()
     Ticks = auto()
     LastTick = auto()
     Tail = auto()
     Done = auto()
+
 
 @dataclass
 class SliderEvent:
@@ -24,19 +27,20 @@ class SliderEvent:
     time: float
     path_progress: float
 
+
 class SliderEventsIter:
     MAX_LEN = 100000.0
     TAIL_LENIENCY = -36.0
 
     def __init__(
-            self,
-            start_time: float,
-            span_duration: float,
-            velocity: float,
-            tick_dist: float,
-            total_dist: float,
-            span_count: int,
-            ticks_buf: List['SliderEvent']
+        self,
+        start_time: float,
+        span_duration: float,
+        velocity: float,
+        tick_dist: float,
+        total_dist: float,
+        span_count: int,
+        ticks_buf: List["SliderEvent"],
     ):
         self.len = min(self.MAX_LEN, total_dist)
         self.tick_dist = max(0.0, min(tick_dist, self.len))
@@ -81,14 +85,18 @@ class SliderEventsIter:
             elif self.state == SliderEventsIterState.LastTick:
                 total_duration = float(self.span_count) * self.span_duration
                 final_span_idx = self.span_count - 1
-                final_span_start_time = self.start_time + (float(final_span_idx) * self.span_duration)
+                final_span_start_time = self.start_time + (
+                    float(final_span_idx) * self.span_duration
+                )
 
                 last_tick_time = max(
                     self.start_time + total_duration / 2.0,
-                    (final_span_start_time + self.span_duration) + self.TAIL_LENIENCY
+                    (final_span_start_time + self.span_duration) + self.TAIL_LENIENCY,
                 )
 
-                last_tick_progress = (last_tick_time - final_span_start_time) / self.span_duration
+                last_tick_progress = (
+                    last_tick_time - final_span_start_time
+                ) / self.span_duration
 
                 if self.span_count % 2 == 0:
                     last_tick_progress = 1.0 - last_tick_progress
@@ -110,7 +118,8 @@ class SliderEventsIter:
                 return SliderEvent(
                     kind=SliderEventType.Tail,
                     span_idx=final_span_idx,
-                    span_start_time=self.start_time + (float(self.span_count - 1) * self.span_duration),
+                    span_start_time=self.start_time
+                    + (float(self.span_count - 1) * self.span_duration),
                     time=self.start_time + total_duration,
                     path_progress=float(self.span_count % 2),
                 )
@@ -133,8 +142,9 @@ class SliderEventsIter:
         else:
             return 0
 
-def generate_ticks(iter_obj: 'SliderEventsIter', span: int):
-    reversed_span = (span % 2 == 1)
+
+def generate_ticks(iter_obj: "SliderEventsIter", span: int):
+    reversed_span = span % 2 == 1
     span_start_time = iter_obj.start_time + float(span) * iter_obj.span_duration
     with_repeat = span < iter_obj.span_count - 1
 
@@ -170,7 +180,10 @@ def generate_ticks(iter_obj: 'SliderEventsIter', span: int):
 
         iter_obj.ticks.reverse()
 
-def new_repeat_point(span: int, span_start_time: float, span_duration: float) -> SliderEvent:
+
+def new_repeat_point(
+    span: int, span_start_time: float, span_duration: float
+) -> SliderEvent:
     path_progress = float((span + 1) % 2)
 
     return SliderEvent(
@@ -178,5 +191,5 @@ def new_repeat_point(span: int, span_start_time: float, span_duration: float) ->
         span_idx=span,
         span_start_time=span_start_time,
         time=span_start_time + span_duration,
-        path_progress=path_progress
+        path_progress=path_progress,
     )

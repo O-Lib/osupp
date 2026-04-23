@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+
 class TimeSignatureError(Exception):
     def __init__(self):
         super().__init__("time signature numerator must be positive.")
+
 
 @dataclass(frozen=True)
 class TimeSignature:
@@ -26,6 +28,7 @@ class TimeSignature:
     def new_simple_quadruple(cls) -> "TimeSignature":
         return cls(4)
 
+
 @dataclass
 class TimingPoint:
     time: float
@@ -42,18 +45,24 @@ class TimingPoint:
             time=0.0,
             beat_len=cls.DEFAULT_BEAT_LEN,
             omit_first_bar_line=cls.DEFAULT_OMIT_FIRST_BAR_LINE,
-            time_signature=TimeSignature.new_simple_quadruple()
+            time_signature=TimeSignature.new_simple_quadruple(),
         )
 
     @classmethod
-    def new(cls, time: float, beat_len: float, omit_first_bar_line: bool, time_signature: TimeSignature) -> "TimingPoint":
+    def new(
+        cls,
+        time: float,
+        beat_len: float,
+        omit_first_bar_line: bool,
+        time_signature: TimeSignature,
+    ) -> "TimingPoint":
         clamped_beat_len = max(6.0, min(60000.0, beat_len))
 
         return cls(
             time=time,
             beat_len=clamped_beat_len,
             omit_first_bar_line=omit_first_bar_line,
-            time_signature=time_signature
+            time_signature=time_signature,
         )
 
     def __lt__(self, other: "TimingPoint") -> bool:

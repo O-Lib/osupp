@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
+
 @dataclass(slots=True)
 class Pos:
     x: float = 0.0
@@ -20,7 +21,7 @@ class Pos:
     def dot(self, other: Pos) -> float:
         return (self.x * other.x) + (self.y * other.y)
 
-    def distance (self, other: Pos) -> float:
+    def distance(self, other: Pos) -> float:
         return (self - other).length()
 
     def normalize(self) -> Pos:
@@ -49,10 +50,7 @@ class Pos:
 
     def __mul__(self, rhs: float) -> Pos:
         if isinstance(rhs, (int, float)):
-            return Pos(
-                x=self.x * rhs,
-                y=self.y * rhs
-            )
+            return Pos(x=self.x * rhs, y=self.y * rhs)
         return NotImplemented
 
     def __rmul__(self, lhs: float) -> Pos:
@@ -67,17 +65,14 @@ class Pos:
 
     def __truediv__(self, rhs: float) -> Pos:
         if isinstance(rhs, (int, float)):
-            return Pos(
-                x=self.x / rhs,
-                y=self.y / rhs
-            )
+            return Pos(x=self.x / rhs, y=self.y / rhs)
         return NotImplemented
 
     def __itruediv__(self, rhs: float) -> Pos:
         if isinstance(rhs, (int, float)):
             self.x /= rhs
             self.y /= rhs
-            return  self
+            return self
         return NotImplemented
 
     def __str__(self) -> str:

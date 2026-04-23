@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from beatmap import Beatmap
 
+
 @dataclass
 class Metadata:
     title: str = ""
@@ -22,15 +23,15 @@ class Metadata:
     def into_beatmap(self) -> "Beatmap":
         return Beatmap(
             title=self.title,
-            title_unicode = self.title_unicode,
-            artist = self.artist,
-            artist_unicode = self.artist_unicode,
-            creator = self.creator,
-            version = self.version,
-            source = self.source,
-            tags = self.tags,
-            beatmap_id = self.beatmap_id,
-            beatmap_set_id = self.beatmap_set_id
+            title_unicode=self.title_unicode,
+            artist=self.artist,
+            artist_unicode=self.artist_unicode,
+            creator=self.creator,
+            version=self.version,
+            source=self.source,
+            tags=self.tags,
+            beatmap_id=self.beatmap_id,
+            beatmap_set_id=self.beatmap_set_id,
         )
 
     @classmethod
@@ -117,7 +118,9 @@ class Metadata:
     def parse_mania(cls, state: "MetadataState", line: str) -> None:
         pass
 
+
 MetadataState = Metadata
+
 
 class MetadataKey(Enum):
     Title = "Title"
@@ -138,6 +141,7 @@ class MetadataKey(Enum):
         except KeyError:
             return None
 
+
 class ParseMetadataError(Exception):
     def __init__(self, kind: str, source: Exception):
         self.kind = kind
@@ -153,6 +157,7 @@ class ParseMetadataError(Exception):
     @classmethod
     def from_number(cls, err: Exception) -> "ParseMetadataError":
         return cls("Number", err)
+
 
 @dataclass
 class MetadataState:

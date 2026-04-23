@@ -20,20 +20,21 @@ __all__ = [
     "SliderEvent",
     "SliderEventsIterState",
     "SliderEventsIter",
-    "SliderEventType"
+    "SliderEventType",
 ]
+
 
 class HitObjectSlider:
     def __init__(
-            self,
-            pos: Pos,
-            start_time: float,
-            new_combo: bool,
-            combo_offset: int,
-            path: SliderPath,
-            node_samples: List[List['HitSampleInfo']],
-            repeat_count: int,
-            velocity: float,
+        self,
+        pos: Pos,
+        start_time: float,
+        new_combo: bool,
+        combo_offset: int,
+        path: SliderPath,
+        node_samples: List[List["HitSampleInfo"]],
+        repeat_count: int,
+        velocity: float,
     ):
         self.pos = pos
         self.start_time = start_time

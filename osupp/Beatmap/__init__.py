@@ -1,10 +1,4 @@
-from decode import (
-DecodeBeatmap,
-DecodeState,
-from_str,
-from_path,
-from_bytes
-)
+from decode import DecodeBeatmap, DecodeState, from_str, from_path, from_bytes
 from format_version import LATEST_FORMAT_VERSION
 from beatmap import Beatmap, BeatmapState, ParseBeatmapError
 

@@ -12,16 +12,20 @@ from section import Section
 D = TypeVar("D", bound="DecodeBeatmap")
 S = TypeVar("S", bound="DecodeState")
 
+
 def from_path(target_class: Type[D], path: Union[str, Path]) -> D:
     with open(path, "rb") as f:
         reader = io.BufferedReader(f)
         return target_class.decode(reader)
 
+
 def from_bytes(target_class: Type[D], bytes_data: bytes) -> D:
     return target_class.decode(io.BytesIO(bytes_data))
 
+
 def from_str(target_class: Type[D], s: str) -> D:
     return target_class.decode(io.BytesIO(s.encode("utf-8")))
+
 
 class DecodeState(ABC):
     @classmethod
@@ -33,6 +37,7 @@ class DecodeState(ABC):
     def to_result(self) -> Any:
         pass
 
+
 class DecodeBeatmap(ABC, Generic[S]):
     Error = Exception
     State = Type[S]
@@ -42,7 +47,9 @@ class DecodeBeatmap(ABC, Generic[S]):
         reader = Decoder.new(src)
         version, use_curr_line = parse_version(reader)
 
-        actual_version = version if version is not None else format_version.LATEST_FORMAT_VERSION
+        actual_version = (
+            version if version is not None else format_version.LATEST_FORMAT_VERSION
+        )
         state = cls.State.create(actual_version)
 
         section = parse_first_section(reader, use_curr_line)
@@ -138,12 +145,14 @@ class DecodeBeatmap(ABC, Generic[S]):
     def parse_mania(cls, state: State, line: str):
         pass
 
+
 @dataclass
 class UseCurrentLine:
     value: bool
 
     def __bool__(self):
         return self.value
+
 
 def parse_version(reader: "Decoder") -> Tuple[Optional[int], UseCurrentLine]:
     while True:
@@ -163,7 +172,10 @@ def parse_version(reader: "Decoder") -> Tuple[Optional[int], UseCurrentLine]:
         logger.error(f"Failed to parse format version: {res}")
         return None, UseCurrentLine(True)
 
-def parse_first_section(reader: "Decoder", use_curr_line: UseCurrentLine) -> Optional[Section]:
+
+def parse_first_section(
+    reader: "Decoder", use_curr_line: UseCurrentLine
+) -> Optional[Section]:
     current_line_section = Section.try_from_line(reader.curr_line())
     if current_line_section is not None:
         return current_line_section
@@ -179,12 +191,16 @@ def parse_first_section(reader: "Decoder", use_curr_line: UseCurrentLine) -> Opt
 
         return None
 
+
 class SectionFlow:
     def __init__(self, section: Optional[Section] = None, break_loop: bool = False):
         self.section = section
         self.break_loop = break_loop
 
-def parse_section(reader: Decoder, state: S, f: Any, cls: Type[DecodeBeatmap]) -> SectionFlow:
+
+def parse_section(
+    reader: Decoder, state: S, f: Any, cls: Type[DecodeBeatmap]
+) -> SectionFlow:
     while True:
         try:
             line = reader.read_line()
@@ -202,16 +218,23 @@ def parse_section(reader: Decoder, state: S, f: Any, cls: Type[DecodeBeatmap]) -
             try:
                 f(cls, state, line)
             except Exception as err:
-                logging.getLogger("osupp_beatmap").error(f"Failed to process line {line!r}: {err}")
+                logging.getLogger("osupp_beatmap").error(
+                    f"Failed to process line {line!r}: {err}"
+                )
                 log_error_cause(err)
 
             continue
 
         return SectionFlow(break_loop=True)
 
+
 def log_error_cause(err: Exception):
     current_err = err.__cause__ if err.__cause__ is not None else err.__context__
 
     while current_err is not None:
         logger.error(f" - caused by: {current_err}")
-        current_err = current_err.__cause__ if current_err.__cause__ is not None else current_err.__context__
+        current_err = (
+            current_err.__cause__
+            if current_err.__cause__ is not None
+            else current_err.__context__
+        )

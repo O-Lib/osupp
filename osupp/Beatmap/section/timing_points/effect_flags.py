@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class EffectFlags:
     value: int = 0
@@ -35,6 +36,7 @@ class EffectFlags:
 
     def __int__(self) -> int:
         return self.value
+
 
 class ParseEffectFlagsError(Exception):
     def __init__(self, source: Exception):

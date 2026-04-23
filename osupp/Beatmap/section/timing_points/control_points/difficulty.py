@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from section.timing_points.decode import ControlPoints
 
+
 @dataclass
 class DifficultyPoint:
     time: float
@@ -21,17 +22,17 @@ class DifficultyPoint:
         return cls(
             time=0.0,
             slider_velocity=cls.DEFAULT_SLIDER_VELOCITY,
-            generate_ticks=cls.DEFAULT_GENERATE_TICKS
+            generate_ticks=cls.DEFAULT_GENERATE_TICKS,
         )
 
     @classmethod
-    def new(cls, time: float, beat_len: float, speed_multiplier: float) -> "DifficultyPoint":
+    def new(
+        cls, time: float, beat_len: float, speed_multiplier: float
+    ) -> "DifficultyPoint":
         sv = max(0.1, min(10.0, speed_multiplier))
 
         return cls(
-            time=time,
-            slider_velocity=sv,
-            generate_ticks=not math.isnan(beat_len)
+            time=time, slider_velocity=sv, generate_ticks=not math.isnan(beat_len)
         )
 
     def check_already_existing(self, control_points: "ControlPoints") -> bool:
@@ -53,8 +54,8 @@ class DifficultyPoint:
 
     def is_redundant(self, existing: "DifficultyPoint") -> bool:
         return (
-            self.generate_ticks == existing.generate_ticks and
-            abs(self.slider_velocity - existing.slider_velocity) < 1e-9
+            self.generate_ticks == existing.generate_ticks
+            and abs(self.slider_velocity - existing.slider_velocity) < 1e-9
         )
 
     def __lt__(self, other: "DifficultyPoint") -> bool:

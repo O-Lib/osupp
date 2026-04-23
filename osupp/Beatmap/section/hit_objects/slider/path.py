@@ -6,6 +6,7 @@ from .path_type import PathType
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
+
 @dataclass
 class PathControlPoint:
     pos: Pos = field(default_factory=Pos)
@@ -15,19 +16,23 @@ class PathControlPoint:
     def new(cls, pos: Pos) -> "PathControlPoint":
         return cls(pos=pos)
 
+
 @dataclass
 class SliderPath:
-    mode: 'GameMode'
-    control_points: List['PathControlPoint'] = field(default_factory=list)
+    mode: "GameMode"
+    control_points: List["PathControlPoint"] = field(default_factory=list)
     expected_dist: Optional[float] = None
-    curve: Optional['Curve'] = None
+    curve: Optional["Curve"] = None
 
     @classmethod
-    def new(cls, mode: 'GameMode', control_points: List['PathControlPoint'], expected_dist: Optional[float] = None) -> "SliderPath":
+    def new(
+        cls,
+        mode: "GameMode",
+        control_points: List["PathControlPoint"],
+        expected_dist: Optional[float] = None,
+    ) -> "SliderPath":
         return cls(
-            mode=mode,
-            control_points=control_points,
-            expected_dist=expected_dist
+            mode=mode, control_points=control_points, expected_dist=expected_dist
         )
 
     @property

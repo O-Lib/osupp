@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Generic, TypeVar, Type
 
-K = TypeVar('K')
+K = TypeVar("K")
+
 
 @dataclass
 class KeyValue(Generic[K]):
@@ -9,8 +10,8 @@ class KeyValue(Generic[K]):
     value: str
 
     @classmethod
-    def parse (cls, s: str, key_type: Type[K] = str) -> "KeyValue[K]":
-        parts = s.split(':', 1)
+    def parse(cls, s: str, key_type: Type[K] = str) -> "KeyValue[K]":
+        parts = s.split(":", 1)
 
         if len(parts) == 1:
             key_raw = parts[0].strip()
@@ -22,12 +23,12 @@ class KeyValue(Generic[K]):
         try:
             parsed_key = key_type(key_raw)
         except Exception as e:
-            raise ValueError(f"Failed to parse key '{key_raw}' with type {key_type}: {e}")
+            raise ValueError(
+                f"Failed to parse key '{key_raw}' with type {key_type}: {e}"
+            )
 
-        return cls(
-            key=parsed_key,
-            value=value
-        )
+        return cls(key=parsed_key, value=value)
+
 
 class Key:
     def __init__(self, s: str):

@@ -3,6 +3,7 @@ from .parse_number import ParseNumber
 
 N = TypeVar("N", bound=ParseNumber)
 
+
 class StrExtra:
     @staticmethod
     def trim_comment(s: str) -> str:
@@ -16,7 +17,9 @@ class StrExtra:
         return number_type.parse(s)
 
     @staticmethod
-    def parse_with_limits(s: str, number_type: Type[N], limit: Union[int, float]) -> Union[int, float]:
+    def parse_with_limits(
+        s: str, number_type: Type[N], limit: Union[int, float]
+    ) -> Union[int, float]:
         return number_type.parse_with_limits(s, limit)
 
     @staticmethod

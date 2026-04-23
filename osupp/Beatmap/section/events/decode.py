@@ -5,6 +5,7 @@ from .mod import BreakPeriod, EventType
 from utils import StrExtra
 from beatmap import Beatmap
 
+
 class ParseEventsError(Exception):
     def __init__(self, message: str, source: Exception = None):
         self.source = source
@@ -23,6 +24,7 @@ class ParseEventsError(Exception):
     @classmethod
     def from_number(cls, err: Exception) -> "ParseEventsError":
         return cls("failed to parse number", err)
+
 
 @dataclass
 class Events:
@@ -70,7 +72,7 @@ class Events:
         if not clean_line:
             return
 
-        parts = clean_line.split(',')
+        parts = clean_line.split(",")
 
         if len(parts) < 3:
             return
@@ -79,7 +81,7 @@ class Events:
 
         try:
             event_type = EventType.from_str(raw_type)
-        except Exception as e:
+        except Exception:
             return
 
         try:
@@ -88,7 +90,15 @@ class Events:
                     state.background_file = cls.clean_filename(parts[3])
 
             elif event_type == EventType.Video:
-                video_extensions = {".mp4", ".mov", ".avi", ".flv", ".mpg", ".wmv", ".m4v"}
+                video_extensions = {
+                    ".mp4",
+                    ".mov",
+                    ".avi",
+                    ".flv",
+                    ".mpg",
+                    ".wmv",
+                    ".m4v",
+                }
                 filename = cls.clean_filename(raw_params)
 
                 ext = filename[-4:].lower()
@@ -103,12 +113,15 @@ class Events:
                     start_time = float(raw_start)
                     end_time = float(raw_params)
 
-                    state.breaks.append(BreakPeriod(
-                        start_time=start_time,
-                        end_time=max(start_time, end_time)
-                    ))
+                    state.breaks.append(
+                        BreakPeriod(
+                            start_time=start_time, end_time=max(start_time, end_time)
+                        )
+                    )
                 except ValueError:
-                    raise ParseEventsError.from_number(ValueError("Invalid break times"))
+                    raise ParseEventsError.from_number(
+                        ValueError("Invalid break times")
+                    )
 
             elif event_type in (EventType.Color, EventType.Sample, EventType.Animation):
                 pass
@@ -138,5 +151,6 @@ class Events:
     @classmethod
     def parse_mania(cls, state: "EventsState", line: str) -> None:
         pass
+
 
 EventsState = Events

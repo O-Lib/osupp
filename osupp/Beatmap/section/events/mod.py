@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 
+
 @dataclass(frozen=True)
 class BreakPeriod:
     start_time: float = 0.0
@@ -14,9 +15,11 @@ class BreakPeriod:
     def has_effect(self) -> bool:
         return self.duration() >= self.MIN_BREAK_DURATION
 
+
 class ParseEventTypeError(Exception):
     def __init__(self):
         super().__init__("invalid event type")
+
 
 class EventType(IntEnum):
     Background = 0

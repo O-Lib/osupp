@@ -4,6 +4,7 @@ import io
 
 R = TypeVar("R", bound=BinaryIO)
 
+
 class Decoder(Generic[R]):
     __slots__ = ("inner", "read_buf", "decode_buf", "encoding")
 
@@ -52,4 +53,4 @@ class Decoder(Generic[R]):
         return self.decode_buf
 
     def curr_line(self) -> str:
-        return self.decode_buf.rstrip('\r\n ')
+        return self.decode_buf.rstrip("\r\n ")

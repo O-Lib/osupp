@@ -5,6 +5,7 @@ from enum import Enum
 from utils import KeyValue, ParseNumber
 from beatmap import Beatmap
 
+
 @dataclass
 class Editor:
     bookmarks: List[int]
@@ -20,7 +21,7 @@ class Editor:
             distance_spacing=1.0,
             beat_divisor=4,
             grid_size=0,
-            timeline_zoom=1.0
+            timeline_zoom=1.0,
         )
 
     def into_beatmap(self) -> "Beatmap":
@@ -29,7 +30,7 @@ class Editor:
             distance_spacing=self.distance_spacing,
             beat_divisor=self.beat_divisor,
             grid_size=self.grid_size,
-            timeline_zoom=self.timeline_zoom
+            timeline_zoom=self.timeline_zoom,
         )
 
     @classmethod
@@ -45,7 +46,7 @@ class Editor:
 
     @classmethod
     def parse_editor(cls, state: "EditorState", line: str) -> None:
-        clean_line = line.split('//')[0].strip()
+        clean_line = line.split("//")[0].strip()
 
         kv = KeyValue.parse(clean_line)
         if kv is None:
@@ -60,7 +61,7 @@ class Editor:
         try:
             if key_enum == EditorKey.Bookmarks:
                 bookmarks = []
-                for s in value.split(','):
+                for s in value.split(","):
                     s = s.strip()
                     if not s:
                         continue
@@ -121,7 +122,9 @@ class Editor:
     def parse_mania(cls, state: "EditorState", line: str) -> None:
         pass
 
+
 EditorState = Editor
+
 
 class EditorKey(Enum):
     Bookmarks = "Bookmarks"
@@ -133,6 +136,7 @@ class EditorKey(Enum):
     @classmethod
     def from_str(cls, key: str) -> Optional["EditorKey"]:
         return cls.__members__.get(key)
+
 
 class ParseEditorError(Exception):
     def __init__(self, kind: str, source: Exception):

@@ -8,20 +8,12 @@ from .hit_samples import HitSampleInfo
 
 BASE_SCORING_DIST: float = 100.0
 
-HitObjectKind = Union[
-    HitObjectCircle,
-    HitObjectSlider,
-    HitObjectSpinner,
-    HitObjectHold
-]
+HitObjectKind = Union[HitObjectCircle, HitObjectSlider, HitObjectSpinner, HitObjectHold]
 
 
 class HitObject:
     def __init__(
-            self,
-            start_time: float,
-            kind: HitObjectKind,
-            samples: List[HitSampleInfo]
+        self, start_time: float, kind: HitObjectKind, samples: List[HitSampleInfo]
     ):
         self.start_time = start_time
         self.kind = kind
@@ -74,12 +66,12 @@ class HitObjectType:
         return (self.value & flag) != 0
 
     @classmethod
-    def from_hit_object(cls, hit_object: 'HitObject') -> 'HitObjectType':
+    def from_hit_object(cls, hit_object: "HitObject") -> "HitObjectType":
         kind_bits = 0
         obj = hit_object.kind
 
         if isinstance(obj, (HitObjectCircle, HitObjectSlider)):
-            kind_bits |= (obj.combo_offset << 4)
+            kind_bits |= obj.combo_offset << 4
             if obj.new_combo:
                 kind_bits |= 4
 
@@ -94,7 +86,7 @@ class HitObjectType:
         return cls(kind_bits)
 
     @classmethod
-    def from_str(cls, s: str) -> 'HitObjectType':
+    def from_str(cls, s: str) -> "HitObjectType":
         try:
             return cls(int(s))
         except ValueError as e:
@@ -106,7 +98,7 @@ class HitObjectType:
     def __and__(self, rhs: int) -> int:
         return self.value & rhs
 
-    def __iand__(self, rhs: int) -> 'HitObjectType':
+    def __iand__(self, rhs: int) -> "HitObjectType":
         self.value &= rhs
         return self
 

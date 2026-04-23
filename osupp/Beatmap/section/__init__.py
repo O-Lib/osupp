@@ -1,9 +1,11 @@
 from enum import Enum, auto
 from typing import Optional
 
+
 class UnknownKeyError(Exception):
     def __init__(self, message: str = "unknown key"):
         super().__init__(message)
+
 
 class Section(Enum):
     General = auto()
@@ -20,7 +22,7 @@ class Section(Enum):
 
     @classmethod
     def try_from_line(cls, line: str) -> Optional["Section"]:
-        if not (line.startswith('[') and line.endswith(']')):
+        if not (line.startswith("[") and line.endswith("]")):
             return None
         section_name = line[1:-1]
 

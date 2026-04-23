@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+
 class GameMode(IntEnum):
     Osu = 0
     Taiko = 1
@@ -30,9 +31,11 @@ class GameMode(IntEnum):
         except ValueError:
             return cls.Osu
 
+
 class ParseGameModeError(Exception):
     def __init__(self):
         super().__init__("invalid game mode")
+
 
 class CountdownType(IntEnum):
     None_ = 0
@@ -56,6 +59,7 @@ class CountdownType(IntEnum):
             return cls.DoubleSpeed
         else:
             raise ParseCountdownTypeError()
+
 
 class ParseCountdownTypeError(Exception):
     def __init__(self):

@@ -1,34 +1,53 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, TYPE_CHECKING, Union, TextIO, Any
+from typing import List, TYPE_CHECKING, Union, TextIO
 import io
-import math
 import copy
 import bisect
 
 from utils import Pos
+
 if TYPE_CHECKING:
     from section.colors import Color, Colors, ColorsState, CustomColor, ParseColorsError
     from section.editor import Editor, EditorState, ParseEditorError, EditorKey
     from section.events import BreakPeriod, EventType
     from section.general import CountdownType, GameMode, GeneralKey
     from section.hit_objects import (
-        SampleBank, HitObject, HitObjects, HitObjectsState, ParseHitObjectsError, CurveBuffers,
-        HitObjectCircle, HitObjectSlider, BASE_SCORING_DIST, SliderPath, SplineType, HitSampleInfo,
-        HitObjectType, PathType, SliderEvent, SliderEventType, SliderEventsIter, SliderEventsIterState,
-        HitObjectSpinner, HitObjectHold
-)
-    from section.metadata import Metadata, MetadataState, ParseMetadataError, MetadataKey
-    from section.timing_points import ControlPoints, TimingPoints, SamplePoint, EffectFlags, EffectPoint, DifficultyPoint
+        SampleBank,
+        HitObject,
+        HitObjects,
+        HitObjectsState,
+        ParseHitObjectsError,
+        CurveBuffers,
+        HitObjectCircle,
+        HitObjectSlider,
+        HitObjectType,
+        HitObjectSpinner,
+        HitObjectHold,
+    )
+    from section.metadata import (
+        Metadata,
+        MetadataState,
+        ParseMetadataError,
+        MetadataKey,
+    )
+    from section.timing_points import ControlPoints, TimingPoints, SamplePoint
 from format_version import LATEST_FORMAT_VERSION
-from .encode import ControlPointProperties, ControlPointGroup, add_path_data, get_sample_bank, collect_samples
+from .encode import (
+    ControlPointProperties,
+    ControlPointGroup,
+    add_path_data,
+    get_sample_bank,
+    collect_samples,
+)
+
 
 @dataclass
 class Beatmap:
     format_version: int = LATEST_FORMAT_VERSION
 
-    #General
+    # General
     audio_file: str = ""
     audio_lead_in: float = 0.0
     preview_time: int = 0
@@ -44,14 +63,14 @@ class Beatmap:
     countdown: "CountdownType" = field(default_factory=lambda: CountdownType.Normal)
     countdown_offset: int = 0
 
-    #Editor
+    # Editor
     bookmarks: List[int] = field(default_factory=list)
     distance_spacing: float = 1.0
     beat_divisor: int = 4
     grid_size: int = 4
     timeline_zoom: float = 1.0
 
-    #Metadata
+    # Metadata
     title: str = ""
     title_unicode: str = ""
     artist: str = ""
@@ -63,7 +82,7 @@ class Beatmap:
     beatmap_id: int = -1
     beatmap_set_id: int = -1
 
-    #Difficulty
+    # Difficulty
     hp_drain_rate: float = 5.0
     circle_size: float = 5.0
     overall_difficulty: float = 5.0
@@ -71,33 +90,36 @@ class Beatmap:
     slider_multiplier: float = 1.4
     slider_tick_rate: float = 1.0
 
-    #Events
+    # Events
     background_file: str = ""
     breaks: List[BreakPeriod] = field(default_factory=list)
 
-    #TimingPoints
+    # TimingPoints
     control_points: "ControlPoints" = field(default_factory=lambda: ControlPoints())
 
-    #Colors
+    # Colors
     custom_combo_colors: List["Color"] = field(default_factory=list)
     custom_colors: List["CustomColor"] = field(default_factory=list)
 
-    #HitObjects
+    # HitObjects
     hit_objects: List["HitObject"] = field(default_factory=list)
 
     @staticmethod
     def from_path(path: Union[str, Path]) -> "Beatmap":
         from decode import from_path
+
         return from_path(Beatmap, path)
 
     @staticmethod
     def from_bytes(bytes_data: bytes) -> "Beatmap":
         from decode import from_bytes
+
         return from_bytes(Beatmap, bytes_data)
 
     @staticmethod
     def from_str(s: str) -> "Beatmap":
         from decode import from_str
+
         return from_str(Beatmap, s)
 
     @classmethod
@@ -106,6 +128,7 @@ class Beatmap:
         from section.metadata import Metadata
         from section.colors import Colors
         from section.hit_objects.decode import HitObjects
+
         editor = Editor.default()
         metadata = Metadata.default()
         colors = Colors.default()
@@ -113,7 +136,6 @@ class Beatmap:
 
         return cls(
             format_version=LATEST_FORMAT_VERSION,
-
             # General
             audio_file=hit_objects.audio_file,
             audio_lead_in=hit_objects.audio_lead_in,
@@ -129,14 +151,12 @@ class Beatmap:
             samples_match_playback_rate=hit_objects.samples_match_playback_rate,
             countdown=hit_objects.countdown,
             countdown_offset=hit_objects.countdown_offset,
-
             # Editor
             bookmarks=editor.bookmarks,
             distance_spacing=editor.distance_spacing,
             beat_divisor=editor.beat_divisor,
             grid_size=editor.grid_size,
             timeline_zoom=editor.timeline_zoom,
-
             # Metadata
             title=metadata.title,
             title_unicode=metadata.title_unicode,
@@ -148,7 +168,6 @@ class Beatmap:
             tags=metadata.tags,
             beatmap_id=metadata.beatmap_id,
             beatmap_set_id=metadata.beatmap_set_id,
-
             # Difficulty
             hp_drain_rate=hit_objects.hp_drain_rate,
             circle_size=hit_objects.circle_size,
@@ -156,18 +175,14 @@ class Beatmap:
             approach_rate=hit_objects.approach_rate,
             slider_multiplier=hit_objects.slider_multiplier,
             slider_tick_rate=hit_objects.slider_tick_rate,
-
             # Events
             background_file=hit_objects.background_file,
             breaks=hit_objects.breaks,
-
             # TimingPoints
             control_points=hit_objects.control_points,
-
             # Colors
             custom_combo_colors=colors.custom_combo_colors,
             custom_colors=colors.custom_colors,
-
             # HitObjects
             hit_objects=hit_objects.hit_objects,
         )
@@ -195,7 +210,7 @@ class Beatmap:
         return beatmap
 
     @classmethod
-    def from_hit_objects(cls, hit_objects: 'HitObjects') -> 'Beatmap':
+    def from_hit_objects(cls, hit_objects: "HitObjects") -> "Beatmap":
         beatmap = cls()
 
         # Mapeamos os campos do container para o objeto real
@@ -299,7 +314,7 @@ class Beatmap:
         pass
 
     def encode_to_path(self, path: str) -> None:
-        with open(path, 'w', enconding='utf-8') as file:
+        with open(path, "w", enconding="utf-8") as file:
             self.encode(file)
 
     def encode_to_string(self) -> str:
@@ -362,7 +377,9 @@ class Beatmap:
         if self.mode == (GameMode.Mania):
             writer.write(f"{GeneralKey.SpecialStyle}: {int(self.special_style)}\n")
 
-        writer.write(f"{GeneralKey.WidescreenStoryboard}: {int(self.widescreen_storyboard)}\n")
+        writer.write(
+            f"{GeneralKey.WidescreenStoryboard}: {int(self.widescreen_storyboard)}\n"
+        )
 
         if self.sample_match_playback_rate:
             writer.write(f"{GeneralKey.SamplesMatchPlaybackRate}: 1\n")
@@ -406,14 +423,15 @@ class Beatmap:
         writer.write("[Events]\n")
 
         if self.background_file:
-            writer.write(f"{int(EventType.Break)},0,\"{self.background_file}\",0,0\n")
+            writer.write(f'{int(EventType.Break)},0,"{self.background_file}",0,0\n')
 
         for b in self.breaks:
             writer.write(f"{int(EventType.Break)},{b.start_time},{b.end_time}\n")
 
     def _encode_timing_points(self, writer: TextIO) -> None:
-
-        def output_control_point_at(writer: TextIO, props: ControlPointProperties, is_timing: bool) -> None:
+        def output_control_point_at(
+            writer: TextIO, props: ControlPointProperties, is_timing: bool
+        ) -> None:
             timing_change = "1" if is_timing else "0"
             writer.write(
                 f"{props.timing_signature},{int(props.sample_bank)},"
@@ -424,13 +442,18 @@ class Beatmap:
         control_points = copy.deepcopy(self.control_points)
         collect_samples(self, control_points)
 
-        groups = [ControlPointGroup.from_timing(tp) for tp in control_points.timing_points]
+        groups = [
+            ControlPointGroup.from_timing(tp) for tp in control_points.timing_points
+        ]
         groups.sort(key=lambda a: a.time)
 
         times = []
-        for point in control_points.difficulty_points: times.append(point.time)
-        for point in control_points.effect_points: times.append(point.time)
-        for point in control_points.sample_points: times.append(point.time)
+        for point in control_points.difficulty_points:
+            times.append(point.time)
+        for point in control_points.effect_points:
+            times.append(point.time)
+        for point in control_points.sample_points:
+            times.append(point.time)
 
         for time in times:
             group_times = [g.time for g in groups]
@@ -443,10 +466,7 @@ class Beatmap:
 
         for group in groups:
             props = ControlPointProperties.new(
-                group.time,
-                control_points,
-                last_props,
-                group.timing is not None
+                group.time, control_points, last_props, group.timing is not None
             )
 
             if group.timing is not None:
@@ -464,10 +484,14 @@ class Beatmap:
         writer.write("[Colours]\n")
 
         for i, color in enumerate(self.custom_combo_colors, start=1):
-            writer.write(f"Combo{i}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n")
+            writer.write(
+                f"Combo{i}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n"
+            )
 
         for custom in self.custom_colors:
-            writer.write(f"{custom.name}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n")
+            writer.write(
+                f"{custom.name}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n"
+            )
 
     def _encode_hit_objects(self, writer: TextIO) -> None:
         writer.write("[HitObjects]\n")
@@ -503,6 +527,7 @@ class Beatmap:
             get_sample_bank(writer, hit_object.samples, False, self.mode)
             writer.write("\n")
 
+
 class ParseBeatmapError(Exception):
     def __init__(self, kind: str, source: Exception):
         self.kind = kind
@@ -537,6 +562,7 @@ class ParseBeatmapError(Exception):
     def from_metadata(cls, err: "ParseMetadataError") -> "ParseBeatmapError":
         return cls("Metadata", err)
 
+
 @dataclass
 class BeatmapState:
     version: int
@@ -563,7 +589,6 @@ class BeatmapState:
 
         return Beatmap(
             format_version=self.version,
-
             # General
             audio_file=hit_objects.audio_file,
             audio_lead_in=hit_objects.audio_lead_in,
@@ -579,14 +604,12 @@ class BeatmapState:
             samples_match_playback_rate=hit_objects.samples_match_playback_rate,
             countdown=hit_objects.countdown,
             countdown_offset=hit_objects.countdown_offset,
-
             # Editor
             bookmarks=editor.bookmarks,
             distance_spacing=editor.distance_spacing,
             beat_divisor=editor.beat_divisor,
             grid_size=editor.grid_size,
             timeline_zoom=editor.timeline_zoom,
-
             # Metadata
             title=metadata.title,
             title_unicode=metadata.title_unicode,
@@ -598,7 +621,6 @@ class BeatmapState:
             tags=metadata.tags,
             beatmap_id=metadata.beatmap_id,
             beatmap_set_id=metadata.beatmap_set_id,
-
             # Difficulty
             hp_drain_rate=hit_objects.hp_drain_rate,
             circle_size=hit_objects.circle_size,
@@ -606,18 +628,14 @@ class BeatmapState:
             approach_rate=hit_objects.approach_rate,
             slider_multiplier=hit_objects.slider_multiplier,
             slider_tick_rate=hit_objects.slider_tick_rate,
-
             # Events
             background_file=hit_objects.background_file,
             breaks=hit_objects.breaks,
-
             # TimingPoints
             control_points=hit_objects.control_points,
-
             # Colors
             custom_combo_colors=colors.custom_combo_colors,
             custom_colors=colors.custom_colors,
-
             # HitObjects
             hit_objects=hit_objects.hit_objects,
         )

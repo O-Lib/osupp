@@ -8,6 +8,7 @@ from section.hit_objects.hit_samples import SampleBank
 from utils import KeyValue, StrExtra
 from beatmap import Beatmap
 
+
 class ParseGeneralError(Exception):
     def __init__(self, kind: str, source: Exception):
         self.kind = kind
@@ -39,6 +40,7 @@ class ParseGeneralError(Exception):
     @classmethod
     def from_sample_bank(cls, err: Exception) -> "ParseGeneralError":
         return cls("SampleBank", err)
+
 
 @dataclass
 class General:
@@ -76,7 +78,7 @@ class General:
             epilepsy_warning=self.epilepsy_warning,
             samples_match_playback_rate=self.samples_match_playback_rate,
             countdown=self.countdown,
-            countdown_offset=self.countdown_offset
+            countdown_offset=self.countdown_offset,
         )
 
     @classmethod
@@ -88,7 +90,7 @@ class General:
 
     @classmethod
     def parse_general(cls, state: "GeneralState", line: str) -> None:
-        clean_line = line.split('//')[0].strip()
+        clean_line = line.split("//")[0].strip()
 
         kv = KeyValue.parse(clean_line, str)
         if kv is None:
@@ -198,7 +200,9 @@ class General:
     def parse_mania(cls, state: "GeneralState", line: str) -> None:
         pass
 
+
 GeneralState = General
+
 
 class GeneralKey(Enum):
     AudioFilename = "AudioFilename"

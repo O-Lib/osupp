@@ -5,7 +5,6 @@ from osupp.Beatmap import Beatmap
 from osupp.Beatmap.section.general import GameMode
 from osupp.Beatmap.section.hit_objects import (
     HitObject,
-    HitObjectKind,
     HitObjectSlider,
     PathControlPoint,
     PathType,
@@ -14,20 +13,21 @@ from osupp.Beatmap.section.hit_objects import (
 )
 from osupp.Beatmap.utils.pos import Pos
 
+
 class TestEncode(unittest.TestCase):
     def test_stability(self):
         resources_dir = Path("./resources")
         if not resources_dir.exists():
             # If running from a different directory, try to find it
             resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
-            
+
         if not resources_dir.exists():
-             self.skipTest("Resources directory not found")
+            self.skipTest("Resources directory not found")
 
         for entry in resources_dir.iterdir():
             if not entry.is_file():
                 continue
-                
+
             filename = entry.name
             if not (filename.endswith(".osu") or filename.endswith(".osb")):
                 continue
@@ -39,7 +39,7 @@ class TestEncode(unittest.TestCase):
 
             try:
                 # Assuming encode() will be implemented in Beatmap class
-                encoded_data = decoded.encode() 
+                encoded_data = decoded.encode()
                 if isinstance(encoded_data, str):
                     encoded_bytes = encoded_data.encode("utf-8")
                 else:
@@ -69,14 +69,14 @@ class TestEncode(unittest.TestCase):
             )
 
             self.assertEqual(
-                decoded.custom_colors, 
+                decoded.custom_colors,
                 decoded_after_encode.custom_colors,
-                f"{filename!r}"
+                f"{filename!r}",
             )
             self.assertEqual(
-                decoded.custom_combo_colors, 
+                decoded.custom_combo_colors,
                 decoded_after_encode.custom_combo_colors,
-                f"{filename!r}"
+                f"{filename!r}",
             )
 
     def test_bspline_curve_type(self):
@@ -125,7 +125,7 @@ class TestEncode(unittest.TestCase):
             encoded_bytes = encoded_data.encode("utf-8")
         else:
             encoded_bytes = encoded_data
-            
+
         decoded_after_encode = Beatmap.from_bytes(encoded_bytes)
 
         expected = map_obj.hit_objects[0].kind
@@ -198,11 +198,12 @@ class TestEncode(unittest.TestCase):
                 self.fail(
                     f"[{idx}] filename: {filename!r}\nleft:\n{a!r}\nright:\n{b!r}"
                 )
-        
+
         if len(expected) != len(actual):
-             self.fail(
+            self.fail(
                 f"Length mismatch filename: {filename!r}\nleft len: {len(expected)}\nright len: {len(actual)}"
             )
+
 
 if __name__ == "__main__":
     unittest.main()

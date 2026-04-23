@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from section.timing_points import ControlPoints
 
+
 @dataclass
 class EffectPoint:
     time: float
@@ -17,18 +18,12 @@ class EffectPoint:
     @classmethod
     def default(cls) -> "EffectPoint":
         return cls(
-            time=0.0,
-            kiai=cls.DEFAULT_KIAI,
-            scroll_speed=cls.DEFAULT_SCROLL_SPEED
+            time=0.0, kiai=cls.DEFAULT_KIAI, scroll_speed=cls.DEFAULT_SCROLL_SPEED
         )
 
     @classmethod
     def new(cls, time: float, kiai: bool) -> "EffectPoint":
-        return cls(
-            time=time,
-            kiai=kiai,
-            scroll_speed=cls.DEFAULT_SCROLL_SPEED
-        )
+        return cls(time=time, kiai=kiai, scroll_speed=cls.DEFAULT_SCROLL_SPEED)
 
     def check_already_existing(self, control_points: "ControlPoints") -> bool:
         existing = control_points.effect_points_at(self.time)
@@ -49,8 +44,8 @@ class EffectPoint:
 
     def is_redundant(self, existing: "EffectPoint") -> bool:
         return (
-            self.kiai == existing.kiai and
-            abs(self.scroll_speed - existing.scroll_speed) < 1e-9
+            self.kiai == existing.kiai
+            and abs(self.scroll_speed - existing.scroll_speed) < 1e-9
         )
 
     def __lt__(self, other: "EffectPoint") -> bool:

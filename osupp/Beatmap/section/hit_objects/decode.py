@@ -5,16 +5,36 @@ from typing import List, Optional
 from section.difficulty import Difficulty, DifficultyState, ParseDifficultyError
 from section.events import BreakPeriod, Events, EventsState, ParseEventsError
 from section.general import CountdownType, GameMode
-from .slider import PathType, SliderPath, CurveBuffers, HitObjectSlider, PathControlPoint
+from .slider import (
+    PathType,
+    SliderPath,
+    CurveBuffers,
+    HitObjectSlider,
+    PathControlPoint,
+)
 from .mod import BASE_SCORING_DIST, HitObject, HitObjectType, ParseHitObjectTypeError
 from .circle import HitObjectCircle
 from .hold import HitObjectHold
 from .spinner import HitObjectSpinner
-from section.timing_points import ControlPoints, DifficultyPoint, ParseTimingPointsError, TimingPoint, TimingPoints, TimingPointsState
+from section.timing_points import (
+    ControlPoints,
+    DifficultyPoint,
+    ParseTimingPointsError,
+    TimingPoint,
+    TimingPoints,
+    TimingPointsState,
+)
 from utils import Pos, ParseNumberError
-from .hit_samples import HitSoundType, ParseHitSoundTypeError, ParseSampleBankInfoError, SampleBank, SampleBankInfo
+from .hit_samples import (
+    HitSoundType,
+    ParseHitSoundTypeError,
+    ParseSampleBankInfoError,
+    SampleBank,
+    SampleBankInfo,
+)
 
 MAX_COORDINATE_VALUE = 131072
+
 
 @dataclass
 class HitObjects:
@@ -25,13 +45,13 @@ class HitObjects:
     default_sample_bank: SampleBank = SampleBank.NORMAL
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
-    mode: 'GameMode' = None  # Placeholder para o Enum de GameMode
+    mode: "GameMode" = None  # Placeholder para o Enum de GameMode
     letterbox_in_breaks: bool = False
     special_style: bool = False
     widescreen_storyboard: bool = False
     epilepsy_warning: bool = False
     samples_match_playback_rate: bool = False
-    countdown: 'CountdownType' = None  # Placeholder
+    countdown: "CountdownType" = None  # Placeholder
     countdown_offset: int = 0
 
     # Difficulty
@@ -44,65 +64,65 @@ class HitObjects:
 
     # Events
     background_file: str = ""
-    breaks: List['BreakPeriod'] = field(default_factory=list)
+    breaks: List["BreakPeriod"] = field(default_factory=list)
 
     # TimingPoints
-    control_points: 'ControlPoints' = field(default_factory=lambda: ControlPoints())
+    control_points: "ControlPoints" = field(default_factory=lambda: ControlPoints())
 
     # HitObjects específicos
-    hit_objects: List['HitObject'] = field(default_factory=list)
+    hit_objects: List["HitObject"] = field(default_factory=list)
 
     @classmethod
     def default(cls) -> "HitObjects":
         return cls()
 
     @classmethod
-    def parse_general(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_general(cls, state: "HitObjectsState", line: str) -> None:
         try:
             TimingPoints.parse_general(state.timing_points, line)
         except Exception as e:
             raise ParseHitObjectsError.timing_points(e)
 
     @classmethod
-    def parse_editor(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_editor(cls, state: "HitObjectsState", line: str) -> None:
         pass
 
     @classmethod
-    def parse_metadata(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_metadata(cls, state: "HitObjectsState", line: str) -> None:
         pass
 
     @classmethod
-    def parse_difficulty(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_difficulty(cls, state: "HitObjectsState", line: str) -> None:
         try:
             Difficulty.parse_difficulty(state.difficulty, line)
         except Exception as e:
             raise ParseHitObjectsError.difficulty(e)
 
     @classmethod
-    def parse_events(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_events(cls, state: "HitObjectsState", line: str) -> None:
         try:
             Events.parse_events(state.events, line)
         except Exception as e:
             ParseHitObjectsError.events(e)
 
     @classmethod
-    def parse_timing_points(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_timing_points(cls, state: "HitObjectsState", line: str) -> None:
         try:
             TimingPoints.parse_timing_points(state.timing_points, line)
         except Exception as e:
             raise ParseHitObjectsError.timing_points(e)
 
     @classmethod
-    def parse_colors(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_colors(cls, state: "HitObjectsState", line: str) -> None:
         pass
 
     @classmethod
-    def parse_hit_objects(cls, state: 'HitObjectsState', line: str) -> None:
-        line = line.split('//')[0].strip()
+    def parse_hit_objects(cls, state: "HitObjectsState", line: str) -> None:
+        line = line.split("//")[0].strip()
         if not line:
             return
 
-        parts = line.split(',')
+        parts = line.split(",")
         if len(parts) < 5:
             raise ParseHitObjectsError.invalid_line()
 
@@ -111,7 +131,7 @@ class HitObjects:
             y = float(parts[1])
             pos = Pos(
                 float(int(max(-MAX_COORDINATE_VALUE, min(x, MAX_COORDINATE_VALUE)))),
-                float(int(max(-MAX_COORDINATE_VALUE, min(y, MAX_COORDINATE_VALUE))))
+                float(int(max(-MAX_COORDINATE_VALUE, min(y, MAX_COORDINATE_VALUE)))),
             )
 
             start_time_raw = float(parts[2])
@@ -135,12 +155,14 @@ class HitObjects:
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
-                bank_info.read_custom_sample_banks(parts[5].split(':'), is_slider=False)
+                bank_info.read_custom_sample_banks(parts[5].split(":"), is_slider=False)
 
             kind = HitObjectCircle(
                 pos=pos,
-                new_combo=state.first_object or state.last_object_was_spinner() or new_combo,
-                combo_offset=combo_offset if new_combo else 0
+                new_combo=state.first_object
+                or state.last_object_was_spinner()
+                or new_combo,
+                combo_offset=combo_offset if new_combo else 0,
             )
 
         elif hit_object_type.has_flag(HitObjectType.SLIDER):
@@ -166,25 +188,30 @@ class HitObjects:
             next_9 = parts[9] if len(parts) > 9 else None
 
             if len(parts) > 10:
-                bank_info.read_custom_sample_banks(parts[10].split(':'), is_slider=True)
+                bank_info.read_custom_sample_banks(parts[10].split(":"), is_slider=True)
 
             nodes = repeat_count + 2
             node_bank_infos = [bank_info.copy() for _ in range(nodes)]
 
             if next_9 and next_9.strip():
-                for i, (b_info, s_set) in enumerate(zip(node_bank_infos, next_9.split('|'))):
-                    b_info.read_custom_sample_banks(s_set.split(':'), is_slider=False)
+                for i, (b_info, s_set) in enumerate(
+                    zip(node_bank_infos, next_9.split("|"))
+                ):
+                    b_info.read_custom_sample_banks(s_set.split(":"), is_slider=False)
 
             node_sounds_types = [sound_type for _ in range(nodes)]
             if next_8 and next_8.strip():
-                for i, s_val in enumerate(next_8.split('|')):
-                    if i< nodes:
+                for i, s_val in enumerate(next_8.split("|")):
+                    if i < nodes:
                         try:
                             node_sounds_types[i] = HitSoundType(int(s_val))
                         except ValueError:
                             node_sounds_types[i] = HitSoundType.NONE
 
-            node_samples = [bi.convert_sound_type(st) for bi, st in zip(node_bank_infos, node_sounds_types)]
+            node_samples = [
+                bi.convert_sound_type(st)
+                for bi, st in zip(node_bank_infos, node_sounds_types)
+            ]
 
             state.convert_path_str(points_str, pos)
             control_points = list(state.curve_points)
@@ -192,12 +219,14 @@ class HitObjects:
 
             kind = HitObjectSlider(
                 pos=pos,
-                new_combo=state.first_object or state.last_object_was_spinner() or new_combo,
+                new_combo=state.first_object
+                or state.last_object_was_spinner()
+                or new_combo,
                 combo_offset=combo_offset if new_combo else 0,
                 path=SliderPath(state.timing_points.mode, control_points, length),
                 node_samples=node_samples,
                 repeat_count=repeat_count,
-                velocity=1.0
+                velocity=1.0,
             )
 
         elif hit_object_type.has_flag(HitObjectType.SPINNER):
@@ -208,18 +237,16 @@ class HitObjects:
                 raise ParseHitObjectsError.invalid_line()
 
             if len(parts) > 6:
-                bank_info.read_custom_sample_banks(parts[6].split(':'), is_slider=False)
+                bank_info.read_custom_sample_banks(parts[6].split(":"), is_slider=False)
 
             kind = HitObjectSpinner(
-                pos=Pos(256.0, 192.0),
-                duration=duration,
-                new_combo=new_combo
+                pos=Pos(256.0, 192.0), duration=duration, new_combo=new_combo
             )
 
         elif hit_object_type.has_flag(HitObjectType.HOLD):
             end_time = max(start_time, start_time_raw)
             if len(parts) > 5 and parts[5]:
-                ss = parts[5].split(':')
+                ss = parts[5].split(":")
                 try:
                     end_time = max(start_time, float(ss[0]))
                     if len(ss) > 1:
@@ -227,10 +254,7 @@ class HitObjects:
                 except ValueError:
                     raise ParseHitObjectsError.invalid_line()
 
-            kind = HitObjectHold(
-                pos_x=pos,
-                duration=end_time - start_time
-            )
+            kind = HitObjectHold(pos_x=pos, duration=end_time - start_time)
 
         else:
             raise ParseHitObjectsError.unknown_hit_object_type(hit_object_type)
@@ -238,23 +262,24 @@ class HitObjects:
         result = HitObject(
             start_time=start_time,
             kind=kind,
-            samples=bank_info.convert_sound_type(sound_type)
+            samples=bank_info.convert_sound_type(sound_type),
         )
 
         state.last_object = hit_object_type
         state.hit_objects.append(result)
 
     @classmethod
-    def parse_variables(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_variables(cls, state: "HitObjectsState", line: str) -> None:
         pass
 
     @classmethod
-    def parse_catch_the_beat(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_catch_the_beat(cls, state: "HitObjectsState", line: str) -> None:
         pass
 
     @classmethod
-    def parse_mania(cls, state: 'HitObjectsState', line: str) -> None:
+    def parse_mania(cls, state: "HitObjectsState", line: str) -> None:
         pass
+
 
 class ParseHitObjectsError(Exception):
     def __init__(self, message: str, source: Exception = None):
@@ -298,17 +323,20 @@ class ParseHitObjectsError(Exception):
         return cls("failed to parse timing points", err)
 
     @classmethod
-    def unknown_hit_object_type(cls, obj_type: 'HitObjectType'):
+    def unknown_hit_object_type(cls, obj_type: "HitObjectType"):
         return cls(f"unknown hit object type: {obj_type}")
+
 
 @dataclass
 class HitObjectsState:
     last_object: Optional[HitObjectType] = None
     curve_points: List[PathControlPoint] = field(default_factory=list)
     vertices: List[PathControlPoint] = field(default_factory=list)
-    events: 'EventsState' = field(default_factory=lambda: EventsState())
-    timing_points: 'TimingPointsState' = field(default_factory=lambda: TimingPointsState())
-    difficulty: 'DifficultyState' = field(default_factory=lambda: DifficultyState())
+    events: "EventsState" = field(default_factory=lambda: EventsState())
+    timing_points: "TimingPointsState" = field(
+        default_factory=lambda: TimingPointsState()
+    )
+    difficulty: "DifficultyState" = field(default_factory=lambda: DifficultyState())
     hit_objects: List[HitObject] = field(default_factory=list)
     point_split: List[str] = field(default_factory=list)
 
@@ -322,7 +350,7 @@ class HitObjectsState:
         return self.last_object.has_flag(HitObjectType.SPINNER)
 
     def convert_path_str(self, point_str: str, offset: Pos) -> None:
-        points_split = point_str.split('|')
+        points_split = point_str.split("|")
 
         start_idx = 0
         end_idx = 0
@@ -333,12 +361,18 @@ class HitObjectsState:
             if end_idx >= len(points_split):
                 break
 
-            is_letter = points_split[end_idx][0].isalpha() if points_split[end_idx] else False
+            is_letter = (
+                points_split[end_idx][0].isalpha() if points_split[end_idx] else False
+            )
             if not is_letter:
                 continue
 
-            end_point = points_split[end_idx + 1] if (end_idx + 1) < len(points_split) else None
-            self.convert_points(points_split[start_idx:end_idx], end_point, first, offset)
+            end_point = (
+                points_split[end_idx + 1] if (end_idx + 1) < len(points_split) else None
+            )
+            self.convert_points(
+                points_split[start_idx:end_idx], end_point, first, offset
+            )
 
             start_idx = end_idx
             first = False
@@ -346,7 +380,9 @@ class HitObjectsState:
         if end_idx > start_idx:
             self.convert_points(points_split[start_idx:end_idx], None, first, offset)
 
-    def convert_points(self, points: List[str], end_point: Optional[str], first: bool, offset: Pos) -> None:
+    def convert_points(
+        self, points: List[str], end_point: Optional[str], first: bool, offset: Pos
+    ) -> None:
         if not points:
             raise ParseHitObjectsError.invalid_line()
 
@@ -364,7 +400,9 @@ class HitObjectsState:
 
         if path_type == PathType.perfect_curve:
             if len(self.vertices) == 3:
-                if self._is_linear(self.vertices[0].pos, self.vertices[1].pos, self.vertices[2].pos):
+                if self._is_linear(
+                    self.vertices[0].pos, self.vertices[1].pos, self.vertices[2].pos
+                ):
                     path_type = PathType.linear
             else:
                 path_type = PathType.bezier
@@ -376,7 +414,7 @@ class HitObjectsState:
 
     def _read_point(self, value: str, start_pos: Pos) -> PathControlPoint:
         try:
-            parts = value.split(':')
+            parts = value.split(":")
 
             x = float(parts[0])
             y = float(parts[1])
@@ -418,7 +456,10 @@ class HitObjectsState:
         force_new_combo = False
 
         for h in hit_objects:
-            while curr_break < len(events.breaks) and events.breaks[curr_break].end_time < h.start_time:
+            while (
+                curr_break < len(events.breaks)
+                and events.breaks[curr_break].end_time < h.start_time
+            ):
                 force_new_combo = True
                 curr_break += 1
 
@@ -436,13 +477,12 @@ class HitObjectsState:
             events=EventsState.create(version),
             timing_points=TimingPointsState.create(version),
             difficulty=DifficultyState.create(version),
-            hit_objects=[]
+            hit_objects=[],
         )
 
+
 def get_precision_adjusted_beat_len(
-        slider_velocity: float,
-        beat_len: float,
-        mode: GameMode
+    slider_velocity: float, beat_len: float, mode: GameMode
 ) -> float:
     slider_velocity_as_beat_len = -100.0 / slider_velocity
     if slider_velocity_as_beat_len < 0.0:
@@ -459,6 +499,7 @@ def get_precision_adjusted_beat_len(
         bpm_multiplier = 1.0
 
     return beat_len * bpm_multiplier
+
 
 def finalize_hit_objects(state: HitObjectsState) -> HitObjects:
     CONTROL_POINT_LENIENCY = 5.0
@@ -482,14 +523,15 @@ def finalize_hit_objects(state: HitObjectsState) -> HitObjects:
             beat_len = tp.beat_len if tp else TimingPoint.DEFAULT_BEAT_LEN
 
             dp = timing_points.control_points.difficulty_point_at(h.start_time)
-            slider_velocity = dp.slider_velocity if dp else DifficultyPoint.DEFAULT_SLIDER_VELOCITY
+            slider_velocity = (
+                dp.slider_velocity if dp else DifficultyPoint.DEFAULT_SLIDER_VELOCITY
+            )
 
             slider.velocity = (
-                BASE_SCORING_DIST * difficulty.slider_multiplier /
-                get_precision_adjusted_beat_len(
-                    slider_velocity,
-                    beat_len,
-                    timing_points.mode
+                BASE_SCORING_DIST
+                * difficulty.slider_multiplier
+                / get_precision_adjusted_beat_len(
+                    slider_velocity, beat_len, timing_points.mode
                 )
             )
 
@@ -506,7 +548,9 @@ def finalize_hit_objects(state: HitObjectsState) -> HitObjects:
 
         end_time = h.end_time_with_bufs(bufs)
 
-        sample_point = timing_points.control_points.sample_point_at(end_time + CONTROL_POINT_LENIENCY)
+        sample_point = timing_points.control_points.sample_point_at(
+            end_time + CONTROL_POINT_LENIENCY
+        )
 
         for sample in h.samples:
             if sample_point:
@@ -536,5 +580,5 @@ def finalize_hit_objects(state: HitObjectsState) -> HitObjects:
         background_file=events.background_file,
         breaks=events.breaks,
         control_points=timing_points.control_points,
-        hit_objects=hit_objects
+        hit_objects=hit_objects,
     )

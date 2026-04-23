@@ -14,6 +14,7 @@ BEZIER_TOLERANCE = 0.25
 CATMULL_DETAIL = 50
 CIRCULAR_ARC_TOLERANCE = 0.1
 
+
 @dataclass
 class BezierBuffers:
     left: List[Pos] = field(default_factory=list)
@@ -40,6 +41,7 @@ class BezierBuffers:
             self.midpoints.append(Pos())
             self.left_child.append(Pos())
 
+
 @dataclass
 class CurveBuffers:
     path: List[Pos] = field(default_factory=list)
@@ -53,6 +55,7 @@ class CurveBuffers:
         self.vertices.clear()
         self.bezier.clear()
 
+
 @dataclass
 class CircularArcProperties:
     theta_start: float
@@ -60,6 +63,7 @@ class CircularArcProperties:
     direction: float
     radius: float
     centre: Pos
+
 
 @dataclass
 class Curve:
@@ -69,13 +73,12 @@ class Curve:
 
     @classmethod
     def new(
-            cls,
-            mode: 'GameMode',
-            points: List['PathControlPoint'],
-            expected_len: Optional[float],
-            bufs: 'CurveBuffers'
+        cls,
+        mode: "GameMode",
+        points: List["PathControlPoint"],
+        expected_len: Optional[float],
+        bufs: "CurveBuffers",
     ) -> "Curve":
-
         optimized_len = [0.0]
         calculate_path(mode, points, bufs, optimized_len)
         calculate_length(bufs, expected_len, optimized_len[0])
@@ -111,8 +114,9 @@ class Curve:
     def interpolate_vertices(self, i: int, d: float) -> Pos:
         return interpolate_vertices(self._path, self._lengths, i, d)
 
-    def as_borrowed_curve(self) -> 'BorrowedCurve':
+    def as_borrowed_curve(self) -> "BorrowedCurve":
         return BorrowedCurve(self._path, self._lengths)
+
 
 @dataclass
 class BorrowedCurve:
@@ -121,13 +125,12 @@ class BorrowedCurve:
 
     @classmethod
     def new(
-            cls,
-            mode: 'GameMode',
-            points: List["PathControlPoint"],
-            expected_len: Optional[float],
-            bufs: 'CurveBuffers',
+        cls,
+        mode: "GameMode",
+        points: List["PathControlPoint"],
+        expected_len: Optional[float],
+        bufs: "CurveBuffers",
     ) -> "BorrowedCurve":
-
         optimized_len = 0.0
         calculate_path(mode, points, bufs, optimized_len)
         calculate_length(bufs, expected_len, optimized_len[0])
@@ -157,8 +160,9 @@ class BorrowedCurve:
     def interpolate_vertices(self, i: int, d: float) -> Pos:
         return interpolate_vertices(self._path, self._lengths, i, d)
 
-    def to_owned_curve(self) -> 'Curve':
+    def to_owned_curve(self) -> "Curve":
         return Curve(list(self._path), list(self._lengths))
+
 
 def position_at(path: List[Pos], lengths: List[float], progress: float) -> Pos:
     d = progress_at_dist(lengths, progress)
@@ -166,17 +170,23 @@ def position_at(path: List[Pos], lengths: List[float], progress: float) -> Pos:
 
     return interpolate_vertices(path, lengths, i, d)
 
+
 def progress_to_dist(lengths: List[float], progress: float) -> float:
     clamped_progress = max(0.0, min(1.0, progress))
     return clamped_progress * dist(lengths)
 
+
 def dist(lengths: List[float]) -> float:
     return lengths[-1] if lengths else 0.0
+
 
 def idx_of_dist(lengths: List[float], d: float) -> int:
     return bisect.bisect_left(lengths, d)
 
-def interpolate_vertices(path: List[Pos], lengths: List[float], i: int, d: float) -> Pos:
+
+def interpolate_vertices(
+    path: List[Pos], lengths: List[float], i: int, d: float
+) -> Pos:
     if not path:
         return Pos()
 
@@ -199,11 +209,12 @@ def interpolate_vertices(path: List[Pos], lengths: List[float], i: int, d: float
 
     return p0 + (p1 - p0) * float(w)
 
+
 def calculate_path(
-        mode: 'GameMode',
-        points: List['PathControlPoint'],
-        bufs: 'CurveBuffers',
-        optimized_len_ref: List[float],
+    mode: "GameMode",
+    points: List["PathControlPoint"],
+    bufs: "CurveBuffers",
+    optimized_len_ref: List[float],
 ):
     if not points:
         return
@@ -246,7 +257,7 @@ def calculate_path(
                 segment_vertices,
                 segment_kind,
                 optimized_len_ref,
-                bezier_bufs
+                bezier_bufs,
             )
 
             if path_len_before > 0 and len(path) > path_len_before:
@@ -255,7 +266,10 @@ def calculate_path(
 
             start = i
 
-def calculate_length(bufs: 'CurveBuffers', expected_len: Optional[float], optimized_len: float):
+
+def calculate_length(
+    bufs: "CurveBuffers", expected_len: Optional[float], optimized_len: float
+):
     path = bufs.path
     cumulative_len = bufs.lengths
 
@@ -266,7 +280,7 @@ def calculate_length(bufs: 'CurveBuffers', expected_len: Optional[float], optimi
 
     for i in range(len(path) - 1):
         curr_pos = path[i]
-        next_pos = path[i+1]
+        next_pos = path[i + 1]
 
         diff = next_pos - curr_pos
         calculated_len += float(diff.length())
@@ -292,7 +306,7 @@ def calculate_length(bufs: 'CurveBuffers', expected_len: Optional[float], optimi
 
         if last_valid < len(cumulative_len):
             cumulative_len = cumulative_len[:last_valid]
-            del path[last_valid + 1:]
+            del path[last_valid + 1 :]
             bufs.lengths = cumulative_len
 
             if not cumulative_len:
@@ -312,20 +326,23 @@ def calculate_length(bufs: 'CurveBuffers', expected_len: Optional[float], optimi
 
         cumulative_len.append(expected_len)
 
+
 def calculate_subpath(
-        mode: 'GameMode',
-        path: List[Pos],
-        sub_points: List[Pos],
-        path_type: SplineType,
-        optimized_len_ref: List[float],
-        bufs: 'BezierBuffers',
+    mode: "GameMode",
+    path: List[Pos],
+    sub_points: List[Pos],
+    path_type: SplineType,
+    optimized_len_ref: List[float],
+    bufs: "BezierBuffers",
 ):
     if path_type == SplineType.Linear:
         approximate_linear(path, sub_points)
 
     elif path_type == SplineType.PerfectCurve:
         if len(sub_points) == 3:
-            if approximate_circular_arc(path, sub_points[0], sub_points[1], sub_points[2]):
+            if approximate_circular_arc(
+                path, sub_points[0], sub_points[1], sub_points[2]
+            ):
                 return
 
         approximate_bezier(path, sub_points, bufs)
@@ -354,12 +371,13 @@ def calculate_subpath(
             dist_from_start = float(last_start.distance(curr))
             len_removed_since_start += float(sub_path[i - 1].distance(curr))
 
-            if (dist_from_start > 6.0 or
-            ((i + 1) % CATMULL_SEGMENT_LEN) == 0 or
-            i == len(sub_path) -1):
-
+            if (
+                dist_from_start > 6.0
+                or ((i + 1) % CATMULL_SEGMENT_LEN) == 0
+                or i == len(sub_path) - 1
+            ):
                 path.append(curr)
-                optimized_len_ref[0] += (len_removed_since_start - dist_from_start)
+                optimized_len_ref[0] += len_removed_since_start - dist_from_start
 
                 last_start = None
                 len_removed_since_start = 0.0
@@ -367,9 +385,11 @@ def calculate_subpath(
     elif path_type == SplineType.BSpline:
         approximate_bezier(path, sub_points, bufs)
 
-def approximate_bezier(path: List[Pos], points: List[Pos], bufs: 'BezierBuffers'):
+
+def approximate_bezier(path: List[Pos], points: List[Pos], bufs: "BezierBuffers"):
     bufs.extend_exact(len(points))
     approximate_bspline(path, points, bufs)
+
 
 def approximate_catmull(path: List[Pos], points: List[Pos]):
     if len(points) <= 1:
@@ -390,8 +410,10 @@ def approximate_catmull(path: List[Pos], points: List[Pos]):
 
         catmull_subpath(path, v1, v2, v3, v4)
 
+
 def approximate_linear(path: List[Pos], points: List[Pos]):
     path.extend(points)
+
 
 def approximate_circular_arc(path: List[Pos], a: Pos, b: Pos, c: Pos) -> bool:
     pr = circular_arc_properties(a, b, c)
@@ -428,7 +450,8 @@ def approximate_circular_arc(path: List[Pos], a: Pos, b: Pos, c: Pos) -> bool:
 
     return True
 
-def approximate_bspline(path: List[Pos], points: List[Pos], bufs: 'BezierBuffers'):
+
+def approximate_bspline(path: List[Pos], points: List[Pos], bufs: "BezierBuffers"):
     p = len(points)
     if p == 0:
         return
@@ -465,6 +488,7 @@ def approximate_bspline(path: List[Pos], points: List[Pos], bufs: 'BezierBuffers
 
     path.append(points[p - 1])
 
+
 def bezier_is_flat_enough(point: List[Pos]) -> bool:
     limit = BEZIER_TOLERANCE * BEZIER_TOLERANCE * 4.0
 
@@ -478,6 +502,7 @@ def bezier_is_flat_enough(point: List[Pos]) -> bool:
             return False
 
     return True
+
 
 def bezier_subdivide(points: List[Pos], l: List[Pos], midpoints: List[Pos]):
     count = len(points)
@@ -495,12 +520,9 @@ def bezier_subdivide(points: List[Pos], l: List[Pos], midpoints: List[Pos]):
     l[count - 1] = midpoints[0]
     r[0] = midpoints[0]
 
+
 def bezier_approximate(
-        points: List[Pos],
-        path: List[Pos],
-        l: List[Pos],
-        r: List[Pos],
-        midpoints: List[Pos]
+    points: List[Pos], path: List[Pos], l: List[Pos], r: List[Pos], midpoints: List[Pos]
 ):
     count = len(points)
     if count == 0:
@@ -510,13 +532,14 @@ def bezier_approximate(
     path.append(points[0])
     combined = l[:count] + r[1:count]
 
-    for i in range(1, len(combined) -2, 2):
+    for i in range(1, len(combined) - 2, 2):
         prev = combined[i]
         curr = combined[i + 1]
         next_p = combined[i + 2]
 
         smoothed_pos = (prev + curr * 2.0 + next_p) * 0.25
         path.append(smoothed_pos)
+
 
 def catmull_subpath(path: List[Pos], v1: Pos, v2: Pos, v3: Pos, v4: Pos):
     x1 = 2.0 * v2.x
@@ -540,7 +563,7 @@ def catmull_subpath(path: List[Pos], v1: Pos, v2: Pos, v3: Pos, v4: Pos):
 
         pos1 = Pos(
             x=0.5 * (x1 + x2 * t1 + x3 * t2 + x4 * t3),
-            y=0.5 * (y1 + y2 * t1 + y3 * t2 + y4 * t3)
+            y=0.5 * (y1 + y2 * t1 + y3 * t2 + y4 * t3),
         )
 
         t1 = (c_f + 1.0) / detail_f
@@ -549,10 +572,11 @@ def catmull_subpath(path: List[Pos], v1: Pos, v2: Pos, v3: Pos, v4: Pos):
 
         pos2 = Pos(
             x=0.5 * (x1 + x2 * t1 + x3 * t2 + x4 * t3),
-            y=0.5 * (y1 + y2 * t1 + y3 * t2 + y4 * t3)
+            y=0.5 * (y1 + y2 * t1 + y3 * t2 + y4 * t3),
         )
         path.append(pos1)
         path.append(pos2)
+
 
 def circular_arc_properties(a: Pos, b: Pos, c: Pos) -> Optional[CircularArcProperties]:
     if abs((b.y - a.y) * (c.x - a.x) - (b.x - a.x) * (c.y - a.y)) <= 1.1920929e-07:
@@ -566,7 +590,7 @@ def circular_arc_properties(a: Pos, b: Pos, c: Pos) -> Optional[CircularArcPrope
 
     centre = Pos(
         x=(a_sq * (b.y - c.y) + b_sq * (c.y - a.y) + c_sq * (a.y - b.y)) / d,
-        y=(a_sq * (c.x - b.x) + b_sq * (a.x - c.x) + c_sq * (b.x - a.x)) / d
+        y=(a_sq * (c.x - b.x) + b_sq * (a.x - c.x) + c_sq * (b.x - a.x)) / d,
     )
 
     d_a = a - centre
@@ -594,5 +618,5 @@ def circular_arc_properties(a: Pos, b: Pos, c: Pos) -> Optional[CircularArcPrope
         theta_range=theta_range,
         direction=direction,
         radius=radius,
-        centre=centre
+        centre=centre,
     )

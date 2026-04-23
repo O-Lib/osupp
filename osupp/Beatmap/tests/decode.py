@@ -2,32 +2,27 @@ import unittest
 from pathlib import Path
 
 from osupp.Beatmap import Beatmap
-from osupp.Beatmap.section.colors import Color, Colors
+from osupp.Beatmap.section.colors import Color
+
 # from osupp.Beatmap.section.difficulty import Difficulty
-from osupp.Beatmap.section.editor import Editor
-from osupp.Beatmap.section.events import BreakPeriod # , Events
-from osupp.Beatmap.section.general import CountdownType, GameMode, General
+from osupp.Beatmap.section.events import BreakPeriod  # , Events
+from osupp.Beatmap.section.general import CountdownType, GameMode
 from osupp.Beatmap.section.hit_objects import (
-    HitObject,
-    HitObjectKind,
-    HitObjects,
     HitObjectCircle,
     HitObjectSlider,
     SplineType,
 )
 from osupp.Beatmap.section.hit_objects.hit_samples import HitSampleInfo, SampleBank
-from osupp.Beatmap.section.hit_objects.slider import CurveBuffers, PathType
-from osupp.Beatmap.section.metadata import Metadata
+from osupp.Beatmap.section.hit_objects.slider import CurveBuffers
 from osupp.Beatmap.section.timing_points import (
-    ControlPoints,
     DifficultyPoint,
     EffectPoint,
     SamplePoint,
     TimeSignature,
     TimingPoint,
-    TimingPoints,
 )
 from osupp.Beatmap.utils.pos import Pos
+
 
 def get_renatus_path():
     resources_dir = Path("./resources")
@@ -35,15 +30,16 @@ def get_renatus_path():
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
     return resources_dir / "Soleily - Renatus (Gamu) [Insane].osu"
 
+
 class TestDecode(unittest.TestCase):
     def test_format_version(self):
         resources_dir = Path("./resources")
         if not resources_dir.exists():
             resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
-            
+
         path = resources_dir / "beatmap-version-4.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
 
@@ -54,7 +50,7 @@ class TestDecode(unittest.TestCase):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
 
@@ -74,13 +70,33 @@ class TestDecode(unittest.TestCase):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
 
         expected_bookmarks = [
-            11505, 22054, 32604, 43153, 53703, 64252, 74802, 85351, 95901, 106450, 116999, 119637,
-            130186, 140735, 151285, 161834, 164471, 175020, 185570, 196119, 206669, 209306,
+            11505,
+            22054,
+            32604,
+            43153,
+            53703,
+            64252,
+            74802,
+            85351,
+            95901,
+            106450,
+            116999,
+            119637,
+            130186,
+            140735,
+            151285,
+            161834,
+            164471,
+            175020,
+            185570,
+            196119,
+            206669,
+            209306,
         ]
 
         self.assertEqual(map_obj.bookmarks, expected_bookmarks)
@@ -93,7 +109,7 @@ class TestDecode(unittest.TestCase):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
 
@@ -112,7 +128,7 @@ class TestDecode(unittest.TestCase):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
 
@@ -127,7 +143,7 @@ class TestDecode(unittest.TestCase):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
 
@@ -144,7 +160,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "video-with-lowercase-extension.osb"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.background_file, "BG.jpg")
@@ -153,7 +169,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "video-with-uppercase-extension.osb"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.background_file, "BG.jpg")
@@ -162,7 +178,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "image-specified-as-video.osb"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.background_file, "BG.jpg")
@@ -171,7 +187,7 @@ class TestDecode(unittest.TestCase):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
         control_points = map_obj.control_points
@@ -246,7 +262,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "overlapping-control-points.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         control_points = map_obj.control_points
@@ -300,7 +316,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "omit-barline-control-points.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         control_points = map_obj.control_points
@@ -310,7 +326,9 @@ class TestDecode(unittest.TestCase):
 
         def omit_first_bar_line_at(time):
             p = control_points.timing_point_at(time)
-            return p.omit_first_bar_line if p else TimingPoint.DEFAULT_OMIT_FIRST_BAR_LINE
+            return (
+                p.omit_first_bar_line if p else TimingPoint.DEFAULT_OMIT_FIRST_BAR_LINE
+            )
 
         self.assertEqual(omit_first_bar_line_at(500.0), False)
         self.assertEqual(omit_first_bar_line_at(1500.0), True)
@@ -323,7 +341,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "timingpoint-speedmultiplier-reset.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         control_points = map_obj.control_points
@@ -339,7 +357,7 @@ class TestDecode(unittest.TestCase):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
 
@@ -359,7 +377,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "mania-last-object-not-latest.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -368,26 +386,28 @@ class TestDecode(unittest.TestCase):
 
         self.assertEqual(last_object.start_time, 2494.0)
         self.assertEqual(last_object.end_time(), 2494.0)
-        
+
         max_end_time = 0.0
         for h in hit_objects:
             max_end_time = max(max_end_time, h.end_time())
-            
+
         self.assertEqual(max_end_time, 2582.0)
 
     def test_hit_objects(self):
         path = get_renatus_path()
         if not path.exists():
             self.skipTest(f"File {path} not found")
-            
+
         content = path.read_text(encoding="utf-8")
         map_obj = Beatmap.from_str(content)
         hit_objects = map_obj.hit_objects
 
         # Test 0: Slider
         self.assertEqual(hit_objects[0].start_time, 956.0)
-        
-        has_normal = any(sample.name == HitSampleInfo.HIT_NORMAL for sample in hit_objects[0].samples)
+
+        has_normal = any(
+            sample.name == HitSampleInfo.HIT_NORMAL for sample in hit_objects[0].samples
+        )
         self.assertTrue(has_normal)
 
         slider = hit_objects[0].kind
@@ -397,7 +417,9 @@ class TestDecode(unittest.TestCase):
         # Test 1: Circle
         self.assertEqual(hit_objects[1].start_time, 1285.0)
 
-        has_clap = any(sample.name == HitSampleInfo.HIT_CLAP for sample in hit_objects[1].samples)
+        has_clap = any(
+            sample.name == HitSampleInfo.HIT_CLAP for sample in hit_objects[1].samples
+        )
         self.assertTrue(has_clap)
 
         circle = hit_objects[1].kind
@@ -408,7 +430,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "controlpoint-difficulty-multiplier.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         control_points = map_obj.control_points
@@ -426,7 +448,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "controlpoint-custom-samplebank.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -444,7 +466,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "hitobject-custom-samplebank.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -460,7 +482,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "hitobject-file-samples.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -478,7 +500,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "slider-samples.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -520,21 +542,18 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "hitobject-no-addition-bank.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
-        
-        self.assertEqual(
-            hit_objects[0].samples[0].bank,
-            hit_objects[0].samples[1].bank
-        )
+
+        self.assertEqual(hit_objects[0].samples[0].bank, hit_objects[0].samples[1].bank)
 
     def test_invalid_event_pass(self):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "invalid-events.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         # Just ensuring it doesn't raise an exception during decoding
         Beatmap.from_path(path)
@@ -543,7 +562,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "invalid-bank.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -569,7 +588,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "corrupted-header.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.title, "Beatmap with corrupted header")
@@ -579,7 +598,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "missing-header.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.title, "Beatmap with no header")
@@ -589,7 +608,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "empty-lines-at-start.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.title, "Empty lines at start")
@@ -599,7 +618,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "empty-line-instead-of-header.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.title, "The dog ate the file header")
@@ -609,7 +628,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "no-empty-line-after-header.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.title, "No empty line delimiting header from contents")
@@ -622,7 +641,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "multi-segment-slider.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -754,7 +773,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "duplicate-last-position-slider.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -772,7 +791,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "undefined-approach-rate.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.approach_rate, 1.0)
@@ -782,7 +801,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "approach-rate-before-overall-difficulty.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.approach_rate, 9.0)
@@ -792,7 +811,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "approach-rate-after-overall-difficulty.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         self.assertEqual(map_obj.approach_rate, 9.0)
@@ -817,7 +836,9 @@ class TestDecode(unittest.TestCase):
 
         # Filtrar os pontos que têm path_type definido
         # Criamos uma nova lista com os pontos filtrados
-        filtered_control_points = [point for point in control_points if point.path_type is not None]
+        filtered_control_points = [
+            point for point in control_points if point.path_type is not None
+        ]
 
         self.assertEqual(len(filtered_control_points), 1)
         self.assertEqual(filtered_control_points[0].path_type.kind, SplineType.Catmull)
@@ -846,7 +867,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "nan-control-points.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         control_points = map_obj.control_points
@@ -878,7 +899,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "sample-point-leniency.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -893,7 +914,7 @@ class TestDecode(unittest.TestCase):
         resources_dir = Path(__file__).parent.parent.parent.parent / "resources"
         path = resources_dir / "break-between-objects.osu"
         if not path.exists():
-             self.skipTest(f"File {path} not found")
+            self.skipTest(f"File {path} not found")
 
         map_obj = Beatmap.from_path(path)
         hit_objects = map_obj.hit_objects
@@ -901,6 +922,7 @@ class TestDecode(unittest.TestCase):
         self.assertTrue(hit_objects[0].new_combo)
         self.assertTrue(hit_objects[1].new_combo)
         self.assertFalse(hit_objects[2].new_combo)
+
 
 if __name__ == "__main__":
     unittest.main()

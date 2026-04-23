@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from typing import Optional
 from enum import Enum
 
-from utils import KeyValue, ParseNumber, ParseNumberError, StrExtra
+from utils import KeyValue, ParseNumber
 from beatmap import Beatmap
+
 
 @dataclass
 class Difficulty:
@@ -25,7 +26,7 @@ class Difficulty:
             overall_difficulty=self.overall_difficulty,
             approach_rate=self.approach_rate,
             slider_multiplier=self.slider_multiplier,
-            slider_tick_rate=self.slider_tick_rate
+            slider_tick_rate=self.slider_tick_rate,
         )
 
     @classmethod
@@ -42,7 +43,7 @@ class Difficulty:
 
     @classmethod
     def parse_difficulty(cls, state: "DifficultyState", line: str) -> None:
-        clean_line = line.split('//')[0].strip()
+        clean_line = line.split("//")[0].strip()
 
         kv = KeyValue.parse(clean_line, str)
         if kv is None:
@@ -110,6 +111,7 @@ class Difficulty:
     def parse_mania(cls, state: "DifficultyState", line: str) -> None:
         pass
 
+
 class DifficultyKey(Enum):
     HPDrainRate = "HPDrainRate"
     CircleSize = "CircleSize"
@@ -121,6 +123,7 @@ class DifficultyKey(Enum):
     @classmethod
     def from_str(cls, key: str) -> Optional["DifficultyKey"]:
         return cls.__members__.get(key)
+
 
 class ParseDifficultyError(Exception):
     def __init__(self, kind: str, source: Exception):
@@ -138,6 +141,7 @@ class ParseDifficultyError(Exception):
     def from_number(cls, err: Exception) -> "ParseDifficultyError":
         return cls("Number", err)
 
+
 @dataclass
 class DifficultyState:
     difficulty: Difficulty
@@ -145,10 +149,7 @@ class DifficultyState:
 
     @classmethod
     def create(cls, _version: int) -> "DifficultyState":
-        return cls(
-            difficulty=Difficulty.default(),
-            has_approach_rate=False
-        )
+        return cls(difficulty=Difficulty.default(), has_approach_rate=False)
 
     def to_result(self) -> Difficulty:
         return self.difficulty

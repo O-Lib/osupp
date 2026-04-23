@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Generic, Type
+from typing import List, Optional
 import bisect
 from abc import ABC, abstractmethod
 import math
@@ -9,14 +9,14 @@ from .control_points.difficulty import DifficultyPoint
 from .control_points.sample import SamplePoint
 from .control_points.effect import EffectPoint
 
-from .effect_flags import ParseEffectFlagsError, EffectFlags
-from .control_points.timing import TimeSignature, TimeSignatureError
+from .effect_flags import EffectFlags
+from .control_points.timing import TimeSignature
 
-from section.general import CountdownType, GameMode, General, GeneralState, ParseGeneralError
-from section.hit_objects.hit_samples import ParseSampleBankError, SampleBank
+from section.general import CountdownType, GameMode, General, GeneralState
+from section.hit_objects.hit_samples import SampleBank
 
-from utils import ParseNumber, ParseNumberError, StrExtra, MAX_PARSE_VALUE
-from beatmap import Beatmap
+from utils import StrExtra, MAX_PARSE_VALUE
+
 
 @dataclass
 class ControlPoints:
@@ -52,37 +52,46 @@ class ControlPoints:
         if not point.check_already_existing(self):
             point.add_to(self)
 
+
 class ParseTimingPointsError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
 
 class EffectFlagsError(ParseTimingPointsError):
     def __init__(self, source: Exception):
         super().__init__(f"failed to parse effect flags: {source}")
 
+
 class GeneralSectionError(ParseTimingPointsError):
     def __init__(self, source: Exception):
         super().__init__(f"failed to parse general section: {source}")
+
 
 class InvalidLineError(ParseTimingPointsError):
     def __init__(self):
         super().__init__("invalid line")
 
+
 class NumberParseError(ParseTimingPointsError):
     def __init__(self, source: Exception):
         super().__init__(f"failed to parse number: {source}")
+
 
 class SampleBankParseError(ParseTimingPointsError):
     def __init__(self, source: Exception):
         super().__init__(f"failed to parse sample bank: {source}")
 
+
 class TimeSignatureParseError(ParseTimingPointsError):
     def __init__(self, source: Exception):
         super().__init__(f"time signature error: {source}")
 
+
 class TimingControlPointNaNError(ParseTimingPointsError):
     def __init__(self):
         super().__init__("beat length cannot be NaN in a timing control point")
+
 
 @dataclass
 class TimingPoints:
@@ -122,7 +131,7 @@ class TimingPoints:
             samples_match_playback_rate=general.samples_match_playback_rate,
             countdown=general.countdown,
             countdown_offset=general.countdown_offset,
-            control_points=ControlPoints.default()
+            control_points=ControlPoints.default(),
         )
 
     @classmethod
@@ -144,7 +153,7 @@ class TimingPoints:
             samples_match_playback_rate=state.general.samples_match_playback_rate,
             countdown=state.general.countdown,
             countdown_offset=state.general.countdown_offset,
-            control_points=state.control_points
+            control_points=state.control_points,
         )
 
     @staticmethod
@@ -176,7 +185,7 @@ class TimingPoints:
         if not line:
             return
 
-        parts = line.split(',')
+        parts = line.split(",")
         if len(parts) < 2:
             return
 
@@ -197,7 +206,7 @@ class TimingPoints:
 
             time_signature = TimeSignature.new_simple_quadruple()
             if len(parts) > 2 and parts[2].strip():
-                if not parts[2].startswith('0'):
+                if not parts[2].startswith("0"):
                     time_signature = TimeSignature.new(int(parts[2]))
 
             sample_set = state.general.default_sample_bank
@@ -211,26 +220,36 @@ class TimingPoints:
             if sample_set == SampleBank.NONE:
                 sample_set = SampleBank.NORMAL
 
-            custom_sample_bank = int(parts[4]) if len(parts) > 4 and parts[4].strip() else 0
+            custom_sample_bank = (
+                int(parts[4]) if len(parts) > 4 and parts[4].strip() else 0
+            )
 
             sample_volume = state.general.default_sample_volume
             if len(parts) > 5 and parts[5].strip():
                 sample_volume = int(parts[5])
 
-            timing_change = parts[6].startswith('1') if len(parts) > 6 and parts[6].strip() else True
+            timing_change = (
+                parts[6].startswith("1")
+                if len(parts) > 6 and parts[6].strip()
+                else True
+            )
 
             kiai_mode = False
             omit_first_bar_signature = False
             if len(parts) > 7 and parts[7].strip():
                 effects_flags = EffectFlags.parse(parts[7])
                 kiai_mode = effects_flags.has_flag(EffectFlags.KIAI)
-                omit_first_bar_signature = effects_flags.has_flag(EffectFlags.OMIT_FIRST_BAR_LINE)
+                omit_first_bar_signature = effects_flags.has_flag(
+                    EffectFlags.OMIT_FIRST_BAR_LINE
+                )
 
             if timing_change:
                 if math.isnan(beat_len):
                     raise TimingControlPointNaNError
 
-                timing = TimingPoint(time, beat_len, omit_first_bar_signature, time_signature)
+                timing = TimingPoint(
+                    time, beat_len, omit_first_bar_signature, time_signature
+                )
                 state.add_control_point(time, timing, timing_change)
 
             difficulty = DifficultyPoint(time, beat_len, speed_multipler)
@@ -270,6 +289,7 @@ class TimingPoints:
     def parse_mania(state: "TimingPointsState", line: str):
         pass
 
+
 class ControlPoint(ABC):
     @abstractmethod
     def check_already_existing(self, control_points: "ControlPoints") -> bool:
@@ -278,6 +298,7 @@ class ControlPoint(ABC):
     @abstractmethod
     def add_to(self, control_points: "ControlPoints") -> None:
         pass
+
 
 @dataclass
 class TimingPointsState:
@@ -300,10 +321,10 @@ class TimingPointsState:
             pending_difficulty_point=None,
             pending_effect_point=None,
             pending_sample_point=None,
-            control_points=ControlPoints.default()
+            control_points=ControlPoints.default(),
         )
 
-    def to_result(self) -> 'TimingPoints':
+    def to_result(self) -> "TimingPoints":
         return self.timing_points
 
     @property
@@ -343,7 +364,6 @@ class TimingPointsState:
         self.pending_control_points_time = time
 
     def flush_pending_points(self) -> None:
-
         if self.pending_timing_point is not None:
             self.control_points.add(self.pending_timing_point)
             self.pending_timing_point = None

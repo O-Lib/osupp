@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from .decode import ParseColorsError
 
+
 @dataclass
 class Color:
     r: int = 0
@@ -22,7 +23,7 @@ class Color:
 
     @classmethod
     def parse(cls, s: str) -> "Color":
-        parts = [p.strip() for p in s.split(',')]
+        parts = [p.strip() for p in s.split(",")]
 
         if len(parts) < 3 or len(parts) > 4:
             raise ParseColorsError.incorrect_color()
@@ -43,7 +44,7 @@ class Color:
             r=max(0, min(255, r)),
             g=max(0, min(255, g)),
             b=max(0, min(255, b)),
-            a=max(0, min(255, a))
+            a=max(0, min(255, a)),
         )
 
     @property
@@ -63,24 +64,33 @@ class Color:
         return self.a
 
     def __getitem__(self, index: int) -> int:
-        if index == 0: return self.r
-        if index == 1: return self.g
-        if index == 2: return self.b
-        if index == 3: return self.a
+        if index == 0:
+            return self.r
+        if index == 1:
+            return self.g
+        if index == 2:
+            return self.b
+        if index == 3:
+            return self.a
         raise IndexError("Color index out of range")
 
     def __setitem__(self, index: int, value: int):
         val = max(0, min(255, value))
 
-        if index == 0: self.r = val
-        elif index == 1: self.g = val
-        elif index == 2: self.b = val
-        elif index == 3: self.a = val
+        if index == 0:
+            self.r = val
+        elif index == 1:
+            self.g = val
+        elif index == 2:
+            self.b = val
+        elif index == 3:
+            self.a = val
         else:
             raise IndexError("Color index out of range")
 
     def __iter__(self):
         yield from (self.r, self.g, self.b, self.a)
+
 
 @dataclass
 class CustomColor:

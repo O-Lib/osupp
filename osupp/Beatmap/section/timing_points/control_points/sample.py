@@ -2,7 +2,11 @@ from dataclasses import dataclass
 import bisect
 from typing import TYPE_CHECKING
 
-from section.hit_objects.hit_samples import HitSampleInfo, HitSampleInfoName, SampleBank, HitSampleDefaultName
+from section.hit_objects.hit_samples import (
+    HitSampleInfo,
+    SampleBank,
+    HitSampleDefaultName,
+)
 
 if TYPE_CHECKING:
     from section.timing_points import ControlPoints
@@ -22,19 +26,25 @@ class SamplePoint:
     @classmethod
     def default(cls) -> "SamplePoint":
         return cls(
-            time= 0.0,
+            time=0.0,
             sample_bank=cls.DEFAULT_SAMPLE_BANK,
             sample_volume=cls.DEFAULT_SAMPLE_VOLUME,
-            custom_sample_bank=cls.DEFAULT_CUSTOM_SAMPLE_BANK
+            custom_sample_bank=cls.DEFAULT_CUSTOM_SAMPLE_BANK,
         )
 
     @classmethod
-    def new(cls, time: float, sample_bank: SampleBank, sample_volume: int, custom_sample_bank: int) -> "SamplePoint":
+    def new(
+        cls,
+        time: float,
+        sample_bank: SampleBank,
+        sample_volume: int,
+        custom_sample_bank: int,
+    ) -> "SamplePoint":
         return cls(
             time=time,
             sample_bank=sample_bank,
             sample_volume=max(0, min(100, sample_volume)),
-            custom_sample_bank=custom_sample_bank
+            custom_sample_bank=custom_sample_bank,
         )
 
     def check_already_existing(self, control_points: "ControlPoints") -> bool:
@@ -63,9 +73,9 @@ class SamplePoint:
 
     def is_redundant(self, existing: "SamplePoint") -> bool:
         return (
-            self.sample_bank == existing.sample_bank and
-            self.sample_volume == existing.sample_volume and
-            self.custom_sample_bank == existing.custom_sample_bank
+            self.sample_bank == existing.sample_bank
+            and self.sample_volume == existing.sample_volume
+            and self.custom_sample_bank == existing.custom_sample_bank
         )
 
     def apply(self, sample: "HitSampleInfo") -> None:
