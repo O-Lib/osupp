@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List, Union
 
 from section.difficulty import Difficulty, DifficultyState
 from section.events import BreakPeriod, Events, EventsState
@@ -152,6 +152,7 @@ class HitObjects:
             raise ParseHitObjectsError.hit_object_type(e)
 
         bank_info = SampleBankInfo()
+        kind: Union[HitObjectCircle, HitObjectCircle, HitObjectSpinner, HitObjectHold]
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
@@ -197,9 +198,9 @@ class HitObjects:
                 for i, (b_info, s_set) in enumerate(
                     zip(node_bank_infos, next_9.split("|"))
                 ):
-                    b_info.read_custom_sample_banks(s_set.split(":"), is_slider=False)
+                    b_info.read_custom_sample_banks(s_set.split(":"), False)
 
-            node_sounds_types: list[HitSoundType] = [sound_type for _ in range(nodes)]
+            node_sounds_types: List[HitSoundType] = [sound_type for _ in range(nodes)]
             if next_8 and next_8.strip():
                 for i, s_val in enumerate(next_8.split("|")):
                     if i < nodes:

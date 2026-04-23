@@ -200,7 +200,7 @@ class ParseHitSoundTypeError(Exception):
 
 @dataclass
 class SampleBankInfo:
-    filenanme: str | None = None
+    filename: str | None = None
     bank_for_normal: SampleBank | None = None
     bank_for_addition: SampleBank | None = None
     volume: int = 0
@@ -245,14 +245,14 @@ class SampleBankInfo:
             if next_val is not None:
                 self.volume = max(0, int(next_val))
 
-            self.filenanme = next(split, None) or None
+            self.filename = next(split, None) or None
         except (ValueError, StopIteration):
             pass
 
     def convert_sound_type(self, sound_type: HitSoundType) -> list[HitSampleInfo]:
         sound_types: list[HitSampleInfo] = []
 
-        if self.filenanme and self.filenanme.strip():
+        if self.filename and self.filename.strip():
             sound_types.append(
                 HitSampleInfo(
                     name=self.filename,
