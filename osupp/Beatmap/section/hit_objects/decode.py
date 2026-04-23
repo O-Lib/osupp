@@ -1,32 +1,29 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
 from typing import Any
-import copy
 
-from section.difficulty import Difficulty, DifficultyState, ParseDifficultyError
-from section.events import BreakPeriod, Events, EventsState, ParseEventsError
+from section.difficulty import Difficulty, DifficultyState
+from section.events import BreakPeriod, Events, EventsState
 from section.general import CountdownType, GameMode
 from section.timing_points import (
     ControlPoints,
     DifficultyPoint,
-    ParseTimingPointsError,
     TimingPoint,
     TimingPoints,
     TimingPointsState,
 )
-from utils import ParseNumberError, Pos
+from utils import Pos
 
 from .circle import HitObjectCircle
 from .hit_samples import (
     HitSoundType,
-    ParseHitSoundTypeError,
-    ParseSampleBankInfoError,
     SampleBank,
     SampleBankInfo,
 )
 from .hold import HitObjectHold
-from .mod import BASE_SCORING_DIST, HitObject, HitObjectType, ParseHitObjectTypeError
+from .mod import BASE_SCORING_DIST, HitObject, HitObjectType
 from .slider import (
     CurveBuffers,
     HitObjectSlider,
