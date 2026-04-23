@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 class TimeSignatureError(Exception):
     def __init__(self):
-        super().__init__("time signature numerator must be positive")
+        super().__init__("time signature numerator must be positive.")
 
 @dataclass(frozen=True)
 class TimeSignature:
