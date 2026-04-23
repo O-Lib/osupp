@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar, Any
+from typing import Any, Generic, TypeVar
 
 K = TypeVar("K")
+
 
 @dataclass
 class KeyValue(Generic[K]):

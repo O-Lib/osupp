@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
-from typing import Any, List, Union
+from typing import Any
 
 from section.difficulty import Difficulty, DifficultyState
 from section.events import BreakPeriod, Events, EventsState
