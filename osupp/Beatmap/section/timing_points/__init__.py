@@ -18,6 +18,7 @@ __all__ = [
     "DifficultyPoint",
     "EffectPoint",
     "SamplePoint",
+    "ControlPoint",
     "ControlPoints",
     "ParseTimingPointsError",
     "TimingPoints",

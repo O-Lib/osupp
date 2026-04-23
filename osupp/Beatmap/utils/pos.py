@@ -26,11 +26,11 @@ class Pos:
         return (self - other).length()
 
     def normalize(self) -> Pos:
-        l = self.length()
-        if l < 1e-7:
+        length = self.length()
+        if length < 1e-7:
             return Pos(0.0, 0.0)
 
-        scale = 1.0 / l
+        scale = 1.0 / length
         return Pos(self.x * scale, self.y * scale)
 
     def __add__(self, rhs: Pos) -> Pos:
