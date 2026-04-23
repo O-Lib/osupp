@@ -84,7 +84,7 @@ class Colors:
             if key.is_combo:
                 state.custom_combo_colors.append(color)
             else:
-                name = key.name
+                name = key.name if key.name is not None else ""
 
                 existing = next(
                     (c for c in state.custom_colors if c.name == name), None
@@ -94,7 +94,7 @@ class Colors:
                 else:
                     state.custom_colors.append(CustomColor(name=name, color=color))
         except Exception as e:
-            raise ParseColorsError.incorrect_color() from e
+            raise ParseColorsError.incorrect_color(e) from e
 
     @staticmethod
     def parse_hit_objects(state: "ColorsState", line: str):

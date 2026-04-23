@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 
 from beatmap import Beatmap
 from utils import StrExtra
@@ -7,7 +8,7 @@ from .mod import BreakPeriod, EventType
 
 
 class ParseEventsError(Exception):
-    def __init__(self, message: str, source: Exception = None):
+    def __init__(self, message: str, source: Optional[Exception] = None):
         self.source = source
         super().__init__(message)
         if source:
