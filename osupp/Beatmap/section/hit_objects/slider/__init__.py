@@ -1,5 +1,3 @@
-from typing import List
-
 from section.hit_objects.hit_samples import HitSampleInfo
 from utils import Pos
 
