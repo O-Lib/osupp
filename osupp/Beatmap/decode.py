@@ -9,6 +9,8 @@ import format_version
 from reader import Decoder
 from section import Section
 
+logger = logging.getLogger(__name__)
+
 D = TypeVar("D", bound="DecodeBeatmap")
 S = TypeVar("S", bound="DecodeState")
 
