@@ -5,6 +5,7 @@ from typing import Optional
 from beatmap import Beatmap
 from utils import KeyValue, ParseNumber
 
+
 @dataclass
 class Metadata:
     title: str = ""
