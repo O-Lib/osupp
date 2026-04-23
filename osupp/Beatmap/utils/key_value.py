@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Any
 
 K = TypeVar("K")
-
 
 @dataclass
 class KeyValue(Generic[K]):
@@ -10,7 +9,7 @@ class KeyValue(Generic[K]):
     value: str
 
     @classmethod
-    def parse(cls, s: str, key_type: type[K] = str) -> "KeyValue[K]":
+    def parse(cls, s: str, key_type: Any = str) -> "KeyValue[K]":
         parts = s.split(":", 1)
 
         if len(parts) == 1:
