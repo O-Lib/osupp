@@ -5,7 +5,6 @@ from typing import Optional
 from beatmap import Beatmap
 from utils import KeyValue, ParseNumber
 
-
 @dataclass
 class Metadata:
     title: str = ""
@@ -55,25 +54,25 @@ class Metadata:
 
         try:
             if key_enum == MetadataKey.Title:
-                state.title = value
+                state.metadata.title = value
             elif key_enum == MetadataKey.TitleUnicode:
-                state.title_unicode = value
+                state.metadata.title_unicode = value
             elif key_enum == MetadataKey.Artist:
-                state.artist = value
+                state.metadata.artist = value
             elif key_enum == MetadataKey.ArtistUnicode:
-                state.artist_unicode = value
+                state.metadata.artist_unicode = value
             elif key_enum == MetadataKey.Creator:
-                state.creator = value
+                state.metadata.creator = value
             elif key_enum == MetadataKey.Version:
-                state.version = value
+                state.metadata.version = value
             elif key_enum == MetadataKey.Source:
-                state.source = value
+                state.metadata.source = value
             elif key_enum == MetadataKey.Tags:
-                state.tags = value
+                state.metadata.tags = value
             elif key_enum == MetadataKey.BeatmapID:
-                state.beatmap_id = ParseNumber.parse(value)
+                state.metadata.beatmap_id = ParseNumber.parse(value)
             elif key_enum == MetadataKey.BeatmapSetID:
-                state.beatmap_set_id = ParseNumber.parse(value)
+                state.metadata.beatmap_set_id = ParseNumber.parse(value)
         except ValueError as e:
             raise ParseMetadataError.from_number(e)
 
