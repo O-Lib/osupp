@@ -405,7 +405,7 @@ class TestDecode(unittest.TestCase):
         # Test 0: Slider
         self.assertEqual(hit_objects[0].start_time, 956.0)
 
-        has_normal = any(
+        has_normal = Any(
             sample.name == HitSampleInfo.HIT_NORMAL for sample in hit_objects[0].samples
         )
         self.assertTrue(has_normal)
@@ -417,7 +417,7 @@ class TestDecode(unittest.TestCase):
         # Test 1: Circle
         self.assertEqual(hit_objects[1].start_time, 1285.0)
 
-        has_clap = any(
+        has_clap = Any(
             sample.name == HitSampleInfo.HIT_CLAP for sample in hit_objects[1].samples
         )
         self.assertTrue(has_clap)

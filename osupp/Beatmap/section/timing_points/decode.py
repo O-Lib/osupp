@@ -327,7 +327,7 @@ class TimingPointsState:
     def mode(self) -> GameMode:
         return self.general.mode
 
-    def pending(self, point: any) -> str:
+    def pending(self, point: Any) -> str:
         if isinstance(point, TimingPoint):
             return "pending_timing_point"
         if isinstance(point, DifficultyPoint):
@@ -339,16 +339,16 @@ class TimingPointsState:
 
         raise TypeError(f"Point Type Unknown: {type(point)}")
 
-    def push_front(self, point: any) -> None:
+    def push_front(self, point: Any) -> None:
         slot = self.pending(point)
         if getattr(self, slot) is None:
             setattr(self, slot, point)
 
-    def push_back(self, point: any) -> None:
+    def push_back(self, point: Any) -> None:
         slot = self.pending(point)
         setattr(self, slot, point)
 
-    def add_control_point(self, time: float, point: any, timing_change: bool) -> None:
+    def add_control_point(self, time: float, point: Any, timing_change: bool) -> None:
         if abs(time - self.pending_control_points_time) >= 1e-15:
             self.flush_pending_points()
 
