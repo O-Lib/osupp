@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from utils import ParseNumberError
 
 VERSION_PREFIX = "osu file format v"

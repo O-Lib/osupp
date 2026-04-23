@@ -2,7 +2,6 @@ import bisect
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 from section.general import CountdownType, GameMode, General, GeneralState
 from section.hit_objects.hit_samples import SampleBank

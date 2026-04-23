@@ -1,7 +1,7 @@
 from enum import Enum
+from typing import Union
 
 from .u16_iter import U16BeInterator, U16LeInterator
-from typing import Union
 
 
 class Encoding(Enum):
@@ -47,7 +47,7 @@ class Encoding(Enum):
 
     @staticmethod
     def _decode_utf16(
-        src_iter: Union[U16LeInterator, U16BeInterator], dst: list[str]
+        src_iter: U16LeInterator | U16BeInterator, dst: list[str]
     ) -> str:
         res_chars = []
         raw_values = list(src_iter)

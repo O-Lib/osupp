@@ -5,7 +5,7 @@ import copy
 import io
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, List, TextIO, Union
+from typing import TYPE_CHECKING, TextIO
 
 from utils import Pos
 

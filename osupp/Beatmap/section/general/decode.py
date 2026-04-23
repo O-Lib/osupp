@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from beatmap import Beatmap
 from section.hit_objects.hit_samples import SampleBank

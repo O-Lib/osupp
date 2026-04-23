@@ -1,5 +1,5 @@
 import math
-from typing import Protocol, Type, TypeVar, Union, runtime_checkable
+from typing import Protocol, TypeVar, Union, runtime_checkable
 
 MAX_PARSE_VALUE: int = 2147483647  # 2,147,483,647
 

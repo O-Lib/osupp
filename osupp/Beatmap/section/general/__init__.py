@@ -1,5 +1,5 @@
 from .decode import General, GeneralKey, GeneralState, ParseGeneralError
-from .mod import GameMode, ParseGameModeError, ParseCountdownTypeError, CountdownType
+from .mod import CountdownType, GameMode, ParseCountdownTypeError, ParseGameModeError
 
 __all__ = [
     "GameMode",

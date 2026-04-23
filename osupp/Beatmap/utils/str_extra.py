@@ -1,4 +1,4 @@
-from typing import Type, TypeVar, Union
+from typing import TypeVar
 
 from .parse_number import ParseNumber
 

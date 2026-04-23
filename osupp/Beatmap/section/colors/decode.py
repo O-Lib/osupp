@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 from beatmap import Beatmap
 from utils import KeyValue, ParseNumberError, StrExtra
