@@ -210,7 +210,7 @@ class TimingPoints:
                 try:
                     val = int(parts[3])
                     sample_set = SampleBank(val) if val > 0 else SampleBank.NORMAL
-                except:
+                except (ValueError, IndexError):
                     pass
 
             if sample_set == SampleBank.NONE:
