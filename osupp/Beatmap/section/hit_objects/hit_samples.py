@@ -1,6 +1,6 @@
-from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
+from typing import Iterable
 
 from utils import ParseNumberError
 
@@ -206,7 +206,7 @@ class SampleBankInfo:
     volume: int = 0
     custom_sample_bank: int = 0
 
-    def read_custom_sample_banks(self, split: Iterator[str], banks_only: bool = False):
+    def read_custom_sample_banks(self, split: Iterable[str], banks_only: bool = False):
         try:
             first = next(split, None)
             if not first:

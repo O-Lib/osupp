@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+import copy
 
 from section.difficulty import Difficulty, DifficultyState, ParseDifficultyError
 from section.events import BreakPeriod, Events, EventsState, ParseEventsError
@@ -157,7 +158,7 @@ class HitObjects:
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
-                bank_info.read_custom_sample_banks(parts[5].split(":"), is_slider=False)
+                bank_info.read_custom_sample_banks(parts[5].split(":"), False)
 
             kind = HitObjectCircle(
                 pos=pos,
@@ -190,10 +191,10 @@ class HitObjects:
             next_9 = parts[9] if len(parts) > 9 else None
 
             if len(parts) > 10:
-                bank_info.read_custom_sample_banks(parts[10].split(":"), is_slider=True)
+                bank_info.read_custom_sample_banks(parts[10].split(":"), True)
 
             nodes = repeat_count + 2
-            node_bank_infos = [bank_info.copy() for _ in range(nodes)]
+            node_bank_infos = [copy.deepcopy(bank_info) for _ in range(nodes)]
 
             if next_9 and next_9.strip():
                 for i, (b_info, s_set) in enumerate(
@@ -201,7 +202,7 @@ class HitObjects:
                 ):
                     b_info.read_custom_sample_banks(s_set.split(":"), is_slider=False)
 
-            node_sounds_types = [sound_type for _ in range(nodes)]
+            node_sounds_types: list[HitSoundType] = [sound_type for _ in range(nodes)]
             if next_8 and next_8.strip():
                 for i, s_val in enumerate(next_8.split("|")):
                     if i < nodes:
@@ -221,6 +222,7 @@ class HitObjects:
 
             kind = HitObjectSlider(
                 pos=pos,
+                start_time=start_time,
                 new_combo=state.first_object
                 or state.last_object_was_spinner()
                 or new_combo,
@@ -239,7 +241,7 @@ class HitObjects:
                 raise ParseHitObjectsError.invalid_line()
 
             if len(parts) > 6:
-                bank_info.read_custom_sample_banks(parts[6].split(":"), is_slider=False)
+                bank_info.read_custom_sample_banks(parts[6].split(":"), False)
 
             kind = HitObjectSpinner(
                 pos=Pos(256.0, 192.0), duration=duration, new_combo=new_combo
@@ -289,19 +291,19 @@ class ParseHitObjectsError(Exception):
         super().__init__(message)
 
     @classmethod
-    def difficulty(cls, err: ParseDifficultyError):
+    def difficulty(cls, err: Exception):
         return cls("failed to parse difficulty section", err)
 
     @classmethod
-    def events(cls, err: ParseEventsError):
+    def events(cls, err: Exception):
         return cls("failed to parse events section", err)
 
     @classmethod
-    def hit_object_type(cls, err: ParseHitObjectTypeError):
+    def hit_object_type(cls, err: Exception):
         return cls("failed to parse hit object type", err)
 
     @classmethod
-    def hit_sound_type(cls, err: ParseHitSoundTypeError):
+    def hit_sound_type(cls, err: Exception):
         return cls("failed to parse hit sound type", err)
 
     @classmethod
@@ -313,15 +315,15 @@ class ParseHitObjectsError(Exception):
         return cls(f"repeat count is way too high: {count}")
 
     @classmethod
-    def number(cls, err: ParseNumberError):
+    def number(cls, err: Exception):
         return cls("failed to parse number", err)
 
     @classmethod
-    def sample_bank_info(cls, err: ParseSampleBankInfoError):
+    def sample_bank_info(cls, err: Exception):
         return cls("invalid sample bank", err)
 
     @classmethod
-    def timing_points(cls, err: ParseTimingPointsError):
+    def timing_points(cls, err: Exception):
         return cls("failed to parse timing points", err)
 
     @classmethod
