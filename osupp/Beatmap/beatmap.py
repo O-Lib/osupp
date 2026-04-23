@@ -487,7 +487,7 @@ class Beatmap:
 
         for i, color in enumerate(self.custom_combo_colors, start=1):
             writer.write(
-                f"Combo{i}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n"
+                f"Combo{i}: {color.color.red()},{color.color.green()},{color.color.blue()},{color.color.alpha()}\n"
             )
 
         for custom in self.custom_colors:
