@@ -117,6 +117,7 @@ class Metadata:
     def parse_mania(cls, state: "MetadataState", line: str) -> None:
         pass
 
+
 class MetadataKey(Enum):
     Title = "Title"
     TitleUnicode = "TitleUnicode"
