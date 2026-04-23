@@ -37,8 +37,8 @@ class Metadata:
         return cls()
 
     @classmethod
-    def create(cls, version: int) -> "MetadataState":
-        return cls.default()
+    def create(cls, _version: int) -> "MetadataState":
+        return MetadataState(metadata=cls.default())
 
     @classmethod
     def parse_metadata(cls, state: "MetadataState", line: str) -> None:
