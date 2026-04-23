@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from .mod import BreakPeriod, EventType
-from utils import StrExtra
 from beatmap import Beatmap
+from utils import StrExtra
+
+from .mod import BreakPeriod, EventType
 
 
 class ParseEventsError(Exception):
@@ -29,7 +30,7 @@ class ParseEventsError(Exception):
 @dataclass
 class Events:
     background_file: str = ""
-    breaks: List[BreakPeriod] = field(default_factory=list)
+    breaks: list[BreakPeriod] = field(default_factory=list)
 
     @classmethod
     def default(cls) -> "Events":

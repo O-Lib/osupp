@@ -1,45 +1,47 @@
 from __future__ import annotations
+
+import bisect
+import copy
+import io
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, TYPE_CHECKING, Union, TextIO
-import io
-import copy
-import bisect
+from typing import TYPE_CHECKING, List, TextIO, Union
 
 from utils import Pos
 
 if TYPE_CHECKING:
     from section.colors import Color, Colors, ColorsState, CustomColor, ParseColorsError
-    from section.editor import Editor, EditorState, ParseEditorError, EditorKey
+    from section.editor import Editor, EditorKey, EditorState, ParseEditorError
     from section.events import BreakPeriod, EventType
     from section.general import CountdownType, GameMode, GeneralKey
     from section.hit_objects import (
-        SampleBank,
-        HitObject,
-        HitObjects,
-        HitObjectsState,
-        ParseHitObjectsError,
         CurveBuffers,
+        HitObject,
         HitObjectCircle,
-        HitObjectSlider,
-        HitObjectType,
-        HitObjectSpinner,
         HitObjectHold,
+        HitObjects,
+        HitObjectSlider,
+        HitObjectSpinner,
+        HitObjectsState,
+        HitObjectType,
+        ParseHitObjectsError,
+        SampleBank,
     )
     from section.metadata import (
         Metadata,
+        MetadataKey,
         MetadataState,
         ParseMetadataError,
-        MetadataKey,
     )
-    from section.timing_points import ControlPoints, TimingPoints, SamplePoint
+    from section.timing_points import ControlPoints, SamplePoint, TimingPoints
 from format_version import LATEST_FORMAT_VERSION
+
 from .encode import (
-    ControlPointProperties,
     ControlPointGroup,
+    ControlPointProperties,
     add_path_data,
-    get_sample_bank,
     collect_samples,
+    get_sample_bank,
 )
 
 
@@ -51,20 +53,20 @@ class Beatmap:
     audio_file: str = ""
     audio_lead_in: float = 0.0
     preview_time: int = 0
-    default_sample_bank: "SampleBank" = field(default_factory=lambda: SampleBank.NORMAL)
+    default_sample_bank: SampleBank = field(default_factory=lambda: SampleBank.NORMAL)
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
-    mode: "GameMode" = field(default_factory=lambda: GameMode.Osu)
+    mode: GameMode = field(default_factory=lambda: GameMode.Osu)
     letterbox_in_breaks: bool = False
     special_style: bool = False
     widescreen_storyboard: bool = False
     epilepsy_warning: bool = False
     samples_match_playback_rate: bool = False
-    countdown: "CountdownType" = field(default_factory=lambda: CountdownType.Normal)
+    countdown: CountdownType = field(default_factory=lambda: CountdownType.Normal)
     countdown_offset: int = 0
 
     # Editor
-    bookmarks: List[int] = field(default_factory=list)
+    bookmarks: list[int] = field(default_factory=list)
     distance_spacing: float = 1.0
     beat_divisor: int = 4
     grid_size: int = 4
@@ -92,42 +94,42 @@ class Beatmap:
 
     # Events
     background_file: str = ""
-    breaks: List[BreakPeriod] = field(default_factory=list)
+    breaks: list[BreakPeriod] = field(default_factory=list)
 
     # TimingPoints
-    control_points: "ControlPoints" = field(default_factory=lambda: ControlPoints())
+    control_points: ControlPoints = field(default_factory=lambda: ControlPoints())
 
     # Colors
-    custom_combo_colors: List["Color"] = field(default_factory=list)
-    custom_colors: List["CustomColor"] = field(default_factory=list)
+    custom_combo_colors: list[Color] = field(default_factory=list)
+    custom_colors: list[CustomColor] = field(default_factory=list)
 
     # HitObjects
-    hit_objects: List["HitObject"] = field(default_factory=list)
+    hit_objects: list[HitObject] = field(default_factory=list)
 
     @staticmethod
-    def from_path(path: Union[str, Path]) -> "Beatmap":
+    def from_path(path: str | Path) -> Beatmap:
         from decode import from_path
 
         return from_path(Beatmap, path)
 
     @staticmethod
-    def from_bytes(bytes_data: bytes) -> "Beatmap":
+    def from_bytes(bytes_data: bytes) -> Beatmap:
         from decode import from_bytes
 
         return from_bytes(Beatmap, bytes_data)
 
     @staticmethod
-    def from_str(s: str) -> "Beatmap":
+    def from_str(s: str) -> Beatmap:
         from decode import from_str
 
         return from_str(Beatmap, s)
 
     @classmethod
-    def default(cls) -> "Beatmap":
-        from section.editor import Editor
-        from section.metadata import Metadata
+    def default(cls) -> Beatmap:
         from section.colors import Colors
+        from section.editor import Editor
         from section.hit_objects.decode import HitObjects
+        from section.metadata import Metadata
 
         editor = Editor.default()
         metadata = Metadata.default()
@@ -188,7 +190,7 @@ class Beatmap:
         )
 
     @classmethod
-    def from_timing_points(cls, timing_points: "TimingPoints"):
+    def from_timing_points(cls, timing_points: TimingPoints):
         beatmap = cls.default()
 
         beatmap.audio_file = timing_points.audio_file
@@ -210,7 +212,7 @@ class Beatmap:
         return beatmap
 
     @classmethod
-    def from_hit_objects(cls, hit_objects: "HitObjects") -> "Beatmap":
+    def from_hit_objects(cls, hit_objects: HitObjects) -> Beatmap:
         beatmap = cls()
 
         # Mapeamos os campos do container para o objeto real
@@ -547,32 +549,32 @@ class ParseBeatmapError(Exception):
         return "failed to parse beatmap"
 
     @classmethod
-    def from_colors(cls, err: "ParseColorsError") -> "ParseBeatmapError":
+    def from_colors(cls, err: ParseColorsError) -> ParseBeatmapError:
         return cls("Colors", err)
 
     @classmethod
-    def from_editor(cls, err: "ParseEditorError") -> "ParseBeatmapError":
+    def from_editor(cls, err: ParseEditorError) -> ParseBeatmapError:
         return cls("Editor", err)
 
     @classmethod
-    def from_hit_objects(cls, err: "ParseHitObjectsError") -> "ParseBeatmapError":
+    def from_hit_objects(cls, err: ParseHitObjectsError) -> ParseBeatmapError:
         return cls("HitObjects", err)
 
     @classmethod
-    def from_metadata(cls, err: "ParseMetadataError") -> "ParseBeatmapError":
+    def from_metadata(cls, err: ParseMetadataError) -> ParseBeatmapError:
         return cls("Metadata", err)
 
 
 @dataclass
 class BeatmapState:
     version: int
-    editor: "EditorState"
-    metadata: "MetadataState"
-    colors: "ColorsState"
-    hit_objects: "HitObjectsState"
+    editor: EditorState
+    metadata: MetadataState
+    colors: ColorsState
+    hit_objects: HitObjectsState
 
     @classmethod
-    def create(cls, version: int) -> "BeatmapState":
+    def create(cls, version: int) -> BeatmapState:
         return cls(
             version=version,
             editor=EditorState.create(version),
@@ -581,7 +583,7 @@ class BeatmapState:
             hit_objects=HitObjectsState.create(version),
         )
 
-    def to_beatmap(self) -> "Beatmap":
+    def to_beatmap(self) -> Beatmap:
         editor = self.editor.to_result()
         metadata = self.metadata.to_result()
         colors = self.colors.to_result()

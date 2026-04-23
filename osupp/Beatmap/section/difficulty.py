@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional
 from enum import Enum
+from typing import Optional
 
-from utils import KeyValue, ParseNumber
 from beatmap import Beatmap
+from utils import KeyValue, ParseNumber
 
 
 @dataclass

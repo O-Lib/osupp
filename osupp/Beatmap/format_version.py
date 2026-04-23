@@ -1,4 +1,5 @@
-from typing import Union, Optional
+from typing import Optional, Union
+
 from utils import ParseNumberError
 
 VERSION_PREFIX = "osu file format v"
@@ -20,7 +21,7 @@ class InvalidNumberFormat(ParseVersionError):
         self.__cause__ = cause
 
 
-def try_version_from_line(line: str) -> Optional[Union[int, ParseVersionError]]:
+def try_version_from_line(line: str) -> int | ParseVersionError | None:
     if not line.startswith(VERSION_PREFIX):
         if not line:
             return None

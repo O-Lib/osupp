@@ -1,12 +1,14 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional
-from enum import Enum
 
-from .mod import GameMode, CountdownType
+from dataclasses import dataclass
+from enum import Enum
+from typing import Optional
+
+from beatmap import Beatmap
 from section.hit_objects.hit_samples import SampleBank
 from utils import KeyValue, StrExtra
-from beatmap import Beatmap
+
+from .mod import CountdownType, GameMode
 
 
 class ParseGeneralError(Exception):
@@ -26,19 +28,19 @@ class ParseGeneralError(Exception):
         return messages.get(self.kind, "failed to parse general section")
 
     @classmethod
-    def from_countdown_type(cls, err: Exception) -> "ParseGeneralError":
+    def from_countdown_type(cls, err: Exception) -> ParseGeneralError:
         return cls("CountdownType", err)
 
     @classmethod
-    def from_mode(cls, err: Exception) -> "ParseGeneralError":
+    def from_mode(cls, err: Exception) -> ParseGeneralError:
         return cls("Mode", err)
 
     @classmethod
-    def from_number(cls, err: Exception) -> "ParseGeneralError":
+    def from_number(cls, err: Exception) -> ParseGeneralError:
         return cls("Number", err)
 
     @classmethod
-    def from_sample_bank(cls, err: Exception) -> "ParseGeneralError":
+    def from_sample_bank(cls, err: Exception) -> ParseGeneralError:
         return cls("SampleBank", err)
 
 
@@ -60,10 +62,10 @@ class General:
     countdown_offset: int = 0
 
     @classmethod
-    def default(cls) -> "General":
+    def default(cls) -> General:
         return cls()
 
-    def into_beatmap(self) -> "Beatmap":
+    def into_beatmap(self) -> Beatmap:
         return Beatmap(
             audio_file=self.audio_file,
             audio_lead_in=self.audio_lead_in,
@@ -82,14 +84,14 @@ class General:
         )
 
     @classmethod
-    def create(cls, version: int) -> "GeneralState":
+    def create(cls, version: int) -> GeneralState:
         return cls.default()
 
     def to_result(self) -> GeneralState:
         return self
 
     @classmethod
-    def parse_general(cls, state: "GeneralState", line: str) -> None:
+    def parse_general(cls, state: GeneralState, line: str) -> None:
         clean_line = line.split("//")[0].strip()
 
         kv = KeyValue.parse(clean_line, str)
@@ -161,43 +163,43 @@ class General:
             raise ParseGeneralError.from_number(e)
 
     @classmethod
-    def parse_editor(cls, state: "GeneralState", line: str) -> None:
+    def parse_editor(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_metadata(cls, state: "GeneralState", line: str) -> None:
+    def parse_metadata(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_difficulty(cls, state: "GeneralState", line: str) -> None:
+    def parse_difficulty(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_events(cls, state: "GeneralState", line: str) -> None:
+    def parse_events(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_timing_points(cls, state: "GeneralState", line: str) -> None:
+    def parse_timing_points(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_colors(cls, state: "GeneralState", line: str) -> None:
+    def parse_colors(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_hit_objects(cls, state: "GeneralState", line: str) -> None:
+    def parse_hit_objects(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_variables(cls, state: "GeneralState", line: str) -> None:
+    def parse_variables(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_catch_the_beat(cls, state: "GeneralState", line: str) -> None:
+    def parse_catch_the_beat(cls, state: GeneralState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_mania(cls, state: "GeneralState", line: str) -> None:
+    def parse_mania(cls, state: GeneralState, line: str) -> None:
         pass
 
 
@@ -221,5 +223,5 @@ class GeneralKey(Enum):
     CountdownOffset = "CountdownOffset"
 
     @classmethod
-    def from_str(cls, key: str) -> Optional["GeneralKey"]:
+    def from_str(cls, key: str) -> GeneralKey | None:
         return cls.__members__.get(key)

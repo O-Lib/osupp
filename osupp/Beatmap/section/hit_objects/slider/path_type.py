@@ -14,7 +14,7 @@ class SplineType(Enum):
 
 
 class PathType:
-    def __init__(self, kind: SplineType, degree: Optional[int] = None):
+    def __init__(self, kind: SplineType, degree: int | None = None):
         self.kind = kind
         self.degree = degree
 

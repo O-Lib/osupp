@@ -1,11 +1,11 @@
-from dataclasses import dataclass
 import bisect
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from section.hit_objects.hit_samples import (
+    HitSampleDefaultName,
     HitSampleInfo,
     SampleBank,
-    HitSampleDefaultName,
 )
 
 if TYPE_CHECKING:

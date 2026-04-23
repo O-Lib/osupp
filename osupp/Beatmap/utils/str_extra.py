@@ -1,4 +1,5 @@
 from typing import Type, TypeVar, Union
+
 from .parse_number import ParseNumber
 
 N = TypeVar("N", bound=ParseNumber)
@@ -13,13 +14,13 @@ class StrExtra:
         return s[:index].rstrip()
 
     @staticmethod
-    def parse_num(s: str, number_type: Type[N]) -> Union[int, float]:
+    def parse_num(s: str, number_type: type[N]) -> int | float:
         return number_type.parse(s)
 
     @staticmethod
     def parse_with_limits(
-        s: str, number_type: Type[N], limit: Union[int, float]
-    ) -> Union[int, float]:
+        s: str, number_type: type[N], limit: int | float
+    ) -> int | float:
         return number_type.parse_with_limits(s, limit)
 
     @staticmethod

@@ -1,5 +1,5 @@
-from enum import Enum, auto
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import List
 
 
@@ -40,7 +40,7 @@ class SliderEventsIter:
         tick_dist: float,
         total_dist: float,
         span_count: int,
-        ticks_buf: List["SliderEvent"],
+        ticks_buf: list["SliderEvent"],
     ):
         self.len = min(self.MAX_LEN, total_dist)
         self.tick_dist = max(0.0, min(tick_dist, self.len))

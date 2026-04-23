@@ -1,10 +1,10 @@
 from typing import List, Union
 
 from .circle import HitObjectCircle
-from .hold import HitObjectHold
-from .spinner import HitObjectSpinner
-from .slider import HitObjectSlider, CurveBuffers
 from .hit_samples import HitSampleInfo
+from .hold import HitObjectHold
+from .slider import CurveBuffers, HitObjectSlider
+from .spinner import HitObjectSpinner
 
 BASE_SCORING_DIST: float = 100.0
 
@@ -13,7 +13,7 @@ HitObjectKind = Union[HitObjectCircle, HitObjectSlider, HitObjectSpinner, HitObj
 
 class HitObject:
     def __init__(
-        self, start_time: float, kind: HitObjectKind, samples: List[HitSampleInfo]
+        self, start_time: float, kind: HitObjectKind, samples: list[HitSampleInfo]
     ):
         self.start_time = start_time
         self.kind = kind

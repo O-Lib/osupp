@@ -1,14 +1,14 @@
 from dataclasses import dataclass
-from typing import List, Optional
 from enum import Enum
+from typing import List, Optional
 
-from utils import KeyValue, ParseNumber
 from beatmap import Beatmap
+from utils import KeyValue, ParseNumber
 
 
 @dataclass
 class Editor:
-    bookmarks: List[int]
+    bookmarks: list[int]
     distance_spacing: float
     beat_divisor: int
     grid_size: int

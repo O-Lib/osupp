@@ -1,4 +1,5 @@
 from enum import Enum
+
 from .u16_iter import U16BeInterator, U16LeInterator
 
 

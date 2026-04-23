@@ -1,14 +1,15 @@
-from utils import KeyValue, ParseNumberError, StrExtra
-from beatmap import Beatmap
-from utils.parse_number import InvalidInteger
-from .mod import Color, CustomColor
-
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from beatmap import Beatmap
+from utils import KeyValue, ParseNumberError, StrExtra
+from utils.parse_number import InvalidInteger
+
+from .mod import Color, CustomColor
+
 
 class ParseColorsError(Exception):
-    def __init__(self, message: str, source: Optional[Exception] = None):
+    def __init__(self, message: str, source: Exception | None = None):
         super().__init__(message)
         self.__cause__ = source
 
@@ -32,8 +33,8 @@ class Colors:
         ]
     )
 
-    custom_combo_colors: List[Color] = field(default_factory=list)
-    custom_colors: List[CustomColor] = field(default_factory=list)
+    custom_combo_colors: list[Color] = field(default_factory=list)
+    custom_colors: list[CustomColor] = field(default_factory=list)
 
     @classmethod
     def default(cls) -> "Colors":
@@ -117,7 +118,7 @@ ColorsState = Colors
 
 
 class ColorsKey:
-    def __init__(self, is_combo: bool, name: Optional[str] = None):
+    def __init__(self, is_combo: bool, name: str | None = None):
         self.is_combo = is_combo
         self.name = name
 

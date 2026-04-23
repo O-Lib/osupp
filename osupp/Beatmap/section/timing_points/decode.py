@@ -1,51 +1,48 @@
+import bisect
+import math
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Optional
-import bisect
-from abc import ABC, abstractmethod
-import math
-
-from .control_points.timing import TimingPoint
-from .control_points.difficulty import DifficultyPoint
-from .control_points.sample import SamplePoint
-from .control_points.effect import EffectPoint
-
-from .effect_flags import EffectFlags
-from .control_points.timing import TimeSignature
 
 from section.general import CountdownType, GameMode, General, GeneralState
 from section.hit_objects.hit_samples import SampleBank
+from utils import MAX_PARSE_VALUE, StrExtra
 
-from utils import StrExtra, MAX_PARSE_VALUE
+from .control_points.difficulty import DifficultyPoint
+from .control_points.effect import EffectPoint
+from .control_points.sample import SamplePoint
+from .control_points.timing import TimeSignature, TimingPoint
+from .effect_flags import EffectFlags
 
 
 @dataclass
 class ControlPoints:
-    timing_points: List[TimingPoint] = field(default_factory=list)
-    difficulty_points: List[DifficultyPoint] = field(default_factory=list)
-    effect_points: List[EffectPoint] = field(default_factory=list)
-    sample_points: List[SamplePoint] = field(default_factory=list)
+    timing_points: list[TimingPoint] = field(default_factory=list)
+    difficulty_points: list[DifficultyPoint] = field(default_factory=list)
+    effect_points: list[EffectPoint] = field(default_factory=list)
+    sample_points: list[SamplePoint] = field(default_factory=list)
 
     @classmethod
     def default(cls) -> "ControlPoints":
         return cls()
 
-    def find_at(self, points: List, time: float):
+    def find_at(self, points: list, time: float):
         if not points:
             return None
 
         idx = bisect.bisect_right(points, time, key=lambda p: p.time)
         return points[idx - 1] if idx > 0 else None
 
-    def difficulty_point_at(self, time: float) -> Optional[DifficultyPoint]:
+    def difficulty_point_at(self, time: float) -> DifficultyPoint | None:
         return self.find_at(self.difficulty_points, time)
 
-    def effect_point_at(self, time: float) -> Optional[EffectPoint]:
+    def effect_point_at(self, time: float) -> EffectPoint | None:
         return self.find_at(self.effect_points, time)
 
-    def sample_point_at(self, time: float) -> Optional[SamplePoint]:
+    def sample_point_at(self, time: float) -> SamplePoint | None:
         return self.find_at(self.sample_points, time)
 
-    def timing_point_at(self, time: float) -> Optional[TimingPoint]:
+    def timing_point_at(self, time: float) -> TimingPoint | None:
         return self.find_at(self.timing_points, time)
 
     def add(self, point) -> None:
@@ -305,10 +302,10 @@ class TimingPointsState:
     general: GeneralState = field(default_factory=GeneralState)
     pending_control_points_time: float = 0.0
 
-    pending_timing_point: Optional[TimingPoint] = None
-    pending_difficulty_point: Optional[DifficultyPoint] = None
-    pending_effect_point: Optional[EffectPoint] = None
-    pending_sample_point: Optional[SamplePoint] = None
+    pending_timing_point: TimingPoint | None = None
+    pending_difficulty_point: DifficultyPoint | None = None
+    pending_effect_point: EffectPoint | None = None
+    pending_sample_point: SamplePoint | None = None
 
     control_points: ControlPoints = field(default_factory=ControlPoints)
 

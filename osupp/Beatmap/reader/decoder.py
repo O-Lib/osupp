@@ -1,6 +1,7 @@
-from typing import TypeVar, Generic, BinaryIO
-from .encoding import Encoding
 import io
+from typing import BinaryIO, Generic, TypeVar
+
+from .encoding import Encoding
 
 R = TypeVar("R", bound=BinaryIO)
 

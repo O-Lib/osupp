@@ -1,8 +1,10 @@
-from utils import ParseNumberError
-
-from enum import Enum, auto, IntEnum
 from dataclasses import dataclass
-from typing import Optional, Union, List, Iterator
+from enum import Enum, IntEnum, auto
+from typing import List, Optional, Union
+
+from collections.abc import Iterator
+
+from utils import ParseNumberError
 
 
 class SampleBank(IntEnum):
@@ -86,9 +88,9 @@ class HitSampleInfo:
     HIT_FINISH = HitSampleDefaultName.FINISH
     HIT_CLAP = HitSampleDefaultName.CLAP
 
-    name: Union[HitSampleDefaultName, str]
+    name: HitSampleDefaultName | str
     bank: SampleBank
-    suffix: Optional[int]
+    suffix: int | None
     volume: int
     custom_sample_bank: int
     bank_specified: bool
@@ -96,8 +98,8 @@ class HitSampleInfo:
 
     def __init__(
         self,
-        name: Union[HitSampleDefaultName, str],
-        bank: Optional[SampleBank] = None,
+        name: HitSampleDefaultName | str,
+        bank: SampleBank | None = None,
         custom_sample_bank: int = 0,
         volume: int = 100,
     ):
@@ -178,7 +180,7 @@ class HitSoundType:
         return (self.value & flag) != 0
 
     @classmethod
-    def from_samples(cls, samples: List["HitSampleInfo"]) -> "HitSoundType":
+    def from_samples(cls, samples: list["HitSampleInfo"]) -> "HitSoundType":
         kind = cls.NONE
 
         for sample in samples:
@@ -200,9 +202,9 @@ class ParseHitSoundTypeError(Exception):
 
 @dataclass
 class SampleBankInfo:
-    filenanme: Optional[str] = None
-    bank_for_normal: Optional[SampleBank] = None
-    bank_for_addition: Optional[SampleBank] = None
+    filenanme: str | None = None
+    bank_for_normal: SampleBank | None = None
+    bank_for_addition: SampleBank | None = None
     volume: int = 0
     custom_sample_bank: int = 0
 
@@ -249,8 +251,8 @@ class SampleBankInfo:
         except (ValueError, StopIteration):
             pass
 
-    def convert_sound_type(self, sound_type: HitSoundType) -> List[HitSampleInfo]:
-        sound_types: List[HitSampleInfo] = []
+    def convert_sound_type(self, sound_type: HitSoundType) -> list[HitSampleInfo]:
+        sound_types: list[HitSampleInfo] = []
 
         if self.filenanme and self.filenanme.strip():
             sound_types.append(
@@ -309,7 +311,7 @@ class SampleBankInfo:
 
 
 class ParseSampleBankInfoError(Exception):
-    def __init__(self, message: str, source: Optional[Exception] = None):
+    def __init__(self, message: str, source: Exception | None = None):
         self.message = message
         self.source = source
         super().__init__(f"{message}" + (f" (caused by: {source})" if source else ""))

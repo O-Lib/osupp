@@ -1,11 +1,12 @@
-from utils import Pos
-from .path import PathControlPoint, SliderPath
-from section.hit_objects.hit_samples import HitSampleInfo
-from .curve import Curve, CurveBuffers, CircularArcProperties
-from .path_type import PathType, SplineType
-from .event import SliderEvent, SliderEventType, SliderEventsIter, SliderEventsIterState
-
 from typing import List
+
+from section.hit_objects.hit_samples import HitSampleInfo
+from utils import Pos
+
+from .curve import CircularArcProperties, Curve, CurveBuffers
+from .event import SliderEvent, SliderEventsIter, SliderEventsIterState, SliderEventType
+from .path import PathControlPoint, SliderPath
+from .path_type import PathType, SplineType
 
 __all__ = [
     "PathControlPoint",
@@ -32,7 +33,7 @@ class HitObjectSlider:
         new_combo: bool,
         combo_offset: int,
         path: SliderPath,
-        node_samples: List[List["HitSampleInfo"]],
+        node_samples: list[list["HitSampleInfo"]],
         repeat_count: int,
         velocity: float,
     ):

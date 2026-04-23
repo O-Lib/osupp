@@ -1,5 +1,5 @@
 import math
-from typing import Protocol, TypeVar, runtime_checkable, Type, Union
+from typing import Protocol, Type, TypeVar, Union, runtime_checkable
 
 MAX_PARSE_VALUE: int = 2147483647  # 2,147,483,647
 
@@ -12,10 +12,10 @@ V = Union[int, float]
 @runtime_checkable
 class ParseNumber(Protocol):
     @classmethod
-    def parse(cls: Type[T], s: str) -> V: ...
+    def parse(cls: type[T], s: str) -> V: ...
 
     @classmethod
-    def parse_with_limits(cls: Type[T], s: str, limit: V) -> V: ...
+    def parse_with_limits(cls: type[T], s: str, limit: V) -> V: ...
 
 
 # ------------------------------------------------------------------

@@ -1,21 +1,11 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 from section.difficulty import Difficulty, DifficultyState, ParseDifficultyError
 from section.events import BreakPeriod, Events, EventsState, ParseEventsError
 from section.general import CountdownType, GameMode
-from .slider import (
-    PathType,
-    SliderPath,
-    CurveBuffers,
-    HitObjectSlider,
-    PathControlPoint,
-)
-from .mod import BASE_SCORING_DIST, HitObject, HitObjectType, ParseHitObjectTypeError
-from .circle import HitObjectCircle
-from .hold import HitObjectHold
-from .spinner import HitObjectSpinner
 from section.timing_points import (
     ControlPoints,
     DifficultyPoint,
@@ -24,7 +14,9 @@ from section.timing_points import (
     TimingPoints,
     TimingPointsState,
 )
-from utils import Pos, ParseNumberError
+from utils import ParseNumberError, Pos
+
+from .circle import HitObjectCircle
 from .hit_samples import (
     HitSoundType,
     ParseHitSoundTypeError,
@@ -32,6 +24,16 @@ from .hit_samples import (
     SampleBank,
     SampleBankInfo,
 )
+from .hold import HitObjectHold
+from .mod import BASE_SCORING_DIST, HitObject, HitObjectType, ParseHitObjectTypeError
+from .slider import (
+    CurveBuffers,
+    HitObjectSlider,
+    PathControlPoint,
+    PathType,
+    SliderPath,
+)
+from .spinner import HitObjectSpinner
 
 MAX_COORDINATE_VALUE = 131072
 
@@ -45,13 +47,13 @@ class HitObjects:
     default_sample_bank: SampleBank = SampleBank.NORMAL
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
-    mode: "GameMode" = None  # Placeholder para o Enum de GameMode
+    mode: GameMode = None  # Placeholder para o Enum de GameMode
     letterbox_in_breaks: bool = False
     special_style: bool = False
     widescreen_storyboard: bool = False
     epilepsy_warning: bool = False
     samples_match_playback_rate: bool = False
-    countdown: "CountdownType" = None  # Placeholder
+    countdown: CountdownType = None  # Placeholder
     countdown_offset: int = 0
 
     # Difficulty
@@ -64,60 +66,60 @@ class HitObjects:
 
     # Events
     background_file: str = ""
-    breaks: List["BreakPeriod"] = field(default_factory=list)
+    breaks: list[BreakPeriod] = field(default_factory=list)
 
     # TimingPoints
-    control_points: "ControlPoints" = field(default_factory=lambda: ControlPoints())
+    control_points: ControlPoints = field(default_factory=lambda: ControlPoints())
 
     # HitObjects específicos
-    hit_objects: List["HitObject"] = field(default_factory=list)
+    hit_objects: list[HitObject] = field(default_factory=list)
 
     @classmethod
-    def default(cls) -> "HitObjects":
+    def default(cls) -> HitObjects:
         return cls()
 
     @classmethod
-    def parse_general(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_general(cls, state: HitObjectsState, line: str) -> None:
         try:
             TimingPoints.parse_general(state.timing_points, line)
         except Exception as e:
             raise ParseHitObjectsError.timing_points(e)
 
     @classmethod
-    def parse_editor(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_editor(cls, state: HitObjectsState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_metadata(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_metadata(cls, state: HitObjectsState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_difficulty(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_difficulty(cls, state: HitObjectsState, line: str) -> None:
         try:
             Difficulty.parse_difficulty(state.difficulty, line)
         except Exception as e:
             raise ParseHitObjectsError.difficulty(e)
 
     @classmethod
-    def parse_events(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_events(cls, state: HitObjectsState, line: str) -> None:
         try:
             Events.parse_events(state.events, line)
         except Exception as e:
             ParseHitObjectsError.events(e)
 
     @classmethod
-    def parse_timing_points(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_timing_points(cls, state: HitObjectsState, line: str) -> None:
         try:
             TimingPoints.parse_timing_points(state.timing_points, line)
         except Exception as e:
             raise ParseHitObjectsError.timing_points(e)
 
     @classmethod
-    def parse_colors(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_colors(cls, state: HitObjectsState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_hit_objects(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_hit_objects(cls, state: HitObjectsState, line: str) -> None:
         line = line.split("//")[0].strip()
         if not line:
             return
@@ -269,15 +271,15 @@ class HitObjects:
         state.hit_objects.append(result)
 
     @classmethod
-    def parse_variables(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_variables(cls, state: HitObjectsState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_catch_the_beat(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_catch_the_beat(cls, state: HitObjectsState, line: str) -> None:
         pass
 
     @classmethod
-    def parse_mania(cls, state: "HitObjectsState", line: str) -> None:
+    def parse_mania(cls, state: HitObjectsState, line: str) -> None:
         pass
 
 
@@ -323,22 +325,22 @@ class ParseHitObjectsError(Exception):
         return cls("failed to parse timing points", err)
 
     @classmethod
-    def unknown_hit_object_type(cls, obj_type: "HitObjectType"):
+    def unknown_hit_object_type(cls, obj_type: HitObjectType):
         return cls(f"unknown hit object type: {obj_type}")
 
 
 @dataclass
 class HitObjectsState:
-    last_object: Optional[HitObjectType] = None
-    curve_points: List[PathControlPoint] = field(default_factory=list)
-    vertices: List[PathControlPoint] = field(default_factory=list)
-    events: "EventsState" = field(default_factory=lambda: EventsState())
-    timing_points: "TimingPointsState" = field(
+    last_object: HitObjectType | None = None
+    curve_points: list[PathControlPoint] = field(default_factory=list)
+    vertices: list[PathControlPoint] = field(default_factory=list)
+    events: EventsState = field(default_factory=lambda: EventsState())
+    timing_points: TimingPointsState = field(
         default_factory=lambda: TimingPointsState()
     )
-    difficulty: "DifficultyState" = field(default_factory=lambda: DifficultyState())
-    hit_objects: List[HitObject] = field(default_factory=list)
-    point_split: List[str] = field(default_factory=list)
+    difficulty: DifficultyState = field(default_factory=lambda: DifficultyState())
+    hit_objects: list[HitObject] = field(default_factory=list)
+    point_split: list[str] = field(default_factory=list)
 
     @property
     def first_object(self) -> bool:
@@ -381,7 +383,7 @@ class HitObjectsState:
             self.convert_points(points_split[start_idx:end_idx], None, first, offset)
 
     def convert_points(
-        self, points: List[str], end_point: Optional[str], first: bool, offset: Pos
+        self, points: list[str], end_point: str | None, first: bool, offset: Pos
     ) -> None:
         if not points:
             raise ParseHitObjectsError.invalid_line()
@@ -451,7 +453,7 @@ class HitObjectsState:
             self.curve_points.extend(self.vertices[start_idx:end_idx])
 
     @staticmethod
-    def post_process_breaks(hit_objects: List[HitObject], events: Any):
+    def post_process_breaks(hit_objects: list[HitObject], events: Any):
         curr_break = 0
         force_new_combo = False
 
@@ -468,7 +470,7 @@ class HitObjectsState:
             force_new_combo = False
 
     @classmethod
-    def create(cls, version: int) -> "HitObjectsState":
+    def create(cls, version: int) -> HitObjectsState:
         return cls(
             last_object=None,
             curve_points=[],

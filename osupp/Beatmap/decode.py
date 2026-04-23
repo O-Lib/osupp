@@ -1,9 +1,9 @@
 import io
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Type, TypeVar, Union, Any, Optional, Generic, Tuple
-from abc import ABC, abstractmethod
+from typing import Any, Generic, Optional, Tuple, Type, TypeVar, Union
 
 import format_version
 from reader import Decoder
@@ -13,17 +13,17 @@ D = TypeVar("D", bound="DecodeBeatmap")
 S = TypeVar("S", bound="DecodeState")
 
 
-def from_path(target_class: Type[D], path: Union[str, Path]) -> D:
+def from_path(target_class: type[D], path: str | Path) -> D:
     with open(path, "rb") as f:
         reader = io.BufferedReader(f)
         return target_class.decode(reader)
 
 
-def from_bytes(target_class: Type[D], bytes_data: bytes) -> D:
+def from_bytes(target_class: type[D], bytes_data: bytes) -> D:
     return target_class.decode(io.BytesIO(bytes_data))
 
 
-def from_str(target_class: Type[D], s: str) -> D:
+def from_str(target_class: type[D], s: str) -> D:
     return target_class.decode(io.BytesIO(s.encode("utf-8")))
 
 
@@ -40,7 +40,7 @@ class DecodeState(ABC):
 
 class DecodeBeatmap(ABC, Generic[S]):
     Error = Exception
-    State = Type[S]
+    State = type[S]
 
     @classmethod
     def decode(cls, src: io.BufferedIOBase) -> Any:
@@ -154,7 +154,7 @@ class UseCurrentLine:
         return self.value
 
 
-def parse_version(reader: "Decoder") -> Tuple[Optional[int], UseCurrentLine]:
+def parse_version(reader: "Decoder") -> tuple[int | None, UseCurrentLine]:
     while True:
         line = reader.read_line()
 
@@ -175,7 +175,7 @@ def parse_version(reader: "Decoder") -> Tuple[Optional[int], UseCurrentLine]:
 
 def parse_first_section(
     reader: "Decoder", use_curr_line: UseCurrentLine
-) -> Optional[Section]:
+) -> Section | None:
     current_line_section = Section.try_from_line(reader.curr_line())
     if current_line_section is not None:
         return current_line_section
@@ -193,13 +193,13 @@ def parse_first_section(
 
 
 class SectionFlow:
-    def __init__(self, section: Optional[Section] = None, break_loop: bool = False):
+    def __init__(self, section: Section | None = None, break_loop: bool = False):
         self.section = section
         self.break_loop = break_loop
 
 
 def parse_section(
-    reader: Decoder, state: S, f: Any, cls: Type[DecodeBeatmap]
+    reader: Decoder, state: S, f: Any, cls: type[DecodeBeatmap]
 ) -> SectionFlow:
     while True:
         try:

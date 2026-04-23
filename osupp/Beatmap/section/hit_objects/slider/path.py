@@ -1,16 +1,17 @@
-from section.general import GameMode
-from utils import Pos
-from .curve import BorrowedCurve, Curve, CurveBuffers
-from .path_type import PathType
-
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
+
+from section.general import GameMode
+from utils import Pos
+
+from .curve import BorrowedCurve, Curve, CurveBuffers
+from .path_type import PathType
 
 
 @dataclass
 class PathControlPoint:
     pos: Pos = field(default_factory=Pos)
-    path_type: Optional[PathType] = None
+    path_type: PathType | None = None
 
     @classmethod
     def new(cls, pos: Pos) -> "PathControlPoint":
@@ -20,36 +21,36 @@ class PathControlPoint:
 @dataclass
 class SliderPath:
     mode: "GameMode"
-    control_points: List["PathControlPoint"] = field(default_factory=list)
-    expected_dist: Optional[float] = None
+    control_points: list["PathControlPoint"] = field(default_factory=list)
+    expected_dist: float | None = None
     curve: Optional["Curve"] = None
 
     @classmethod
     def new(
         cls,
         mode: "GameMode",
-        control_points: List["PathControlPoint"],
-        expected_dist: Optional[float] = None,
+        control_points: list["PathControlPoint"],
+        expected_dist: float | None = None,
     ) -> "SliderPath":
         return cls(
             mode=mode, control_points=control_points, expected_dist=expected_dist
         )
 
     @property
-    def _control_points(self) -> List[PathControlPoint]:
+    def _control_points(self) -> list[PathControlPoint]:
         return self.control_points
 
     @_control_points.setter
-    def _control_points(self, value: List[PathControlPoint]):
+    def _control_points(self, value: list[PathControlPoint]):
         self.clear_curve()
         self.control_points = value
 
     @property
-    def _expected_dist(self) -> Optional[float]:
+    def _expected_dist(self) -> float | None:
         return self.expected_dist
 
     @_expected_dist.setter
-    def _expected_dist(self, value: Optional[float]):
+    def _expected_dist(self, value: float | None):
         self.clear_curve()
         self.expected_dist = value
 
@@ -67,7 +68,7 @@ class SliderPath:
         self.curve = self.calculate_curve_with_bufs(bufs)
         return self.curve
 
-    def borrowed_curve(self, bufs: CurveBuffers) -> Union[Curve, BorrowedCurve]:
+    def borrowed_curve(self, bufs: CurveBuffers) -> Curve | BorrowedCurve:
         if self.curve is not None:
             return self.curve
 
