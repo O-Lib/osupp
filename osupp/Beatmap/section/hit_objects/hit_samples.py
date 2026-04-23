@@ -208,7 +208,7 @@ class SampleBankInfo:
     volume: int = 0
     custom_sample_bank: int = 0
 
-    def read_custom_sample_banks(self, split: Iterator[str], banks_onlys: bool = False):
+    def read_custom_sample_banks(self, split: Iterator[str], banks_only: bool = False):
         try:
             first = next(split, None)
             if not first:

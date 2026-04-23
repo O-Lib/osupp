@@ -1,7 +1,7 @@
 from .decode import General, GeneralKey, GeneralState, ParseGeneralError
-from .mod import CountdownType, GameMode, ParseCountdownTypeError, ParseGameModeError
+from .mod import GameMode, ParseGameModeError, ParseCountdownTypeError, CountdownType
 
-__all__ = {
+__all__ = [
     "GameMode",
     "ParseGameModeError",
     "ParseCountdownTypeError",
@@ -10,4 +10,4 @@ __all__ = {
     "GeneralState",
     "GeneralKey",
     "ParseGeneralError",
-}
+]

@@ -1,6 +1,7 @@
 from enum import Enum
 
 from .u16_iter import U16BeInterator, U16LeInterator
+from typing import Union
 
 
 class Encoding(Enum):
