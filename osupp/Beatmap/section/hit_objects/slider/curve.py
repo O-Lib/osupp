@@ -205,7 +205,7 @@ def interpolate_vertices(
 
 
 def position_at(path: list[Pos], lengths: list[float], progress: float) -> Pos:
-    d = progress_at_dist(lengths, progress)
+    d = progress_to_dist(lengths, progress)
     i = idx_of_dist(lengths, d)
 
     return interpolate_vertices(path, lengths, i, d)
@@ -505,7 +505,7 @@ def bezier_is_flat_enough(point: list[Pos]) -> bool:
     return True
 
 
-def bezier_subdivide(points: list[Pos], list_pos: list[Pos], midpoints: list[Pos]):
+def bezier_subdivide(points: list[Pos], list_pos: list[Pos], list_pos2: list[Pos], midpoints: list[Pos]):
     count = len(points)
 
     for i in range(count):
