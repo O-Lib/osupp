@@ -505,9 +505,7 @@ def bezier_is_flat_enough(point: list[Pos]) -> bool:
     return True
 
 
-def bezier_subdivide(
-    points: list[Pos], list_pos: list[Pos], list_pos2: list[Pos], midpoints: list[Pos]
-):
+def bezier_subdivide(points: list[Pos], list_pos: list[Pos], list_pos2: list[Pos], midpoints: list[Pos]):
     count = len(points)
 
     for i in range(count):
