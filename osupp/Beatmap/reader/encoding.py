@@ -46,7 +46,6 @@ class Encoding(Enum):
 
     @staticmethod
     def _decode_utf16(src_iter: U16LeInterator | U16BeInterator, dst: list[str]) -> str:
-        res_chars = []
         raw_values = list(src_iter)
 
         if isinstance(src_iter, U16LeInterator):
