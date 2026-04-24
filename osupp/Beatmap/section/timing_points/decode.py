@@ -8,12 +8,12 @@ from section.general import CountdownType, GameMode, General, GeneralState
 from section.hit_objects.hit_samples import SampleBank
 from utils import MAX_PARSE_VALUE, StrExtra
 
+from ..general import General
 from .control_points.difficulty import DifficultyPoint
 from .control_points.effect import EffectPoint
 from .control_points.sample import SamplePoint
 from .control_points.timing import TimeSignature, TimingPoint
 from .effect_flags import EffectFlags
-from ..general import General
 
 
 @dataclass
@@ -250,9 +250,7 @@ class TimingPoints:
                 )
                 state.add_control_point(time, timing, timing_change)
 
-            difficulty = DifficultyPoint.new(
-                time, beat_len, speed_multipler
-            )
+            difficulty = DifficultyPoint.new(time, beat_len, speed_multipler)
             state.add_control_point(time, difficulty, False)
 
             sample = SamplePoint(time, sample_set, sample_volume, custom_sample_bank)
