@@ -28,6 +28,15 @@ class SliderEvent:
 
 
 class SliderEventsIter:
+    start_time: float
+    span_duration: float
+    min_dist_from_end: float
+    tick_dist: float
+    len: float
+    span_count: int
+    ticks: list["SliderEvent"]
+    state: SliderEventsIterState
+
     MAX_LEN = 100000.0
     TAIL_LENIENCY = -36.0
 
@@ -57,30 +66,6 @@ class SliderEventsIter:
             ticks=ticks,
             state=SliderEventsIterState.Head,
         )
-
-    def __init__(
-        self,
-        start_time: float,
-        span_duration: float,
-        velocity: float,
-        tick_dist: float,
-        total_dist: float,
-        span_count: int,
-        ticks_buf: list["SliderEvent"],
-    ):
-        self.len = min(self.MAX_LEN, total_dist)
-        self.tick_dist = max(0.0, min(tick_dist, self.len))
-        self.ticks = ticks_buf
-        self.ticks.clear()
-
-        self.start_time = start_time
-        self.span_duration = span_duration
-        self.span_count = span_count
-        self.min_dist_from_end = velocity * 10.0
-        self.state = SliderEventsIterState.Head
-
-        self.current_span = 0
-        self.current_tick = 0
 
     def __next__(self) -> SliderEvent:
         while True:
