@@ -7,7 +7,7 @@ from typing import Any
 from section.hit_objects.hit_samples import SampleBank
 from utils import MAX_PARSE_VALUE, StrExtra
 
-from ..general import General, CountdownType, GameMode, GeneralState
+from ..general import CountdownType, GameMode, General, GeneralState
 from .control_points.difficulty import DifficultyPoint
 from .control_points.effect import EffectPoint
 from .control_points.sample import SamplePoint
