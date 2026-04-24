@@ -18,7 +18,7 @@ S = TypeVar("S", bound="DecodeState")
 def from_path(target_class: type[D], path: str | Path) -> D:
     with open(path, "rb") as f:
         reader = io.BufferedReader(f)
-        return target_class.decode(reader)
+        return target_class.decode(f)
 
 
 def from_bytes(target_class: type[D], bytes_data: bytes) -> D:
@@ -42,17 +42,17 @@ class DecodeState(ABC):
 
 class DecodeBeatmap(ABC, Generic[S]):
     Error = Exception
-    State = type[S]
+    State = Any = None
 
     @classmethod
-    def decode(cls, src: io.BufferedIOBase) -> Any:
-        reader = Decoder.new(src)
-        version, use_curr_line = parse_version(reader)
+    def decode(cls, src: io.BufferedIOBase) -> D:
+        reader = Decoder(src)
+        version, use_curr_line = parse_version(reader.read_line())
 
         actual_version = (
             version if version is not None else format_version.LATEST_FORMAT_VERSION
         )
-        state = cls.State.create(actual_version)
+        state = cls.State.create(version)
 
         section = parse_first_section(reader, use_curr_line)
         if section is None:
@@ -75,7 +75,7 @@ class DecodeBeatmap(ABC, Generic[S]):
             parse_fn = parse_map.get(section)
 
             try:
-                flow = parse_section(cls, reader, state, parse_fn)
+                flow = parse_section(reader, state, parse_fn, cls)
 
                 if flow.section is not None:
                     section = flow.section
