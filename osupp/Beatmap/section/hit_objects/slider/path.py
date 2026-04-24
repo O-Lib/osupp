@@ -58,7 +58,7 @@ class SliderPath:
         if self.curve is not None:
             return self.curve
 
-        self.curve = self.calculate_curve()
+        self.curve = self.calculate_curve_with_bufs(CurveBuffers())
         return self.curve
 
     def get_curve_with_bufs(self, bufs: CurveBuffers) -> Curve:
@@ -72,13 +72,23 @@ class SliderPath:
         if self.curve is not None:
             return self.curve
 
-        return BorrowedCurve(self.mode, self.control_points, self.expected_dist, bufs)
+        return BorrowedCurve.new(
+            mode=self.mode,
+            points=self.control_points,
+            expected_len=self.expected_dist,
+            bufs=bufs
+        )
 
     def clear_curve(self) -> Curve:
         return self.calculate_curve_with_bufs(CurveBuffers())
 
     def calculate_curve_with_bufs(self, bufs: CurveBuffers) -> Curve:
-        return Curve(self.mode, self.control_points, self.expected_dist, bufs)
+        return Curve.new(
+            mode=self.mode,
+            points=self.control_points,
+            expected_len=self.expected_dist,
+            bufs=bufs
+        )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SliderPath):

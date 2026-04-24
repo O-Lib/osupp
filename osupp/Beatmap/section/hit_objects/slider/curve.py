@@ -132,7 +132,7 @@ class BorrowedCurve:
         expected_len: float | None,
         bufs: "CurveBuffers",
     ) -> "BorrowedCurve":
-        optimized_len = 0.0
+        optimized_len = [0.0]
         calculate_path(mode, points, bufs, optimized_len)
         calculate_length(bufs, expected_len, optimized_len[0])
 
@@ -247,8 +247,9 @@ def calculate_path(
 
         else:
             segment_kind = SplineType.Linear
-            if points[start].path_type is not None:
-                segment_kind = points[start].path_type.kind
+            pt = points[start].path_type
+            if pt is not None:
+                segment_kind = pt.kind
 
             path_len_before = len(path)
 
