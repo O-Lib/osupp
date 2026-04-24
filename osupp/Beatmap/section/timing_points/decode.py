@@ -249,22 +249,29 @@ class TimingPoints:
                 )
                 state.add_control_point(time, timing, timing_change)
 
-            difficulty = DifficultyPoint(time, beat_len, speed_multipler)
-            state.add_control_point(time, difficulty, timing_change)
+            state.add_control_point(
+                time,
+                DifficultyPoint(time=time, beat_len=beat_len, speed_multipler=speed_multipler),
+                False
+            )
 
             sample = SamplePoint(time, sample_set, sample_volume, custom_sample_bank)
             state.add_control_point(time, sample, timing_change)
 
-            effect = EffectPoint(time, kiai_mode)
+            effect = EffectPoint(time=time, kiai_mode=kiai_mode, scroll_speed=1.0)
             if state.mode in (GameMode.Taiko, GameMode.Mania):
                 effect.scroll_speed = max(0.01, min(10.0, speed_multipler))
 
-            state.add_control_point(time, effect, timing_change)
+            state.add_control_point(
+                time,
+                effect,
+                False
+            )
 
             state.pending_control_points_time = time
 
         except (ValueError, IndexError) as e:
-            raise ParseTimingPointsError(e)
+            raise ParseTimingPointsError(str(e), e)
 
     @staticmethod
     def parse_colors(state: "TimingPointsState", line: str):
@@ -322,7 +329,7 @@ class TimingPointsState:
         )
 
     def to_result(self) -> "TimingPoints":
-        return self.timing_points
+        return self.control_points.timing_points
 
     @property
     def mode(self) -> GameMode:
