@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 from .circle import HitObjectCircle
 from .hit_samples import HitSampleInfo

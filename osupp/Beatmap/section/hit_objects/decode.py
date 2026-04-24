@@ -45,13 +45,13 @@ class HitObjects:
     default_sample_bank: SampleBank = SampleBank.NORMAL
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
-    mode: Optional[GameMode] = None
+    mode: GameMode | None = None
     letterbox_in_breaks: bool = False
     special_style: bool = False
     widescreen_storyboard: bool = False
     epilepsy_warning: bool = False
     samples_match_playback_rate: bool = False
-    countdown: Optional[CountdownType] = None
+    countdown: CountdownType | None = None
     countdown_offset: int = 0
 
     # Difficulty
@@ -200,7 +200,9 @@ class HitObjects:
                 ):
                     b_info.read_custom_sample_banks(s_set.split(":"), False)
 
-            node_sounds_types: list[HitSoundType] = [HitSoundType(sound_type.value) for _ in range(nodes)]
+            node_sounds_types: list[HitSoundType] = [
+                HitSoundType(sound_type.value) for _ in range(nodes)
+            ]
             if next_8 and next_8.strip():
                 for i, s_val in enumerate(next_8.split("|")):
                     if i < nodes:
@@ -284,7 +286,7 @@ class HitObjects:
 
 
 class ParseHitObjectsError(Exception):
-    def __init__(self, message: str, source: Optional[Exception] = None):
+    def __init__(self, message: str, source: Exception | None = None):
         self.source = source
         super().__init__(message)
 
@@ -331,7 +333,7 @@ class ParseHitObjectsError(Exception):
 
 @dataclass
 class HitObjectsState:
-    last_object: Optional[HitObjectType] = None
+    last_object: HitObjectType | None = None
     curve_points: list[PathControlPoint] = field(default_factory=list)
     vertices: list[PathControlPoint] = field(default_factory=list)
     events: EventsState = field(default_factory=lambda: EventsState())
@@ -383,7 +385,7 @@ class HitObjectsState:
             self.convert_points(points_split[start_idx:end_idx], None, first, offset)
 
     def convert_points(
-        self, points: list[str], end_point: Optional[str], first: bool, offset: Pos
+        self, points: list[str], end_point: str | None, first: bool, offset: Pos
     ) -> None:
         if not points:
             raise ParseHitObjectsError.invalid_line()
