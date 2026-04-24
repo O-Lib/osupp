@@ -1,4 +1,5 @@
-from typing import Union, Optional
+from typing import Optional, Union
+
 from .circle import HitObjectCircle
 from .hit_samples import HitSampleInfo
 from .hold import HitObjectHold
@@ -7,6 +8,7 @@ from .spinner import HitObjectSpinner
 
 BASE_SCORING_DIST: float = 100.0
 HitObjectKind = Union[HitObjectCircle, HitObjectSlider, HitObjectSpinner, HitObjectHold]
+
 
 class HitObject:
     def __init__(
@@ -22,7 +24,7 @@ class HitObject:
             return self.kind.new_combo
         return False
 
-    def end_time(self, bufs: Optional[CurveBuffers] = None) -> float:
+    def end_time(self, bufs: CurveBuffers | None = None) -> float:
         if bufs is None:
             bufs = CurveBuffers()
         return self.end_time_with_bufs(bufs)
