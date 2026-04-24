@@ -156,7 +156,7 @@ class HitObjects:
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
-                bank_info.read_custom_sample_banks(parts[5].split(":"), False)
+                bank_info.read_custom_sample_banks(iter(parts[5].split(":")), False)
 
             kind = HitObjectCircle(
                 pos=pos,
@@ -189,7 +189,7 @@ class HitObjects:
             next_9 = parts[9] if len(parts) > 9 else None
 
             if len(parts) > 10:
-                bank_info.read_custom_sample_banks(parts[10].split(":"), True)
+                bank_info.read_custom_sample_banks(iter(parts[10].split(":")), True)
 
             nodes = repeat_count + 2
             node_bank_infos = [copy.deepcopy(bank_info) for _ in range(nodes)]
@@ -198,7 +198,7 @@ class HitObjects:
                 for i, (b_info, s_set) in enumerate(
                     zip(node_bank_infos, next_9.split("|"))
                 ):
-                    b_info.read_custom_sample_banks(s_set.split(":"), False)
+                    b_info.read_custom_sample_banks(iter(s_set.split(":")), False)
 
             node_sounds_types: list[HitSoundType] = [
                 HitSoundType(sound_type.value) for _ in range(nodes)
@@ -241,7 +241,7 @@ class HitObjects:
                 raise ParseHitObjectsError.invalid_line()
 
             if len(parts) > 6:
-                bank_info.read_custom_sample_banks(parts[6].split(":"), False)
+                bank_info.read_custom_sample_banks(iter(parts[6].split(":")), False)
 
             kind = HitObjectSpinner(
                 pos=Pos(256.0, 192.0), duration=duration, new_combo=new_combo
@@ -254,7 +254,7 @@ class HitObjects:
                 try:
                     end_time = max(start_time, float(ss[0]))
                     if len(ss) > 1:
-                        bank_info.read_custom_sample_banks(ss[1:], False)
+                        bank_info.read_custom_sample_banks(iter(ss[1:]), False)
                 except ValueError:
                     raise ParseHitObjectsError.invalid_line()
 
