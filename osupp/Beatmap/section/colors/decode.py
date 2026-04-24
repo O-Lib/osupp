@@ -14,7 +14,9 @@ class ParseColorsError(Exception):
 
     @classmethod
     def incorrect_color(cls, source: Exception | None = None) -> "ParseColorsError":
-        return cls("color specified in incorret format (should be R,G,B or R,G,B,A", source)
+        return cls(
+            "color specified in incorret format (should be R,G,B or R,G,B,A", source
+        )
 
     @classmethod
     def number(cls, source: Exception) -> "ParseColorsError":

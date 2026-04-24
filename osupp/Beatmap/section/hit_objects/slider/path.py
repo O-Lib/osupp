@@ -76,7 +76,7 @@ class SliderPath:
             mode=self.mode,
             points=self.control_points,
             expected_len=self.expected_dist,
-            bufs=bufs
+            bufs=bufs,
         )
 
     def clear_curve(self) -> Curve:
@@ -87,7 +87,7 @@ class SliderPath:
             mode=self.mode,
             points=self.control_points,
             expected_len=self.expected_dist,
-            bufs=bufs
+            bufs=bufs,
         )
 
     def __eq__(self, other: object) -> bool:
