@@ -19,12 +19,12 @@ class Decoder(Generic[R]):
     def new(cls, inner: io.BufferedIOBase) -> "Decoder[io.BufferedIOBase]":
         buffered_inner = cast(io.BufferedReader, inner)
         encoding = cls.read_bom(buffered_inner)
-        decoder = cls(inner)
+        decoder = cls(cast(R, inner))
         decoder.encoding = encoding
         return cast(Decoder[io.BufferedIOBase], decoder)
 
     @staticmethod
-    def read_bom(reader: io.BufferedIOBase) -> Encoding:
+    def read_bom(reader: io.BufferedReader) -> Encoding:
         buf = reader.peek(3)[:3]
 
         if len(buf) == 0:

@@ -13,7 +13,6 @@ from .control_points.effect import EffectPoint
 from .control_points.sample import SamplePoint
 from .control_points.timing import TimeSignature, TimingPoint
 from .effect_flags import EffectFlags
-from ..general import General
 
 
 @dataclass
@@ -52,8 +51,9 @@ class ControlPoints:
 
 
 class ParseTimingPointsError(Exception):
-    def __init__(self, message: str):
+    def __init__(self, message: str, source: Expection | None = None):
         super().__init__(message)
+        self.__cause__ = source
 
 
 class EffectFlagsError(ParseTimingPointsError):
@@ -325,7 +325,7 @@ class TimingPointsState:
         )
 
     def to_result(self) -> "TimingPoints":
-        return self.control_points.timing_points
+        return
 
     @property
     def mode(self) -> GameMode:
