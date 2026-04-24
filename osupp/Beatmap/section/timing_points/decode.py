@@ -2,7 +2,7 @@ import bisect
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from section.hit_objects.hit_samples import SampleBank
 from utils import MAX_PARSE_VALUE, StrExtra
@@ -323,7 +323,7 @@ class TimingPointsState:
         )
 
     def to_result(self) -> "TimingPoints":
-        return self
+        return cast("TimingPoints", self)
 
     @property
     def mode(self) -> GameMode:
