@@ -251,8 +251,10 @@ class TimingPoints:
 
             state.add_control_point(
                 time,
-                DifficultyPoint(time=time, beat_len=beat_len, speed_multipler=speed_multipler),
-                False
+                DifficultyPoint(
+                    time=time, beat_len=beat_len, speed_multipler=speed_multipler
+                ),
+                False,
             )
 
             sample = SamplePoint(time, sample_set, sample_volume, custom_sample_bank)
@@ -262,11 +264,7 @@ class TimingPoints:
             if state.mode in (GameMode.Taiko, GameMode.Mania):
                 effect.scroll_speed = max(0.01, min(10.0, speed_multipler))
 
-            state.add_control_point(
-                time,
-                effect,
-                False
-            )
+            state.add_control_point(time, effect, False)
 
             state.pending_control_points_time = time
 
