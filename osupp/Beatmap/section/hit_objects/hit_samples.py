@@ -1,7 +1,6 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
-from typing import Optional
 
 from utils import ParseNumberError
 

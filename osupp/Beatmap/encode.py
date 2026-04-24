@@ -2,7 +2,7 @@ import io
 import math
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from section.general import GameMode
@@ -251,10 +251,7 @@ def get_sample_bank(
 
     custom_sample_bank = 0
     for sample in samples:
-        if (
-            not isinstance(sample.name, str)
-            and sample.name != HitSampleInfo.HIT_NORMAL
-        ):
+        if not isinstance(sample.name, str) and sample.name != HitSampleInfo.HIT_NORMAL:
             custom_sample_bank = sample.custom_sample_bank
             break
 
