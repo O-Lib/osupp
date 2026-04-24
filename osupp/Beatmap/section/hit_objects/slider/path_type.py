@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from typing import Optional
 
 
 class SplineType(Enum):
@@ -13,25 +14,25 @@ class SplineType(Enum):
 
 
 class PathType:
-    def __init__(self, kind: SplineType, degree: int | None = None):
+    def __init__(self, kind: SplineType, degree: Optional[int] = None):
         self.kind = kind
         self.degree = degree
 
-    @property
-    def catmull(self):
-        return PathType(SplineType.Catmull)
+    @classmethod
+    def catmull(cls) -> "PathType":
+        return cls(SplineType.Catmull)
 
-    @property
-    def bezier(self):
-        return PathType(SplineType.BSpline)
+    @classmethod
+    def bezier(cls) -> "PathType":
+        return cls(SplineType.BSpline)
 
-    @property
-    def linear(self):
-        return PathType(SplineType.Linear)
+    @classmethod
+    def linear(cls) -> "PathType":
+        return cls(SplineType.Linear)
 
-    @property
-    def perfect_curve(self):
-        return PathType(SplineType.PerfectCurve)
+    @classmethod
+    def perfect_curve(cls) -> "PathType":
+        return cls(SplineType.PerfectCurve)
 
     @classmethod
     def new(cls, kind: SplineType) -> "PathType":
@@ -45,10 +46,8 @@ class PathType:
     def new_from_str(cls, input_str: str) -> "PathType":
         if not input_str:
             return cls(SplineType.Catmull)
-
         first_char = input_str[0].upper()
         rest = input_str[1:]
-
         if first_char == "B":
             if rest.isdigit():
                 degree = int(rest)
@@ -60,3 +59,8 @@ class PathType:
             return cls(SplineType.PerfectCurve)
         else:
             return cls(SplineType.Catmull)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, PathType):
+            return self.kind == other.kind and self.degree == other.degree
+        return False
