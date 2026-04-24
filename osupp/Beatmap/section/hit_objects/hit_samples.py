@@ -90,14 +90,16 @@ class HitSampleInfo:
     bank_specified: bool
     is_layered: bool = False
 
-    HIT_NORMAL: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.NORMAL))
-    HIT_WHISTLE: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.WHISTLE))
-    HIT_FINISH: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.FINISH))
-    HIT_CLAP: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.CLAP))
+    HIT_NORMAL: HitSampleInfoName = HitSampleInfoName.Default(
+        HitSampleDefaultName.NORMAL
+    )
+    HIT_WHISTLE: HitSampleInfoName = HitSampleInfoName.Default(
+        HitSampleDefaultName.WHISTLE
+    )
+    HIT_FINISH: HitSampleInfoName = HitSampleInfoName.Default(
+        HitSampleDefaultName.FINISH
+    )
+    HIT_CLAP: HitSampleInfoName = HitSampleInfoName.Default(HitSampleDefaultName.CLAP)
 
     @classmethod
     def new(
