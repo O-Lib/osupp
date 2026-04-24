@@ -152,7 +152,7 @@ class HitObjects:
             raise ParseHitObjectsError.hit_object_type(e)
 
         bank_info = SampleBankInfo()
-        inner_kind = None
+        inner_kind: HitObjectCircle | HitObjectSlider | HitObjectSpinner | HitObjectHold | None = None
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
