@@ -3,7 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generic, TypeVar, Union, cast
+from typing import Any, Generic, TypeVar, cast
 
 import format_version
 from reader import Decoder
@@ -44,9 +44,7 @@ class DecodeBeatmap(ABC, Generic[S]):
     State = Any = None
 
     @classmethod
-    def decode(
-        cls: type[D], src: io.BufferedIOBase | io.RawIOBase | io.IOBase
-    ) -> D:
+    def decode(cls: type[D], src: io.BufferedIOBase | io.RawIOBase | io.IOBase) -> D:
         reader = Decoder(cast(io.BufferedIOBase, src))
         version = parse_version(reader.read_line())
 
