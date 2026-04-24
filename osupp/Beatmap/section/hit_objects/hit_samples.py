@@ -76,6 +76,7 @@ class HitSampleDefaultName(Enum):
     def __str__(self) -> str:
         return self.to_lowercase_str()
 
+
 @dataclass
 class HitSampleInfoName:
     inner: Union[HitSampleDefaultName, str]
