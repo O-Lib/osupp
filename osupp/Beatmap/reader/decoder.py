@@ -1,5 +1,5 @@
 import io
-from typing import BinaryIO, Generic, TypeVar, cast, Union
+from typing import BinaryIO, Generic, TypeVar, Union, cast
 
 from .encoding import Encoding
 
