@@ -116,6 +116,7 @@ class ControlPointProperties:
             custom_sample_bank=custom_sample_bank,
             sample_volume=tmp_hit_sample,
             effect_flags=effect_flags,
+            time=time,
         )
 
     def is_redundant(self, other: "ControlPointProperties") -> bool:
