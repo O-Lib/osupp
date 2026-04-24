@@ -64,10 +64,10 @@ class HitSampleDefaultName(Enum):
 
     def to_lowercase_str(self) -> str:
         mapping = {
-            HitSampleDefaultName.NORMAL: "hitnormal",
-            HitSampleDefaultName.WHISTLE: "hitwhistle",
-            HitSampleDefaultName.FINISH: "hitfinish",
-            HitSampleDefaultName.CLAP: "hitclap",
+            self.NORMAL: "hitnormal",
+            self.WHISTLE: "hitwhistle",
+            self.FINISH: "hitfinish",
+            self.CLAP: "hitclap",
         }
         return mapping[self]
 
@@ -90,10 +90,10 @@ class HitSampleInfo:
     bank_specified: bool
     is_layered: bool = False
 
-    HIT_NORMAL = HitSampleDefaultName.NORMAL
-    HIT_WHISTLE = HitSampleDefaultName.WHISTLE
-    HIT_FINISH = HitSampleDefaultName.FINISH
-    HIT_CLAP = HitSampleDefaultName.CLAP
+    HIT_NORMAL: HitSampleInfoName.Default = HitSampleDefaultName.NORMAL
+    HIT_WHISTLE: HitSampleInfoName.Default = HitSampleDefaultName.WHISTLE
+    HIT_FINISH: HitSampleInfoName.Default = HitSampleDefaultName.FINISH
+    HIT_CLAP: HitSampleInfoName.Default = HitSampleDefaultName.CLAP
 
     @classmethod
     def new(
