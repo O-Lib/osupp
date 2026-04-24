@@ -45,7 +45,9 @@ class DecodeBeatmap(ABC, Generic[S]):
     State = Any = None
 
     @classmethod
-    def decode(cls: type[D], src: Union[io.BufferedIOBase, io.RawIOBase, io.IOBase]) -> D:
+    def decode(
+        cls: type[D], src: io.BufferedIOBase | io.RawIOBase | io.IOBase
+    ) -> D:
         reader = Decoder(cast(io.BufferedIOBase, src))
         version = parse_version(reader.read_line())
 
