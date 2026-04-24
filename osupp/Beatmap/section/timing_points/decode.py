@@ -4,11 +4,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from section.general import CountdownType, GameMode, GeneralState
 from section.hit_objects.hit_samples import SampleBank
 from utils import MAX_PARSE_VALUE, StrExtra
 
-from ..general import General
+from ..general import General, CountdownType, GameMode, GeneralState
 from .control_points.difficulty import DifficultyPoint
 from .control_points.effect import EffectPoint
 from .control_points.sample import SamplePoint
