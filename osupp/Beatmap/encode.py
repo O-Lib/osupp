@@ -2,7 +2,7 @@ import io
 import math
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, TextIO
 
 if TYPE_CHECKING:
     from section.general import GameMode
