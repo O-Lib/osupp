@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from section.difficulty import Difficulty, DifficultyState
 from section.events import BreakPeriod, Events, EventsState
@@ -45,13 +45,13 @@ class HitObjects:
     default_sample_bank: SampleBank = SampleBank.NORMAL
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
-    mode: GameMode | None = None
+    mode: Optional[GameMode] = None
     letterbox_in_breaks: bool = False
     special_style: bool = False
     widescreen_storyboard: bool = False
     epilepsy_warning: bool = False
     samples_match_playback_rate: bool = False
-    countdown: CountdownType | None = None
+    countdown: Optional[CountdownType] = None
     countdown_offset: int = 0
 
     # Difficulty
@@ -69,7 +69,7 @@ class HitObjects:
     # TimingPoints
     control_points: ControlPoints = field(default_factory=lambda: ControlPoints())
 
-    # HitObjects específicos
+    # HitObjects
     hit_objects: list[HitObject] = field(default_factory=list)
 
     @classmethod
@@ -286,7 +286,7 @@ class HitObjects:
 
 
 class ParseHitObjectsError(Exception):
-    def __init__(self, message: str, source: Exception | None = None):
+    def __init__(self, message: str, source: Optional[Exception] = None):
         self.source = source
         super().__init__(message)
 
@@ -333,7 +333,7 @@ class ParseHitObjectsError(Exception):
 
 @dataclass
 class HitObjectsState:
-    last_object: HitObjectType | None = None
+    last_object: Optional[HitObjectType] = None
     curve_points: list[PathControlPoint] = field(default_factory=list)
     vertices: list[PathControlPoint] = field(default_factory=list)
     events: EventsState = field(default_factory=lambda: EventsState())
@@ -385,7 +385,7 @@ class HitObjectsState:
             self.convert_points(points_split[start_idx:end_idx], None, first, offset)
 
     def convert_points(
-        self, points: list[str], end_point: str | None, first: bool, offset: Pos
+        self, points: list[str], end_point: Optional[str], first: bool, offset: Pos
     ) -> None:
         if not points:
             raise ParseHitObjectsError.invalid_line()
@@ -402,14 +402,14 @@ class HitObjectsState:
         if end_point:
             self.vertices.append(self._read_point(end_point, offset))
 
-        if path_type == PathType.perfect_curve:
+        if path_type == PathType.perfect_curve():
             if len(self.vertices) == 3:
                 if self._is_linear(
                     self.vertices[0].pos, self.vertices[1].pos, self.vertices[2].pos
                 ):
-                    path_type = PathType.linear
+                    path_type = PathType.linear()
             else:
-                path_type = PathType.bezier
+                path_type = PathType.bezier()
 
         if self.vertices:
             self.vertices[0].path_type = path_type
@@ -426,7 +426,10 @@ class HitObjectsState:
             raise ParseHitObjectsError.invalid_line()
 
     def _is_linear(self, p0: Pos, p1: Pos, p2: Pos) -> bool:
-        return abs((p1.y - p0.y) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.y - p0.y)) < 1e-3
+        return (
+            abs((p1.y - p0.y) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.y - p0.y))
+            < 1e-3
+        )
 
     def _build_curve_points(self, path_type: PathType, has_end_point: bool) -> None:
         start_idx = 0
@@ -440,7 +443,7 @@ class HitObjectsState:
 
             if self.vertices[end_idx].pos == self.vertices[end_idx - 1].pos:
                 continue
-            if path_type == PathType.catmull and end_idx > 1:
+            if path_type == PathType.catmull() and end_idx > 1:
                 continue
             if end_idx == limit - 1:
                 continue
@@ -552,7 +555,9 @@ def finalize_hit_objects(state: HitObjectsState) -> HitObjects:
             span_count = float(slider.span_count())
 
             for i, node_samples in enumerate(slider.node_samples):
-                time = h.start_time + 1 * duration / span_count + CONTROL_POINT_LENIENCY
+                time = (
+                    h.start_time + 1 * duration / span_count + CONTROL_POINT_LENIENCY
+                )
                 sample_point = timing_points.control_points.sample_point_at(time)
 
                 for sample in node_samples:
