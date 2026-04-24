@@ -63,26 +63,27 @@ class HitSampleDefaultName(Enum):
     CLAP = auto()
 
     def to_lowercase_str(self) -> str:
-        mapping = {
-            self.NORMAL: "hitnormal",
-            self.WHISTLE: "hitwhistle",
-            self.FINISH: "hitfinish",
-            self.CLAP: "hitclap",
-        }
-        return mapping[self]
+        if self == HitSampleDefaultName.NORMAL:
+            return "hitnormal"
+        elif self == HitSampleDefaultName.WHISTLE:
+            return "hitwhistle"
+        elif self == HitSampleDefaultName.FINISH:
+            return "hitfinish"
+        elif self == HitSampleDefaultName.CLAP:
+            return "hitclap"
+        return ""
 
     def __str__(self) -> str:
         return self.to_lowercase_str()
 
 
 class HitSampleInfoName(Enum):
-    Default = HitSampleDefaultName
-    File = str
+    inner: Union[HitSampleDefaultName, str]
 
 
 @dataclass
 class HitSampleInfo:
-    name: HitSampleInfoName | str
+    name: HitSampleInfoName
     bank: SampleBank
     suffix: int | None
     volume: int
@@ -90,14 +91,10 @@ class HitSampleInfo:
     bank_specified: bool
     is_layered: bool = False
 
-    HIT_NORMAL: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.NORMAL))
-    HIT_WHISTLE: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.WHISTLE))
-    HIT_FINISH: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.FINISH))
-    HIT_CLAP: HitSampleInfoName = (
-        HitSampleInfoName.Default(HitSampleDefaultName.CLAP))
+    HIT_NORMAL = HitSampleDefaultName.NORMAL
+    HIT_WHISTLE = HitSampleDefaultName.WHISTLE
+    HIT_FINISH = HitSampleDefaultName.FINISH
+    HIT_CLAP = HitSampleDefaultName.CLAP
 
     @classmethod
     def new(
