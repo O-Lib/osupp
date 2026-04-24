@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
-from typing import Union
+from typing import Iterator
 
 from utils import ParseNumberError
 
@@ -128,7 +128,7 @@ class LookupName:
         self.sample_info = sample_info
 
     def __str__(self) -> str:
-        info = self.sample_info
+        info = self.sample_info.name
 
         if isinstance(info.inner, HitSampleDefaultName):
             bank = str(self.sample_info.bank).lower()
@@ -219,9 +219,9 @@ class SampleBankInfo:
     volume: int = 0
     custom_sample_bank: int = 0
 
-    def read_custom_sample_banks(self, split: iter, banks_only: bool) -> None:
+    def read_custom_sample_banks(self, split: Iterator[str], banks_only: bool) -> None:
         try:
-            first = next(split_iter, None)
+            first = next(split, None)
             if not first:
                 return
 
