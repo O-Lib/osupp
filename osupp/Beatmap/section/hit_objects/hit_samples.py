@@ -80,13 +80,9 @@ class HitSampleInfoName(Enum):
     File = str
 
 
+@dataclass
 class HitSampleInfo:
-    HIT_NORMAL = HitSampleDefaultName.NORMAL
-    HIT_WHISTLE = HitSampleDefaultName.WHISTLE
-    HIT_FINISH = HitSampleDefaultName.FINISH
-    HIT_CLAP = HitSampleDefaultName.CLAP
-
-    name: HitSampleDefaultName | str
+    name: HitSampleInfoName | str
     bank: SampleBank
     suffix: int | None
     volume: int
@@ -94,20 +90,10 @@ class HitSampleInfo:
     bank_specified: bool
     is_layered: bool = False
 
-    def __init__(
-        self,
-        name: HitSampleDefaultName | str,
-        bank: SampleBank | None = None,
-        custom_sample_bank: int = 0,
-        volume: int = 100,
-    ):
-        self.name = name
-        self.bank = bank if bank is not None else SampleBank.NORMAL
-        self.suffix = custom_sample_bank if custom_sample_bank >= 2 else None
-        self.volume = volume
-        self.custom_sample_bank = custom_sample_bank
-        self.bank_specified = bank is not None
-        self.is_layered = False
+    HIT_NORMAL = HitSampleDefaultName.NORMAL
+    HIT_WHISTLE = HitSampleDefaultName.WHISTLE
+    HIT_FINISH = HitSampleDefaultName.FINISH
+    HIT_CLAP = HitSampleDefaultName.CLAP
 
     @classmethod
     def new(
@@ -125,6 +111,7 @@ class HitSampleInfo:
             name=name,
             bank=resolved_bank,
             suffix=suffix,
+            volume=volume,
             custom_sample_bank=custom_sample_bank,
             bank_specified=bank is not None,
             is_layered=False,
