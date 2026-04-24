@@ -252,7 +252,7 @@ def get_sample_bank(
     custom_sample_bank = 0
     for sample in samples:
         if (
-            not isinstance(sample.name, srtr)
+            not isinstance(sample.name, str)
             and sample.name != HitSampleInfo.HIT_NORMAL
         ):
             custom_sample_bank = sample.custom_sample_bank
@@ -279,7 +279,7 @@ def get_sample_bank(
 def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None:
     ticks: list[float] = []
     curve_bufs = CurveBuffers()
-    collected_samples: list["ControlPointProperties"] = []
+    collected_samples: list[tuple[float, "ControlPointProperties"]] = []
 
     for h in map_obj.hit_objects:
         end_time = h.end_time_with_bufs(curve_bufs)
