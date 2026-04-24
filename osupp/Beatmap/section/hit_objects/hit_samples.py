@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Union
@@ -80,7 +79,7 @@ class HitSampleDefaultName(Enum):
 
 @dataclass
 class HitSampleInfoName:
-    inner: Union[HitSampleDefaultName, str]
+    inner: HitSampleDefaultName | str
 
 
 @dataclass
@@ -227,19 +226,29 @@ class SampleBankInfo:
                 return
 
             bank_val = int(first)
-            bank = SampleBank(bank_val) if bank_val in [s.value for s in SampleBank] else SampleBank.NORMAL
+            bank = (
+                SampleBank(bank_val)
+                if bank_val in [s.value for s in SampleBank]
+                else SampleBank.NORMAL
+            )
 
             second = next(split, None)
             if second is None:
                 raise ValueError("Missing addition bank info")
 
             add_bank_val = int(second)
-            add_bank = SampleBank(add_bank_val) if add_bank_val in [s.value for s in SampleBank] else SampleBank.NORMAL
+            add_bank = (
+                SampleBank(add_bank_val)
+                if add_bank_val in [s.value for s in SampleBank]
+                else SampleBank.NORMAL
+            )
 
             self.bank_for_normal = bank if bank != SampleBank.NONE else None
 
             effective_add = add_bank if add_bank != SampleBank.NONE else None
-            self.bank_for_addition = effective_add if effective_add is not None else self.bank_for_normal
+            self.bank_for_addition = (
+                effective_add if effective_add is not None else self.bank_for_normal
+            )
 
             if banks_only:
                 return
@@ -261,49 +270,57 @@ class SampleBankInfo:
         sound_types: list[HitSampleInfo] = []
 
         if self.filename and self.filename.strip():
-            sound_types.append(HitSampleInfo.new(
-                name=HitSampleInfoName(self.filename),
-                bank=None,
-                custom_sample_bank=1,
-                volume=self.volume
-            ))
+            sound_types.append(
+                HitSampleInfo.new(
+                    name=HitSampleInfoName(self.filename),
+                    bank=None,
+                    custom_sample_bank=1,
+                    volume=self.volume,
+                )
+            )
         else:
             sample = HitSampleInfo.new(
                 name=HitSampleInfo.HIT_NORMAL,
                 bank=self.bank_for_normal,
                 custom_sample_bank=self.custom_sample_bank,
-                volume=self.volume
+                volume=self.volume,
             )
 
             sample.is_layered = (
-                sound_type != HitSoundType.NONE and
-                not sound_type.has_flag(HitSoundType.NORMAL)
+                sound_type != HitSoundType.NONE
+                and not sound_type.has_flag(HitSoundType.NORMAL)
             )
             sound_types.append(sample)
 
         if sound_type.has_flag(HitSoundType.FINISH):
-            sound_types.append(HitSampleInfo.new(
-                name=HitSampleInfo.HIT_FINISH,
-                bank=self.bank_for_addition,
-                custom_sample_bank=self.custom_sample_bank,
-                volume=self.volume
-            ))
+            sound_types.append(
+                HitSampleInfo.new(
+                    name=HitSampleInfo.HIT_FINISH,
+                    bank=self.bank_for_addition,
+                    custom_sample_bank=self.custom_sample_bank,
+                    volume=self.volume,
+                )
+            )
 
         if sound_type.has_flag(HitSoundType.WHISTLE):
-            sound_types.append(HitSampleInfo.new(
-                name=HitSampleInfo.HIT_WHISTLE,
-                bank=self.bank_for_addition,
-                custom_sample_bank=self.custom_sample_bank,
-                volume=self.volume
-            ))
+            sound_types.append(
+                HitSampleInfo.new(
+                    name=HitSampleInfo.HIT_WHISTLE,
+                    bank=self.bank_for_addition,
+                    custom_sample_bank=self.custom_sample_bank,
+                    volume=self.volume,
+                )
+            )
 
         if sound_type.has_flag(HitSoundType.CLAP):
-            sound_types.append(HitSampleInfo.new(
-                name=HitSampleInfo.HIT_CLAP,
-                bank=self.bank_for_addition,
-                custom_sample_bank=self.custom_sample_bank,
-                volume=self.volume
-            ))
+            sound_types.append(
+                HitSampleInfo.new(
+                    name=HitSampleInfo.HIT_CLAP,
+                    bank=self.bank_for_addition,
+                    custom_sample_bank=self.custom_sample_bank,
+                    volume=self.volume,
+                )
+            )
 
         return sound_types
 
