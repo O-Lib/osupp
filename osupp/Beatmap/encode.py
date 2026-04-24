@@ -361,7 +361,7 @@ def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None
         elif isinstance(kind, HitObjectKind.Hold):
             collect_sample(collected_samples, h.samples, h.start_time)
 
-    collected_samples.sort(key=lambda s: s.time)
+    collected_samples.sort(key=lambda s: s[0])
 
     if not collected_samples:
         return
