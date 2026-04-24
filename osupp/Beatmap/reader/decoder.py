@@ -1,9 +1,9 @@
 import io
-from typing import BinaryIO, Generic, TypeVar, cast
+from typing import BinaryIO, Generic, TypeVar, cast, Union
 
 from .encoding import Encoding
 
-R = TypeVar("R", bound=BinaryIO)
+R = TypeVar("R", bound=Union[BinaryIO, io.IOBase])
 
 
 class Decoder(Generic[R]):
@@ -21,7 +21,7 @@ class Decoder(Generic[R]):
         encoding = cls.read_bom(buffered_inner)
         decoder = cls(inner)
         decoder.encoding = encoding
-        return decoder
+        return cast(Decoder[io.BufferedIOBase], decoder)
 
     @staticmethod
     def read_bom(reader: io.BufferedIOBase) -> Encoding:

@@ -13,6 +13,7 @@ from .control_points.effect import EffectPoint
 from .control_points.sample import SamplePoint
 from .control_points.timing import TimeSignature, TimingPoint
 from .effect_flags import EffectFlags
+from ..general import General
 
 
 @dataclass
@@ -249,19 +250,16 @@ class TimingPoints:
                 )
                 state.add_control_point(time, timing, timing_change)
 
-            state.add_control_point(
-                time,
-                DifficultyPoint(
-                    time=time, beat_len=beat_len, speed_multipler=speed_multipler
-                ),
-                False,
+            difficulty = DifficultyPoint.new(
+                time, beat_len, speed_multipler
             )
+            state.add_control_point(time, difficulty, False)
 
             sample = SamplePoint(time, sample_set, sample_volume, custom_sample_bank)
             state.add_control_point(time, sample, timing_change)
 
-            effect = EffectPoint(time=time, kiai_mode=kiai_mode, scroll_speed=1.0)
-            if state.mode in (GameMode.Taiko, GameMode.Mania):
+            effect = EffectPoint.new(time, kiai_mode)
+            if state.general.mode in (GameMode.Taiko, GameMode.Mania):
                 effect.scroll_speed = max(0.01, min(10.0, speed_multipler))
 
             state.add_control_point(time, effect, False)
