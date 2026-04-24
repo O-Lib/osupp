@@ -23,7 +23,7 @@ from .hit_samples import (
     SampleBankInfo,
 )
 from .hold import HitObjectHold
-from .mod import BASE_SCORING_DIST, HitObject, HitObjectType
+from .mod import BASE_SCORING_DIST, HitObject, HitObjectType, HitObjectKind
 from .slider import (
     CurveBuffers,
     HitObjectSlider,
@@ -152,13 +152,13 @@ class HitObjects:
             raise ParseHitObjectsError.hit_object_type(e)
 
         bank_info = SampleBankInfo()
-        kind: HitObjectCircle | HitObjectSlider | HitObjectSpinner | HitObjectHold
+        inner_kind = None
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
                 bank_info.read_custom_sample_banks(iter(parts[5].split(":")), False)
 
-            kind = HitObjectCircle(
+            inner_kind = HitObjectCircle(
                 pos=pos,
                 new_combo=state.first_object
                 or state.last_object_was_spinner()
@@ -220,7 +220,7 @@ class HitObjects:
             control_points = list(state.curve_points)
             state.curve_points.clear()
 
-            kind = HitObjectSlider(
+            inner_kind = HitObjectSlider(
                 pos=pos,
                 start_time=start_time,
                 new_combo=state.first_object
@@ -243,7 +243,7 @@ class HitObjects:
             if len(parts) > 6:
                 bank_info.read_custom_sample_banks(iter(parts[6].split(":")), False)
 
-            kind = HitObjectSpinner(
+            inner_kind = HitObjectSpinner(
                 pos=Pos(256.0, 192.0), duration=duration, new_combo=new_combo
             )
 
@@ -258,10 +258,12 @@ class HitObjects:
                 except ValueError:
                     raise ParseHitObjectsError.invalid_line()
 
-            kind = HitObjectHold(pos_x=pos, duration=end_time - start_time)
+            inner_kind = HitObjectHold(pos_x=pos, duration=end_time - start_time)
 
         else:
             raise ParseHitObjectsError.unknown_hit_object_type(hit_object_type)
+
+        kind_wrapper = HitObjectKind(inner_kind)
 
         result = HitObject(
             start_time=start_time,
