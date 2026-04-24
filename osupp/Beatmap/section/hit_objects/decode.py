@@ -470,19 +470,19 @@ class HitObjectsState:
                 curr_break += 1
 
             if force_new_combo:
-                kind = h.kind
+                kind = h.kind.inner
                 if isinstance(kind, HitObjectCircle):
-                    h.kind = HitObjectCircle(
+                    h.kind = HitObjectKind(HitObjectCircle(
                         pos=kind.pos,
                         new_combo=True,
                         combo_offset=kind.combo_offset,
-                    )
+                    ))
                 elif isinstance(kind, HitObjectSpinner):
-                    h.kind = HitObjectSpinner(
+                    h.kind = HitObjectKind(HitObjectSpinner(
                         pos=kind.pos,
                         duration=kind.duration,
                         new_combo=True,
-                    )
+                    ))
             force_new_combo = False
 
     @classmethod
