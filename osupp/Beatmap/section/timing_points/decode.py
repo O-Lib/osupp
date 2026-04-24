@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from section.general import CountdownType, GameMode, General, GeneralState
+from section.general import CountdownType, GameMode, GeneralState
 from section.hit_objects.hit_samples import SampleBank
 from utils import MAX_PARSE_VALUE, StrExtra
 
@@ -52,7 +52,7 @@ class ControlPoints:
 
 
 class ParseTimingPointsError(Exception):
-    def __init__(self, message: str, source: Expection | None = None):
+    def __init__(self, message: str, source: Exception | None = None):
         super().__init__(message)
         self.__cause__ = source
 
@@ -324,7 +324,7 @@ class TimingPointsState:
         )
 
     def to_result(self) -> "TimingPoints":
-        return
+        return self
 
     @property
     def mode(self) -> GameMode:
