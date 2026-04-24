@@ -3,7 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, Union, cast
 
 import format_version
 from reader import Decoder
@@ -11,7 +11,7 @@ from section import Section
 
 logger = logging.getLogger(__name__)
 
-D = TypeVar("D", bound="DecodeBeatmap")
+D = TypeVar("D", bound="DecodeBeatmap[Any]")
 S = TypeVar("S", bound="DecodeState")
 
 
@@ -45,18 +45,18 @@ class DecodeBeatmap(ABC, Generic[S]):
     State = Any = None
 
     @classmethod
-    def decode(cls, src: io.BufferedIOBase) -> D:
-        reader = Decoder(src)
-        version, use_curr_line = parse_version(reader.read_line())
+    def decode(cls: type[D], src: Union[io.BufferedIOBase, io.RawIOBase, io.IOBase]) -> D:
+        reader = Decoder(cast(io.BufferedIOBase, src))
+        version = parse_version(reader.read_line())
 
-        actual_version = (
-            version if version is not None else format_version.LATEST_FORMAT_VERSION
-        )
+        if cls.State is None:
+            raise NotImplementedError(f"{cls.__name__} must define a State class")
+
         state = cls.State.create(version)
 
-        section = parse_first_section(reader, use_curr_line)
+        section = parse_first_section(reader)
         if section is None:
-            return state.to_result()
+            return cast(D, state.to_result())
 
         while True:
             parse_map = {
@@ -94,57 +94,57 @@ class DecodeBeatmap(ABC, Generic[S]):
 
     @classmethod
     @abstractmethod
-    def parse_general(cls, state: State, line: str):
+    def parse_general(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_editor(cls, state: State, line: str):
+    def parse_editor(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_metadata(cls, state: State, line: str):
+    def parse_metadata(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_difficulty(cls, state: State, line: str):
+    def parse_difficulty(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_events(cls, state: State, line: str):
+    def parse_events(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_timing_points(cls, state: State, line: str):
+    def parse_timing_points(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_colors(cls, state: State, line: str):
+    def parse_colors(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_hit_objects(cls, state: State, line: str):
+    def parse_hit_objects(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_variables(cls, state: State, line: str):
+    def parse_variables(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_catch_the_beat(cls, state: State, line: str):
+    def parse_catch_the_beat(cls, state: S, line: str):
         pass
 
     @classmethod
     @abstractmethod
-    def parse_mania(cls, state: State, line: str):
+    def parse_mania(cls, state: S, line: str):
         pass
 
 
