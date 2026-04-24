@@ -42,6 +42,7 @@ class ControlPointProperties:
     custom_sample_bank: int
     sample_volume: int
     effect_flags: int
+    time: float
 
     @classmethod
     def default(cls) -> "ControlPointProperties":
@@ -52,6 +53,7 @@ class ControlPointProperties:
             custom_sample_bank=0,
             sample_volume=0,
             effect_flags=0,
+            time=0.0,
         )
 
     @classmethod
@@ -276,7 +278,7 @@ def get_sample_bank(
 def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None:
     ticks: list[float] = []
     curve_bufs = CurveBuffers()
-    collected_samples: list[tuple[float, "ControlPointProperties"]] = []
+    collected_samples: list["ControlPointProperties"] = []
 
     for h in map_obj.hit_objects:
         end_time = h.end_time_with_bufs(curve_bufs)
@@ -361,7 +363,7 @@ def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None
         elif isinstance(kind, HitObjectKind.Hold):
             collect_sample(collected_samples, h.samples, h.start_time)
 
-    collected_samples.sort(key=lambda s: s[0])
+    collected_samples.sort(key=lambda s: s.time)
 
     if not collected_samples:
         return
