@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
+from typing import Union
 
 from utils import ParseNumberError
 
@@ -124,22 +125,25 @@ class HitSampleInfo:
 
 
 class LookupName:
-    def __init__(self, sample_info: "HitSampleInfo"):
+    def __init__(self, sample_info: "HitSampleInfo") -> None:
         self.sample_info = sample_info
 
     def __str__(self) -> str:
         info = self.sample_info
 
-        if isinstance(info.name, str):
-            return info.name
+        if isinstance(info.inner, HitSampleDefaultName):
+            bank = str(self.sample_info.bank).lower()
+            sample_name = info.inner.to_lowercase_str()
 
-        bank_str = str(info.bank).capitalize()
-        name_str = info.name.to_lowercase_str()
+            if self.sample_info.suffix is not None:
+                return f"Gameplay/{bank}-{sample_name}{self.sample_info.suffix}"
 
-        if info.suffix is not None:
-            return f"Gameplay/{bank_str}-{name_str}{info.suffix}"
+            return f"Gameplay/{bank}-{sample_name}"
 
-        return f"Gameplay/{bank_str}-{name_str}"
+        elif isinstance(info.inner, str):
+            return info.inner
+
+        return ""
 
 
 class ParseSampleBankError(ValueError):
@@ -216,105 +220,90 @@ class SampleBankInfo:
     volume: int = 0
     custom_sample_bank: int = 0
 
-    def read_custom_sample_banks(self, split: Iterable[str], banks_only: bool = False):
-        it = iter(split)
+    def read_custom_sample_banks(self, split: iter, banks_only: bool) -> None:
         try:
-            first = next(it, None)
+            first = next(split_iter, None)
             if not first:
                 return
 
             bank_val = int(first)
-            bank = (
-                SampleBank(bank_val) if bank_val in [0, 1, 2, 3] else SampleBank.NORMAL
-            )
+            bank = SampleBank(bank_val) if bank_val in [s.value for s in SampleBank] else SampleBank.NORMAL
 
-            add_bank_str = next(it, None)
-            if add_bank_str is None:
-                raise ParseSampleBankInfoError.missing_info()
+            second = next(split, None)
+            if second is None:
+                raise ValueError("Missing addition bank info")
 
-            add_bank_val = int(add_bank_str)
-            add_bank = (
-                SampleBank(add_bank_val)
-                if add_bank_val in [0, 1, 2, 3]
-                else SampleBank.NORMAL
-            )
+            add_bank_val = int(second)
+            add_bank = SampleBank(add_bank_val) if add_bank_val in [s.value for s in SampleBank] else SampleBank.NORMAL
 
-            normal_bank = bank if bank != SampleBank.NONE else None
-            addition_bank = add_bank if add_bank != SampleBank.NONE else None
+            self.bank_for_normal = bank if bank != SampleBank.NONE else None
 
-            self.bank_for_normal = normal_bank
-            self.bank_for_addition = addition_bank or normal_bank
+            effective_add = add_bank if add_bank != SampleBank.NONE else None
+            self.bank_for_addition = effective_add if effective_add is not None else self.bank_for_normal
 
             if banks_only:
                 return
 
-            next_val = next(it, None)
+            next_val = next(split, None)
             if next_val is not None:
                 self.custom_sample_bank = int(next_val)
 
-            next_val = next(it, None)
+            next_val = next(split, None)
             if next_val is not None:
                 self.volume = max(0, int(next_val))
 
-            self.filename = next(it, None) or None
+            self.filename = next(split, None)
+
         except (ValueError, StopIteration):
             pass
 
-    def convert_sound_type(self, sound_type: HitSoundType) -> list[HitSampleInfo]:
+    def convert_sound_type(self, sound_type: "HitSoundType") -> list[HitSampleInfo]:
         sound_types: list[HitSampleInfo] = []
 
         if self.filename and self.filename.strip():
-            sound_types.append(
-                HitSampleInfo(
-                    name=self.filename,
-                    bank=None,
-                    custom_sample_bank=1,
-                    volume=self.volume,
-                )
-            )
+            sound_types.append(HitSampleInfo.new(
+                name=HitSampleInfoName(self.filename),
+                bank=None,
+                custom_sample_bank=1,
+                volume=self.volume
+            ))
         else:
-            sample = HitSampleInfo(
-                name=HitSampleDefaultName.NORMAL,
+            sample = HitSampleInfo.new(
+                name=HitSampleInfo.HIT_NORMAL,
                 bank=self.bank_for_normal,
                 custom_sample_bank=self.custom_sample_bank,
-                volume=self.volume,
+                volume=self.volume
             )
 
             sample.is_layered = (
-                sound_type.value != HitSoundType.NONE
-                and not sound_type.has_flag(HitSoundType.NORMAL)
+                sound_type != HitSoundType.NONE and
+                not sound_type.has_flag(HitSoundType.NORMAL)
             )
             sound_types.append(sample)
 
         if sound_type.has_flag(HitSoundType.FINISH):
-            sound_types.append(
-                HitSampleInfo(
-                    name=HitSampleDefaultName.FINISH,
-                    bank=self.bank_for_addition,
-                    custom_sample_bank=self.custom_sample_bank,
-                    volume=self.volume,
-                )
-            )
+            sound_types.append(HitSampleInfo.new(
+                name=HitSampleInfo.HIT_FINISH,
+                bank=self.bank_for_addition,
+                custom_sample_bank=self.custom_sample_bank,
+                volume=self.volume
+            ))
 
         if sound_type.has_flag(HitSoundType.WHISTLE):
-            sound_types.append(
-                HitSampleInfo(
-                    name=HitSampleDefaultName.WHISTLE,
-                    bank=self.bank_for_addition,
-                    custom_sample_bank=self.custom_sample_bank,
-                    volume=self.volume,
-                )
-            )
+            sound_types.append(HitSampleInfo.new(
+                name=HitSampleInfo.HIT_WHISTLE,
+                bank=self.bank_for_addition,
+                custom_sample_bank=self.custom_sample_bank,
+                volume=self.volume
+            ))
 
         if sound_type.has_flag(HitSoundType.CLAP):
-            sound_types.append(
-                HitSampleInfo(
-                    name=HitSampleDefaultName.CLAP,
-                    bank=self.bank_for_addition,
-                    custom_sample_bank=self.custom_sample_bank,
-                    volume=self.volume,
-                )
-            )
+            sound_types.append(HitSampleInfo.new(
+                name=HitSampleInfo.HIT_CLAP,
+                bank=self.bank_for_addition,
+                custom_sample_bank=self.custom_sample_bank,
+                volume=self.volume
+            ))
 
         return sound_types
 
