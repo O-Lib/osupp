@@ -267,7 +267,7 @@ class HitObjects:
 
         result = HitObject(
             start_time=start_time,
-            kind=kind,
+            kind=kind_wrapper,
             samples=bank_info.convert_sound_type(sound_type),
         )
 
