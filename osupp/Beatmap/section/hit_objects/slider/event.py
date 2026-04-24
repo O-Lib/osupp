@@ -27,6 +27,7 @@ class SliderEvent:
     path_progress: float
 
 
+@dataclass
 class SliderEventsIter:
     start_time: float
     span_duration: float
