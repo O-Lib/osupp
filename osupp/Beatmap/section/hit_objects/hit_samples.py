@@ -76,8 +76,8 @@ class HitSampleDefaultName(Enum):
     def __str__(self) -> str:
         return self.to_lowercase_str()
 
-
-class HitSampleInfoName(Enum):
+@dataclass
+class HitSampleInfoName:
     inner: Union[HitSampleDefaultName, str]
 
 
@@ -91,10 +91,10 @@ class HitSampleInfo:
     bank_specified: bool
     is_layered: bool = False
 
-    HIT_NORMAL = HitSampleDefaultName.NORMAL
-    HIT_WHISTLE = HitSampleDefaultName.WHISTLE
-    HIT_FINISH = HitSampleDefaultName.FINISH
-    HIT_CLAP = HitSampleDefaultName.CLAP
+    HIT_NORMAL = HitSampleInfoName(HitSampleDefaultName.NORMAL)
+    HIT_WHISTLE = HitSampleInfoName(HitSampleDefaultName.WHISTLE)
+    HIT_FINISH = HitSampleInfoName(HitSampleDefaultName.FINISH)
+    HIT_CLAP = HitSampleInfoName(HitSampleDefaultName.CLAP)
 
     @classmethod
     def new(
