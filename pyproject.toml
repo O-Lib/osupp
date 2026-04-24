@@ -9,4 +9,3 @@ description = "osu! PP Calculation for Python"
 dependencies = [
     "requests",
 ]
-
