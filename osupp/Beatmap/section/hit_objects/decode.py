@@ -23,7 +23,7 @@ from .hit_samples import (
     SampleBankInfo,
 )
 from .hold import HitObjectHold
-from .mod import BASE_SCORING_DIST, HitObject, HitObjectType, HitObjectKind
+from .mod import BASE_SCORING_DIST, HitObject, HitObjectKind, HitObjectType
 from .slider import (
     CurveBuffers,
     HitObjectSlider,
