@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from section.difficulty import Difficulty, DifficultyState
 from section.events import BreakPeriod, Events, EventsState
@@ -45,13 +45,13 @@ class HitObjects:
     default_sample_bank: SampleBank = SampleBank.NORMAL
     default_sample_volume: int = 100
     stack_leniency: float = 0.7
-    mode: GameMode = None  # Placeholder para o Enum de GameMode
+    mode: Optional[GameMode] = None
     letterbox_in_breaks: bool = False
     special_style: bool = False
     widescreen_storyboard: bool = False
     epilepsy_warning: bool = False
     samples_match_playback_rate: bool = False
-    countdown: CountdownType = None  # Placeholder
+    countdown: Optional[CountdownType] = None
     countdown_offset: int = 0
 
     # Difficulty
@@ -147,12 +147,12 @@ class HitObjects:
         hit_object_type &= ~(HitObjectType.NEW_COMBO | HitObjectType.COMBO_OFFSET)
 
         try:
-            sound_type = HitObjectType(int(parts[4]))
+            sound_type = HitSoundType(int(parts[4]))
         except ValueError as e:
             raise ParseHitObjectsError.hit_object_type(e)
 
         bank_info = SampleBankInfo()
-        kind: HitObjectCircle | HitObjectCircle | HitObjectSpinner | HitObjectHold
+        kind: HitObjectCircle | HitObjectSlider | HitObjectSpinner | HitObjectHold
 
         if hit_object_type.has_flag(HitObjectType.CIRCLE):
             if len(parts) > 5:
@@ -200,14 +200,14 @@ class HitObjects:
                 ):
                     b_info.read_custom_sample_banks(s_set.split(":"), False)
 
-            node_sounds_types: list[HitSoundType] = [sound_type for _ in range(nodes)]
+            node_sounds_types: list[HitSoundType] = [HitSoundType(sound_type.value) for _ in range(nodes)]
             if next_8 and next_8.strip():
                 for i, s_val in enumerate(next_8.split("|")):
                     if i < nodes:
                         try:
                             node_sounds_types[i] = HitSoundType(int(s_val))
                         except ValueError:
-                            node_sounds_types[i] = HitSoundType.NONE
+                            node_sounds_types[i] = HitSoundType(HitSoundType.NONE)
 
             node_samples = [
                 bi.convert_sound_type(st)
@@ -252,7 +252,7 @@ class HitObjects:
                 try:
                     end_time = max(start_time, float(ss[0]))
                     if len(ss) > 1:
-                        bank_info.read_custom_sample_banks(ss[1:], is_slider=False)
+                        bank_info.read_custom_sample_banks(ss[1:], False)
                 except ValueError:
                     raise ParseHitObjectsError.invalid_line()
 
@@ -284,54 +284,54 @@ class HitObjects:
 
 
 class ParseHitObjectsError(Exception):
-    def __init__(self, message: str, source: Exception = None):
+    def __init__(self, message: str, source: Optional[Exception] = None):
         self.source = source
         super().__init__(message)
 
     @classmethod
-    def difficulty(cls, err: Exception):
+    def difficulty(cls, err: Exception) -> ParseHitObjectsError:
         return cls("failed to parse difficulty section", err)
 
     @classmethod
-    def events(cls, err: Exception):
+    def events(cls, err: Exception) -> ParseHitObjectsError:
         return cls("failed to parse events section", err)
 
     @classmethod
-    def hit_object_type(cls, err: Exception):
+    def hit_object_type(cls, err: Exception) -> ParseHitObjectsError:
         return cls("failed to parse hit object type", err)
 
     @classmethod
-    def hit_sound_type(cls, err: Exception):
+    def hit_sound_type(cls, err: Exception) -> ParseHitObjectsError:
         return cls("failed to parse hit sound type", err)
 
     @classmethod
-    def invalid_line(cls):
+    def invalid_line(cls) -> ParseHitObjectsError:
         return cls("invalid line")
 
     @classmethod
-    def invalid_repeat_count(cls, count: int):
+    def invalid_repeat_count(cls, count: int) -> ParseHitObjectsError:
         return cls(f"repeat count is way too high: {count}")
 
     @classmethod
-    def number(cls, err: Exception):
+    def number(cls, err: Exception) -> ParseHitObjectsError:
         return cls("failed to parse number", err)
 
     @classmethod
-    def sample_bank_info(cls, err: Exception):
+    def sample_bank_info(cls, err: Exception) -> ParseHitObjectsError:
         return cls("invalid sample bank", err)
 
     @classmethod
-    def timing_points(cls, err: Exception):
+    def timing_points(cls, err: Exception) -> ParseHitObjectsError:
         return cls("failed to parse timing points", err)
 
     @classmethod
-    def unknown_hit_object_type(cls, obj_type: HitObjectType):
+    def unknown_hit_object_type(cls, obj_type: HitObjectType) -> ParseHitObjectsError:
         return cls(f"unknown hit object type: {obj_type}")
 
 
 @dataclass
 class HitObjectsState:
-    last_object: HitObjectType | None = None
+    last_object: Optional[HitObjectType] = None
     curve_points: list[PathControlPoint] = field(default_factory=list)
     vertices: list[PathControlPoint] = field(default_factory=list)
     events: EventsState = field(default_factory=lambda: EventsState())
@@ -383,12 +383,12 @@ class HitObjectsState:
             self.convert_points(points_split[start_idx:end_idx], None, first, offset)
 
     def convert_points(
-        self, points: list[str], end_point: str | None, first: bool, offset: Pos
+        self, points: list[str], end_point: Optional[str], first: bool, offset: Pos
     ) -> None:
         if not points:
             raise ParseHitObjectsError.invalid_line()
 
-        path_type = PathType.new_from_str(points[0])
+        path_type: PathType = PathType.new_from_str(points[0])
 
         self.vertices.clear()
         if first:
@@ -417,10 +417,8 @@ class HitObjectsState:
     def _read_point(self, value: str, start_pos: Pos) -> PathControlPoint:
         try:
             parts = value.split(":")
-
             x = float(parts[0])
             y = float(parts[1])
-
             return PathControlPoint(Pos(x, y) - start_pos)
         except (ValueError, IndexError):
             raise ParseHitObjectsError.invalid_line()
@@ -428,7 +426,7 @@ class HitObjectsState:
     def _is_linear(self, p0: Pos, p1: Pos, p2: Pos) -> bool:
         return abs((p1.y - p0.y) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.y - p0.y)) < 1e-3
 
-    def _build_curve_points(self, path_type: PathType, has_end_point: bool):
+    def _build_curve_points(self, path_type: PathType, has_end_point: bool) -> None:
         start_idx = 0
         end_idx = 0
         limit = len(self.vertices) - (1 if has_end_point else 0)
@@ -453,7 +451,7 @@ class HitObjectsState:
             self.curve_points.extend(self.vertices[start_idx:end_idx])
 
     @staticmethod
-    def post_process_breaks(hit_objects: list[HitObject], events: Any):
+    def post_process_breaks(hit_objects: list[HitObject], events: Any) -> None:
         curr_break = 0
         force_new_combo = False
 
@@ -465,8 +463,20 @@ class HitObjectsState:
                 force_new_combo = True
                 curr_break += 1
 
-            if force_new_combo and hasattr(h.kind, "new_combo"):
-                h.kind.new_combo = True
+            if force_new_combo:
+                kind = h.kind
+                if isinstance(kind, HitObjectCircle):
+                    h.kind = HitObjectCircle(
+                        pos=kind.pos,
+                        new_combo=True,
+                        combo_offset=kind.combo_offset,
+                    )
+                elif isinstance(kind, HitObjectSpinner):
+                    h.kind = HitObjectSpinner(
+                        pos=kind.pos,
+                        duration=kind.duration,
+                        new_combo=True,
+                    )
             force_new_combo = False
 
     @classmethod
@@ -496,7 +506,6 @@ def get_precision_adjusted_beat_len(
             bpm_multiplier = max(10.0, min(val, 1000.0)) / 100.0
         else:
             bpm_multiplier = 1.0
-
     else:
         bpm_multiplier = 1.0
 
