@@ -1,24 +1,38 @@
-import sys
 import io
 import math
+import sys
 from dataclasses import dataclass
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
-    from section.timing_points.decode import ControlPoints
-    from section.timing_points.control_points.timing import TimingPoint
-    from section.hit_objects import HitObjectSlider, CurveBuffers, PathType, SplineType, HitSoundType, HitObjectKind, BASE_SCORING_DIST
-    from section.hit_objects.slider import SliderEvent, SliderEventType, SliderEventsIter
-    from utils.pos import Pos
     from section.general import GameMode
+    from section.hit_objects import (
+        BASE_SCORING_DIST,
+        CurveBuffers,
+        HitObjectKind,
+        HitObjectSlider,
+        HitSoundType,
+        PathType,
+        SplineType,
+    )
     from section.hit_objects.hit_samples import HitSampleInfo
+    from section.hit_objects.slider import (
+        SliderEvent,
+        SliderEventsIter,
+        SliderEventType,
+    )
+    from section.timing_points.control_points.timing import TimingPoint
+    from section.timing_points.decode import ControlPoints
+    from utils.pos import Pos
+
     from .beatmap import Beatmap
 
-from section.timing_points.effect_flags import EffectFlags
-from section.timing_points.control_points.timing import TimingPoint
 from section.timing_points.control_points.difficulty import DifficultyPoint
-from section.timing_points.control_points.sample import SamplePoint
 from section.timing_points.control_points.effect import EffectPoint
+from section.timing_points.control_points.sample import SamplePoint
+from section.timing_points.control_points.timing import TimingPoint
+from section.timing_points.effect_flags import EffectFlags
+
 
 @dataclass
 class ControlPointProperties:
@@ -42,11 +56,11 @@ class ControlPointProperties:
 
     @classmethod
     def new(
-            cls,
-            time: float,
-            control_points: "ControlPoints",
-            last_props: "ControlPointProperties",
-            update_sample_bank: bool,
+        cls,
+        time: float,
+        control_points: "ControlPoints",
+        last_props: "ControlPointProperties",
+        update_sample_bank: bool,
     ) -> "ControlPointProperties":
         timing = control_points.timing_point_at(time)
         difficulty = control_points.difficulty_point_at(time)
@@ -65,19 +79,33 @@ class ControlPointProperties:
         if kiai:
             effect_flags |= EffectFlags.KIAI
 
-        omit_first_bar_line = timing.omit_first_bar_line if timing is not None else TimingPoint.DEFAULT_OMIT_FIRST_BAR_LINE
+        omit_first_bar_line = (
+            timing.omit_first_bar_line
+            if timing is not None
+            else TimingPoint.DEFAULT_OMIT_FIRST_BAR_LINE
+        )
         if omit_first_bar_line:
             effect_flags |= EffectFlags.OMIT_FIRST_BAR_LINE
 
-        slider_velocity = difficulty.slider_velocity if difficulty is not None else DifficultyPoint.DEFAULT_SLIDER_VELOCITY
+        slider_velocity = (
+            difficulty.slider_velocity
+            if difficulty is not None
+            else DifficultyPoint.DEFAULT_SLIDER_VELOCITY
+        )
 
         if timing is not None:
             timing_signature = timing.time_signature.numerator
         else:
             timing_signature = TimingPoint.default().time_signature.numerator
 
-        sample_bank = int(tmp_hit_sample) if update_sample_bank else last_props.sample_bank
-        custom_sample_bank = tmp_hit_sample.custom_sample_bank if tmp_hit_sample.custom_sample_bank >= 0 else last_props.custom_sample_bank
+        sample_bank = (
+            int(tmp_hit_sample) if update_sample_bank else last_props.sample_bank
+        )
+        custom_sample_bank = (
+            tmp_hit_sample.custom_sample_bank
+            if tmp_hit_sample.custom_sample_bank >= 0
+            else last_props.custom_sample_bank
+        )
 
         return cls(
             slider_velocity=slider_velocity,
@@ -98,6 +126,7 @@ class ControlPointProperties:
             and self.effect_flags == other.effect_flags
         )
 
+
 @dataclass
 class ControlPointGroup:
     time: float
@@ -111,19 +140,20 @@ class ControlPointGroup:
     def from_timing(cls, point: "TimingPoint") -> "ControlPointGroup":
         return cls(time=point.time, timing=point)
 
+
 def add_path_data(
-        writer: io.StringIO,
-        slider: "HitObjectSlider",
-        pos: "Pos",
-        mode: "GameMode",
-        bufs: "CurveBuffers",
+    writer: io.StringIO,
+    slider: "HitObjectSlider",
+    pos: "Pos",
+    mode: "GameMode",
+    bufs: "CurveBuffers",
 ) -> None:
     last_type: Optional["PathType"] = None
     control_points = slider.path.control_points
     num_points = len(control_points)
 
     def get_separator(index: int) -> str:
-        return ',' if index == num_points - 1 else '|'
+        return "," if index == num_points - 1 else "|"
 
     for i in range(num_points):
         point = control_points[i]
@@ -132,8 +162,7 @@ def add_path_data(
             path_type = point.path_type
 
             needs_explicit_segment = (
-                path_type != last_type or
-                path_type.kind == SplineType.PerfectCurve
+                path_type != last_type or path_type.kind == SplineType.PerfectCurve
             )
 
             if i > 1:
@@ -183,7 +212,7 @@ def add_path_data(
         else:
             sound_type = 0
 
-        suffix = ',' if i == span_count else '|'
+        suffix = "," if i == span_count else "|"
         writer.write(f"{sound_type}{suffix}")
 
     for i in range(span_count + 1):
@@ -195,11 +224,12 @@ def add_path_data(
         suffix = "," if i == span_count else "|"
         writer.write(suffix)
 
+
 def get_sample_bank(
-        writer: io.StringIO,
-        samples: List["HitSampleInfo"],
-        banks_only: bool,
-        mode: "GameMode",
+    writer: io.StringIO,
+    samples: list["HitSampleInfo"],
+    banks_only: bool,
+    mode: "GameMode",
 ) -> None:
     normal_bank_val = 0
     for sample in samples:
@@ -221,7 +251,10 @@ def get_sample_bank(
 
     custom_sample_bank = 0
     for sample in samples:
-        if not isinstance(sample.name, srtr) and sample.name != HitSampleInfo.HIT_NORMAL:
+        if (
+            not isinstance(sample.name, srtr)
+            and sample.name != HitSampleInfo.HIT_NORMAL
+        ):
             custom_sample_bank = sample.custom_sample_bank
             break
 
@@ -242,10 +275,11 @@ def get_sample_bank(
     if sample_filename is not None:
         writer.write(sample_filename)
 
+
 def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None:
-    ticks: List[float] = []
+    ticks: list[float] = []
     curve_bufs = CurveBuffers()
-    collected_samples: List["ControlPointProperties"] = []
+    collected_samples: list["ControlPointProperties"] = []
 
     for h in map_obj.hit_objects:
         end_time = h.end_time_with_bufs(curve_bufs)
@@ -264,22 +298,32 @@ def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None
                     map_obj.slider_tick_rate,
                     map_obj.control_points,
                     curve_bufs,
-                    ticks
+                    ticks,
                 )
 
                 for event in events:
                     if event.kind in (SliderEventType.Tick, SliderEventType.LastTick):
                         continue
                     elif event.kind == SliderEventType.Head:
-                        samples = slider.node_samples[0] if slider.node_samples else h.samples
+                        samples = (
+                            slider.node_samples[0] if slider.node_samples else h.samples
+                        )
                         collect_sample(collected_samples, samples, event.time)
                     elif event.kind == SliderEventType.Repeat:
                         idx = event.span_idx + 1
-                        samples = slider.node_samples[idx] if idx < len(slider.node_samples) else h.samples
+                        samples = (
+                            slider.node_samples[idx]
+                            if idx < len(slider.node_samples)
+                            else h.samples
+                        )
                         collect_sample(collected_samples, samples, event.time)
                     elif event.kind == SliderEventType.Tail:
                         idx = slider.repeat_count + 1
-                        samples = slider.node_samples[idx] if idx < len(slider.node_samples) else h.samples
+                        samples = (
+                            slider.node_samples[idx]
+                            if idx < len(slider.node_samples)
+                            else h.samples
+                        )
                         collect_sample(collected_samples, samples, event.time)
 
             elif map_obj.mode == GameMode.Taiko:
@@ -294,13 +338,21 @@ def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None
                     map_obj.slider_multiplier,
                     map_obj.control_points,
                     curve_bufs,
-                    ticks
+                    ticks,
                 )
 
                 node_idx = 0
                 for event in events:
-                    if event.kind in (SliderEventType.Head, SliderEventType.Repeat, SliderEventType.Tail):
-                        samples = slider.node_samples[node_idx] if node_idx < len(slider.node_samples) else h.samples
+                    if event.kind in (
+                        SliderEventType.Head,
+                        SliderEventType.Repeat,
+                        SliderEventType.Tail,
+                    ):
+                        samples = (
+                            slider.node_samples[node_idx]
+                            if node_idx < len(slider.node_samples)
+                            else h.samples
+                        )
                         collect_sample(collected_samples, samples, event.time)
                         node_idx += 1
                     elif event.kind in (SliderEventType.Tick, SliderEventType.LastTick):
@@ -330,10 +382,11 @@ def collect_samples(map_obj: "Beatmap", control_points: "ControlPoints") -> None
     except StopIteration:
         pass
 
+
 def collect_sample(
-        collected_samples: List[SamplePoint],
-        samples: List[HitSampleInfo],
-        end_time: float,
+    collected_samples: list[SamplePoint],
+    samples: list[HitSampleInfo],
+    end_time: float,
 ) -> None:
     if not samples:
         return
@@ -345,22 +398,27 @@ def collect_sample(
         time=end_time,
         sample_bank=SamplePoint.DEFAULT_SAMPLE_BANK,
         sample_volume=volume,
-        custom_sample_bank=custom_idx
+        custom_sample_bank=custom_idx,
     )
 
     collected_samples.append(sample_point)
 
+
 def slider_events(
-        start_time: float,
-        slider: "HitObjectSlider",
-        format_version: int,
-        slider_tick_rate: float,
-        control_points: "ControlPoints",
-        curve_bufs: "CurveBuffers",
-        ticks: List["SliderEvent"]
+    start_time: float,
+    slider: "HitObjectSlider",
+    format_version: int,
+    slider_tick_rate: float,
+    control_points: "ControlPoints",
+    curve_bufs: "CurveBuffers",
+    ticks: list["SliderEvent"],
 ) -> "SliderEventsIter":
     timing_point = control_points.timing_point_at(start_time)
-    beat_len = timing_point.beat_len if timing_point is not None else TimingPoint.DEFAULT_BEAT_LEN
+    beat_len = (
+        timing_point.beat_len
+        if timing_point is not None
+        else TimingPoint.DEFAULT_BEAT_LEN
+    )
 
     difficulty_point = control_points.difficulty_point_at(start_time)
     if difficulty_point is not None:
@@ -386,24 +444,19 @@ def slider_events(
     span_duration = total_duration / float(span_count)
 
     return SliderEventsIter.new(
-        start_time,
-        span_duration,
-        slider_velocity,
-        tick_dist,
-        dist,
-        span_count,
-        ticks
+        start_time, span_duration, slider_velocity, tick_dist, dist, span_count, ticks
     )
 
+
 def juicestream_events(
-        start_time: float,
-        slider: "HitObjectSlider",
-        format_version: int,
-        slider_tick_rate: float,
-        slider_multiplier: float,
-        control_points: "ControlPoints",
-        curve_bufs: "CurveBuffers",
-        ticks: List["SliderEvent"]
+    start_time: float,
+    slider: "HitObjectSlider",
+    format_version: int,
+    slider_tick_rate: float,
+    slider_multiplier: float,
+    control_points: "ControlPoints",
+    curve_bufs: "CurveBuffers",
+    ticks: list["SliderEvent"],
 ) -> "SliderEventsIter":
     difficulty_point = control_points.difficulty_point_at(start_time)
     slider_velocity = (
@@ -423,10 +476,5 @@ def juicestream_events(
     span_duration = total_duration / float(span_count)
 
     return SliderEventsIter.new(
-        start_time,
-        span_duration,
-        tick_dist,
-        dist,
-        span_count,
-        ticks
+        start_time, span_duration, tick_dist, dist, span_count, ticks
     )

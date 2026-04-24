@@ -112,15 +112,15 @@ class HitSampleInfo:
 
     @classmethod
     def new(
-            cls,
-            name: HitSampleInfoName,
-            bank: Optional[SampleBank],
-            custom_sample_bank: int,
-            volume: int
+        cls,
+        name: HitSampleInfoName,
+        bank: SampleBank | None,
+        custom_sample_bank: int,
+        volume: int,
     ) -> "HitSampleInfo":
         resolved_bank = bank if bank is not None else SampleBank.NORMAL
 
-        suffix: Optional[int] = custom_sample_bank if custom_sample_bank >= 2 else None
+        suffix: int | None = custom_sample_bank if custom_sample_bank >= 2 else None
 
         return cls(
             name=name,
@@ -128,11 +128,12 @@ class HitSampleInfo:
             suffix=suffix,
             custom_sample_bank=custom_sample_bank,
             bank_specified=bank is not None,
-            is_layered=False
+            is_layered=False,
         )
 
     def lookup_name(self) -> "LookupName":
         return LookupName(self)
+
 
 class LookupName:
     def __init__(self, sample_info: "HitSampleInfo"):

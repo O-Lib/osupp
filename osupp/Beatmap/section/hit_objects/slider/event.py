@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import List
 from enum import Enum, auto
+from typing import List
+
 
 class SliderEventType(Enum):
     Head = auto()
@@ -33,14 +34,14 @@ class SliderEventsIter:
 
     @classmethod
     def new(
-            cls,
-            start_time: float,
-            span_duration: float,
-            velocity: float,
-            tick_dist: float,
-            total_dist: float,
-            span_count: int,
-            ticks: List["SliderEvent"]
+        cls,
+        start_time: float,
+        span_duration: float,
+        velocity: float,
+        tick_dist: float,
+        total_dist: float,
+        span_count: int,
+        ticks: list["SliderEvent"],
     ) -> "SliderEventsIter":
         effective_len = min(cls.MAX_LEN, total_dist)
         clamped_tick_dist = max(0.0, min(tick_dist, effective_len))
@@ -55,7 +56,7 @@ class SliderEventsIter:
             len=effective_len,
             span_count=span_count,
             ticks=ticks,
-            state=SliderEventsIterState.Head
+            state=SliderEventsIterState.Head,
         )
 
     def __init__(

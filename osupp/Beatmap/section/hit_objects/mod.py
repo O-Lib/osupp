@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from .circle import HitObjectCircle
@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 BASE_SCORING_DIST: float = 100.0
 
+
 @dataclass
 class HitObjectKind:
     Circle = "HitObjectCircle"
@@ -17,7 +18,9 @@ class HitObjectKind:
     Spinner = "HitObjectSpinner"
     Hold = "HitObjectHold"
 
-    inner: Union["HitObjectCircle", "HitObjectSlider", "HitObjectSpinner", "HitObjectHold"]
+    inner: Union[
+        "HitObjectCircle", "HitObjectSlider", "HitObjectSpinner", "HitObjectHold"
+    ]
 
     @property
     def new_combo(self) -> bool:
@@ -41,6 +44,7 @@ class HitObjectKind:
     @classmethod
     def from_hold(cls, h: "HitObjectHold") -> "HitObjectKind":
         return cls(inner=h)
+
 
 class HitObject:
     def __init__(
