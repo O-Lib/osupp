@@ -145,7 +145,7 @@ class ControlPointGroup:
 
 
 def add_path_data(
-    writer: io.StringIO,
+    writer: TextIO,
     slider: "HitObjectSlider",
     pos: "Pos",
     mode: "GameMode",
@@ -229,7 +229,7 @@ def add_path_data(
 
 
 def get_sample_bank(
-    writer: io.StringIO,
+    writer: TextIO,
     samples: list["HitSampleInfo"],
     banks_only: bool,
     mode: "GameMode",
