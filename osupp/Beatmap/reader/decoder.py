@@ -17,8 +17,8 @@ class Decoder(Generic[R]):
 
     @classmethod
     def new(cls, inner: io.BufferedIOBase) -> "Decoder[io.BufferedIOBase]":
-        buffer_inner = cast(io.BufferedReader, inner)
-        encoding = cls.read_bom(inner)
+        buffered_inner = cast(io.BufferedReader, inner)
+        encoding = cls.read_bom(buffered_inner)
         decoder = cls(inner)
         decoder.encoding = encoding
         return decoder
