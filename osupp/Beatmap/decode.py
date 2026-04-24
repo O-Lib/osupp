@@ -17,7 +17,6 @@ S = TypeVar("S", bound="DecodeState")
 
 def from_path(target_class: type[D], path: str | Path) -> D:
     with open(path, "rb") as f:
-        reader = io.BufferedReader(f)
         return target_class.decode(f)
 
 
