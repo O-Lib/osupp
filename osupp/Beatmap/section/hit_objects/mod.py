@@ -1,14 +1,46 @@
-from typing import Union
+from dataclasses import dataclass
+from typing import Union, TYPE_CHECKING
 
-from .circle import HitObjectCircle
-from .hit_samples import HitSampleInfo
-from .hold import HitObjectHold
-from .slider import CurveBuffers, HitObjectSlider
-from .spinner import HitObjectSpinner
+if TYPE_CHECKING:
+    from .circle import HitObjectCircle
+    from .hit_samples import HitSampleInfo
+    from .hold import HitObjectHold
+    from .slider import CurveBuffers, HitObjectSlider
+    from .spinner import HitObjectSpinner
 
 BASE_SCORING_DIST: float = 100.0
-HitObjectKind = Union[HitObjectCircle, HitObjectSlider, HitObjectSpinner, HitObjectHold]
 
+@dataclass
+class HitObjectKind:
+    Circle = "HitObjectCircle"
+    Slider = "HitObjectSlider"
+    Spinner = "HitObjectSpinner"
+    Hold = "HitObjectHold"
+
+    inner: Union["HitObjectCircle", "HitObjectSlider", "HitObjectSpinner", "HitObjectHold"]
+
+    @property
+    def new_combo(self) -> bool:
+        if isinstance(self.inner, (HitObjectCircle, HitObjectSlider, HitObjectSpinner)):
+            return self.inner.new_combo
+
+        return False
+
+    @classmethod
+    def from_circle(cls, h: "HitObjectCircle") -> "HitObjectKind":
+        return cls(inner=h)
+
+    @classmethod
+    def from_slider(cls, h: "HitObjectSlider") -> "HitObjectKind":
+        return cls(inner=h)
+
+    @classmethod
+    def from_spinner(cls, h: "HitObjectSpinner") -> "HitObjectKind":
+        return cls(inner=h)
+
+    @classmethod
+    def from_hold(cls, h: "HitObjectHold") -> "HitObjectKind":
+        return cls(inner=h)
 
 class HitObject:
     def __init__(

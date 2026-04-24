@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
 
+from section.difficulty import DifficultyKey
 from utils import Pos
 
 if TYPE_CHECKING:
@@ -320,8 +321,9 @@ class Beatmap:
             self.encode(file)
 
     def encode_to_string(self) -> str:
-        writer = io.StringIO()
-        return self.encode(writer)
+        with io.StringIO() as writer:
+            self.encode(writer)
+            return writer.getvalue()
 
     def encode(self, writer: TextIO) -> None:
         writer.write(f"osu file format v{self.format_version}\n")
@@ -349,6 +351,8 @@ class Beatmap:
 
         writer.write("\n")
         self._encode_hit_objects(writer)
+
+        writer.flush()
 
     def _encode_general(self, writer: TextIO) -> None:
         writer.write(
@@ -383,7 +387,7 @@ class Beatmap:
             f"{GeneralKey.WidescreenStoryboard}: {int(self.widescreen_storyboard)}\n"
         )
 
-        if self.sample_match_playback_rate:
+        if self.samples_match_playback_rate:
             writer.write(f"{GeneralKey.SamplesMatchPlaybackRate}: 1\n")
 
     def _encode_editor(self, writer: TextIO) -> None:
@@ -420,6 +424,15 @@ class Beatmap:
 
         if self.tags:
             writer.write(f"{MetadataKey.Tags}: {self.tags}\n")
+
+    def _encode_difficulty(self, writer: TextIO) -> None:
+        writer.write("[Difficulty]\n")
+        writer.write(f"{DifficultyKey.HPDrainRate}: {self.hp_drain_rate}\n")
+        writer.write(f"{DifficultyKey.CircleSize}: {self.circle_size}\n")
+        writer.write(f"{DifficultyKey.OverallDifficulty}: {self.overall_difficulty}\n")
+        writer.write(f"{DifficultyKey.ApproachRate}: {self.approach_rate}\n")
+        writer.write(f"{DifficultyKey.SliderMultiplier}: {self.slider_multiplier}\n")
+        writer.write(f"{DifficultyKey.SliderTickRate}: {self.slider_tick_rate}\n")
 
     def _encode_events(self, writer: TextIO) -> None:
         writer.write("[Events]\n")
@@ -492,7 +505,7 @@ class Beatmap:
 
         for custom in self.custom_colors:
             writer.write(
-                f"{custom.name}: {custom.color.red()},{custom.color.green()},{custom.color.blue()},{custom.color.alpha()}\n"
+                f"{custom.name}: {custom.color.red},{custom.color.green},{custom.color.blue},{custom.color.alpha}\n"
             )
 
     def _encode_hit_objects(self, writer: TextIO) -> None:

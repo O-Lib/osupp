@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
+from typing import Optional
 
 from utils import ParseNumberError
 
@@ -109,9 +110,29 @@ class HitSampleInfo:
         self.bank_specified = bank is not None
         self.is_layered = False
 
+    @classmethod
+    def new(
+            cls,
+            name: HitSampleInfoName,
+            bank: Optional[SampleBank],
+            custom_sample_bank: int,
+            volume: int
+    ) -> "HitSampleInfo":
+        resolved_bank = bank if bank is not None else SampleBank.NORMAL
+
+        suffix: Optional[int] = custom_sample_bank if custom_sample_bank >= 2 else None
+
+        return cls(
+            name=name,
+            bank=resolved_bank,
+            suffix=suffix,
+            custom_sample_bank=custom_sample_bank,
+            bank_specified=bank is not None,
+            is_layered=False
+        )
+
     def lookup_name(self) -> "LookupName":
         return LookupName(self)
-
 
 class LookupName:
     def __init__(self, sample_info: "HitSampleInfo"):
