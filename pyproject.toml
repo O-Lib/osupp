@@ -2,6 +2,10 @@
 name = "osupp"
 version = "0.0.1"
 description = "osu! PP Calculation for Python"
+authors = [
+    "DevilPedrow",
+    "Error44"
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
