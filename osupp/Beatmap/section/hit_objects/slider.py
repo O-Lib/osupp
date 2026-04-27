@@ -208,9 +208,9 @@ class Curve:
                     break
 
             if is_flat:
-                l, r = self._bezier_subdivide(parent)
+                left, right = self._bezier_subdivide(parent)
                 self.path.append(parent[0])
-                lr = l + r[1:]
+                lr = left + right[1:]
                 for i in range(1, len(lr) - 2, 2):
                     self.path.append((lr[i] + (lr[i + 1] * 2.0) + lr[i + 2]) * 0.25)
             else:
@@ -223,18 +223,18 @@ class Curve:
     def _bezier_subdivide(self, points: list[Pos]) -> tuple[list[Pos], list[Pos]]:
         count = len(points)
         midpoints = list(points)
-        l = [Pos()] * count
-        r = [Pos()] * count
+        left = [Pos()] * count
+        right = [Pos()] * count
 
         for i in range(1, count)[::-1]:
-            l[count - i - 1] = midpoints[0]
-            r[i] = midpoints[i]
+            left[count - i - 1] = midpoints[0]
+            right[i] = midpoints[i]
             for j in range(i):
                 midpoints[j] = (midpoints[j] + midpoints[j + 1]) * 0.5
 
-        l[count - 1] = midpoints[0]
-        r[0] = midpoints[0]
-        return l, r
+        left[count - 1] = midpoints[0]
+        right[0] = midpoints[0]
+        return left, right
 
     def _approximate_catmull(self, points: list[Pos]):
         if len(points) == 1:

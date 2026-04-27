@@ -43,7 +43,7 @@ class DifficultyPoint:
     generate_ticks: bool = True
 
     def is_redundant(self, existing: DifficultyPoint) -> bool:
-        rerturn(
+        return(
             self.generate_ticks == existing.generate_ticks
             and abs(self.slider_velocity - existing.slider_velocity) < EPSILON
         )
@@ -81,8 +81,8 @@ class EffectPoint:
 class ControlPoints:
     timing_points: list[TimingPoint] = field(default_factory=list)
     difficulty_points: list[DifficultyPoint] = field(default_factory=list)
-    effect_point: list[EffectPoint] = field(default_factory=list)
-    sample_point: list[SamplePoint] = field(default_factory=list)
+    effect_points: list[EffectPoint] = field(default_factory=list)
+    sample_points: list[SamplePoint] = field(default_factory=list)
 
     def difficulty_point_at(self, time: float) -> DifficultyPoint:
         idx = bisect.bisect_right(self.difficulty_points, time, key=lambda x: x.time)

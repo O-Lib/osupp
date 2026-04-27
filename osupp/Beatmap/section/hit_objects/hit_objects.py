@@ -230,8 +230,8 @@ def convert_points(
     for point in points[1:]:
         vertices.append(PathControlPoint(read_point(point), None))
 
-    if end_point:
-        vertices.append(PathControlPoint(read_point(end_point), None))
+    if end_points:
+        vertices.append(PathControlPoint(read_point(end_points), None))
 
     end_point_len = 1 if end_points else 0
 
@@ -281,13 +281,13 @@ def convert_path_str(point_str: str, offset: Pos) -> list[PathControlPoint]:
         end_idx += 1
         if end_idx < len(point_split):
             if point_split[end_idx] and point_split[end_idx][0].isalpha():
-                end_point = (
+                end_points = (
                     point_split[end_idx + 1] if end_idx + 1 < len(point_split) else None
                 )
                 convert_points(
                     curve_points,
                     point_split[start_idx:end_idx],
-                    end_point,
+                    end_points,
                     first,
                     offset,
                 )
@@ -374,11 +374,13 @@ class HitObjectsState:
                 repeat_count = max(0, parse_int(split[6]) - 1)
                 expected_dist = parse_float(split[7]) if len(split) > 7 else None
 
+                control_points = convert_path_str(point_str, pos)
+
                 slider = HitObjectSlider(
                     pos,
                     force_new_combo,
                     combo_offset if new_combo else 0,
-                    SliderPath([], expected_dist),
+                    SliderPath(control_points, expected_dist),
                     [],
                     repeat_count,
                     1.0,

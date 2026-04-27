@@ -24,7 +24,7 @@ class GameMode(IntEnum):
             case "3":
                 return cls.Mania
             case _:
-                raise ParseGamemodeError()
+                raise ParseGameModeError()
 
     @classmethod
     def from_int(cls, mode: int) -> "GameMode":

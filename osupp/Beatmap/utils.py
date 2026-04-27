@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
@@ -67,7 +68,7 @@ def parse_with_limits(s: str, limit: int | float, target_type: type) -> int | fl
 
 
 def parse_int(s: str) -> int:
-    return parse_with_limits(s, MAX_PARSE_VALUE, int)
+    return parse_with_limits(s, int(MAX_PARSE_VALUE), int)
 
 
 def parse_float(s: str) -> float:
