@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
-from utils import KeyValue, parse_int, ParseNumberError
+from utils import KeyValue, ParseNumberError, parse_int
 
 
 class ParseMetadataError(Exception):
@@ -23,7 +24,7 @@ class MetadataKey(Enum):
     BeatmapSetID = "BeatmapSetID"
 
     @classmethod
-    def from_str(cls, s: str) -> "MetadataKey":
+    def from_str(cls, s: str) -> MetadataKey:
         try:
             return cls(s)
         except ValueError:
@@ -85,5 +86,6 @@ class Metadata:
 
         except ParseNumberError as e:
             raise ParseMetadataError(f"failed to parse number: {e}")
+
 
 MetadataState = Metadata

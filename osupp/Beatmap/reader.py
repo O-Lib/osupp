@@ -34,10 +34,10 @@ class Decoder:
         if not raw_line:
             return None
 
-        if self.encoding == Encoding.Utf16LE and raw_line.endswith(b'\n'):
+        if self.encoding == Encoding.Utf16LE and raw_line.endswith(b"\n"):
             extra_byte = self.stream.read(1)
             raw_line += extra_byte
 
-        decoded = raw_line.decode(self.encoding.value, errors='replace')
+        decoded = raw_line.decode(self.encoding.value, errors="replace")
 
         return decoded.rstrip()

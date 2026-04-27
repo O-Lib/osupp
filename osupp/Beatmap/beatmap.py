@@ -1,26 +1,30 @@
 from __future__ import annotations
+
 import io
 from dataclasses import dataclass
 
-from reader import Decoder
-from section.enums import Section
-from section.general import General
-from section.editor import Editor
-from section.metadata import Metadata
-from section.difficulty import Difficulty
-from section.events import Events
-from section.timing_points import TimingPointsState
-from section.colors import Colors
-from section.hit_objects.hit_objects import HitObjectsState
 from encode import encode_beatmap
+from reader import Decoder
+from section.colors import Colors
+from section.difficulty import Difficulty
+from section.editor import Editor
+from section.enums import Section
+from section.events import Events
+from section.general import General
+from section.hit_objects.hit_objects import HitObjectsState
+from section.metadata import Metadata
+from section.timing_points import TimingPointsState
 
 LATEST_FORMAT_VERSION = 14
+
 
 class ParseBeatmapError(Exception):
     pass
 
+
 class UnknownFileFormatError(ParseBeatmapError):
     pass
+
 
 def try_version_from_line(line: str) -> str | None:
     if not line.startswith("osu file format v"):
@@ -28,7 +32,7 @@ def try_version_from_line(line: str) -> str | None:
             return None
         raise UnknownFileFormatError("unknown file format")
 
-    parts = line.split('v', 1)
+    parts = line.split("v", 1)
     if len(parts) > 1:
         try:
             return int(parts[-1])
@@ -51,20 +55,20 @@ class Beatmap:
     hit_objects: HitObjectsState
 
     @classmethod
-    def from_path(cls, path: str) -> "Beatmap":
+    def from_path(cls, path: str) -> Beatmap:
         with open(path, "rb") as f:
             reader = io.BufferedReader(f)
             decoder = Decoder(reader)
             return cls._decode(decoder)
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> "Beatmap":
+    def from_bytes(cls, data: bytes) -> Beatmap:
         reader = io.BufferedReader(io.BytesIO(data))
         decoder = Decoder(reader)
         return cls._decode(decoder)
 
     @classmethod
-    def _decode(cls, decoder: Decoder) -> "Beatmap":
+    def _decode(cls, decoder: Decoder) -> Beatmap:
         format_version = LATEST_FORMAT_VERSION
         use_current_line = False
         current_line_content = ""
@@ -91,9 +95,7 @@ class Beatmap:
         difficulty = Difficulty()
         events = Events()
         timing_points = TimingPointsState(
-            general.mode,
-            getattr(general, "sample_bank", 1),
-            100
+            general.mode, getattr(general, "sample_bank", 1), 100
         )
         colors = Colors()
         hit_objects = HitObjectsState()
@@ -163,7 +165,7 @@ class Beatmap:
             events=events,
             timing_points=timing_points,
             colors=colors,
-            hit_objects=hit_objects
+            hit_objects=hit_objects,
         )
 
     def encode_to_path(self, path: str) -> None:
@@ -172,6 +174,7 @@ class Beatmap:
 
     def encode_to_string(self) -> str:
         import io
+
         writer = io.StringIO()
         encode_beatmap(self, writer)
         return writer.getvalue()

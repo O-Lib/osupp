@@ -1,15 +1,17 @@
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Generator
+from collections.abc import Generator
 
+from section.enums import GameMode, SplineType
 from utils import Pos
-from section.enums import SplineType, GameMode
 
 BEZIER_TOLERANCE = 0.25
 CATMULL_DETAIL = 50
 CIRCULAR_ARC_TOLERANCE = 0.1
+
 
 @dataclass(slots=True)
 class PathType:
@@ -17,12 +19,12 @@ class PathType:
     degree: int | None = None
 
     @classmethod
-    def new_from_str(cls, s: str) -> "PathType":
+    def new_from_str(cls, s: str) -> PathType:
         if not s:
             return cls(SplineType.Catmull)
 
         char = s[0].upper()
-        if char == 'B':
+        if char == "B":
             if len(s) > 1:
                 try:
                     deg = int(s[1:])
@@ -32,12 +34,13 @@ class PathType:
                 except ValueError:
                     pass
             return cls(SplineType.BSpline)
-        elif char == 'L':
+        elif char == "L":
             return cls(SplineType.Linear)
-        elif char == 'P':
+        elif char == "P":
             return cls(SplineType.PerfectCurve)
         else:
             return cls(SplineType.Catmull)
+
 
 @dataclass(slots=True)
 class PathControlPoint:
@@ -46,7 +49,9 @@ class PathControlPoint:
 
 
 class Curve:
-    def __init__(self, mode: GameMode, points: list[PathControlPoint], expected_len: float | None):
+    def __init__(
+        self, mode: GameMode, points: list[PathControlPoint], expected_len: float | None
+    ):
         self.path: list[Pos] = []
         self.lengths: list[float] = []
 
@@ -60,7 +65,9 @@ class Curve:
     def progress_to_dist(self, progress: float) -> float:
         return max(0.0, min(1.0, progress)) * self.dist()
 
-    def _calculate_path(self, mode: GameMode, points: list[PathControlPoint], optimized_len: list[float]):
+    def _calculate_path(
+        self, mode: GameMode, points: list[PathControlPoint], optimized_len: list[float]
+    ):
         vertices = [p.pos for p in points]
         start = 0
 
@@ -68,14 +75,20 @@ class Curve:
             if points[i].path_type is None and i < len(points) - 1:
                 continue
 
-            segment_vertices = vertices[start:i+1]
+            segment_vertices = vertices[start : i + 1]
             if len(segment_vertices) == 1:
                 self.path.append(segment_vertices[0])
             elif len(segment_vertices) > 1:
-                segment_kind = points[start].path_type.kind if points[start].path_type else SplineType.Linear
+                segment_kind = (
+                    points[start].path_type.kind
+                    if points[start].path_type
+                    else SplineType.Linear
+                )
                 path_len = len(self.path)
 
-                self._calculate_subpath(mode, segment_vertices, segment_kind, optimized_len)
+                self._calculate_subpath(
+                    mode, segment_vertices, segment_kind, optimized_len
+                )
 
                 if path_len > 0 and self.path[path_len - 1] == self.path[path_len]:
                     self.path.pop(path_len)
@@ -93,23 +106,28 @@ class Curve:
             self.lengths.append(calculated_len)
 
         if expected_len is not None and abs(calculated_len - expected_len) >= 1e-7:
-            if len(self.path) >= 2 and self.path[-1] == self.path[-2] and expected_len > calculated_len:
+            if (
+                len(self.path) >= 2
+                and self.path[-1] == self.path[-2]
+                and expected_len > calculated_len
+            ):
                 self.lengths.append(calculated_len)
                 return
 
-            if len(self.lengths) == 1: return
+            if len(self.lengths) == 1:
+                return
 
             self.lengths.pop()
 
             last_valid = 0
-            for i in range(len(self.lengths)-1, -1, -1):
+            for i in range(len(self.lengths) - 1, -1, -1):
                 if self.lengths[i] < expected_len:
                     last_valid = i + 1
                     break
 
             if last_valid < len(self.lengths):
                 self.lengths = self.lengths[:last_valid]
-                self.path = self.path[:last_valid + 1]
+                self.path = self.path[: last_valid + 1]
 
                 if not self.lengths:
                     self.lengths.append(0.0)
@@ -119,14 +137,24 @@ class Curve:
                 prev_idx = end_idx - 1
                 direction = (self.path[end_idx] - self.path[prev_idx]).normalize()
 
-                self.path[end_idx] = self.path[prev_idx] + (direction * float(expected_len - self.lengths[prev_idx]))
+                self.path[end_idx] = self.path[prev_idx] + (
+                    direction * float(expected_len - self.lengths[prev_idx])
+                )
 
-    def _calculate_subpath(self, mode: GameMode, sub_points: list[Pos], path_type: SplineType, optimized_len: list[float]):
+    def _calculate_subpath(
+        self,
+        mode: GameMode,
+        sub_points: list[Pos],
+        path_type: SplineType,
+        optimized_len: list[float],
+    ):
         if path_type == SplineType.Linear:
             self.path.extend(sub_points)
 
         elif path_type == SplineType.PerfectCurve:
-            if len(sub_points) == 3 and self._approximate_circular_arc(sub_points[0], sub_points[1], sub_points[2]):
+            if len(sub_points) == 3 and self._approximate_circular_arc(
+                sub_points[0], sub_points[1], sub_points[2]
+            ):
                 return
             self._approximate_bezier(sub_points)
 
@@ -137,7 +165,8 @@ class Curve:
             start_len = len(self.path)
             self._approximate_catmull(sub_points)
 
-            if mode != GameMode.Osu: return
+            if mode != GameMode.Osu:
+                return
 
             sub_path = self.path[start_len:]
             self.path = self.path[:start_len]
@@ -153,9 +182,13 @@ class Curve:
                 dist_from_start = last_start.distance(curr)
                 len_removed_since_start += sub_path[i - 1].distance(curr)
 
-                if dist_from_start > 6.0 or ((i + 1) % (CATMULL_DETAIL * 2)) == 0 or i == len(sub_path) - 1:
+                if (
+                    dist_from_start > 6.0
+                    or ((i + 1) % (CATMULL_DETAIL * 2)) == 0
+                    or i == len(sub_path) - 1
+                ):
                     self.path.append(curr)
-                    optimized_len[0] += (len_removed_since_start - dist_from_start)
+                    optimized_len[0] += len_removed_since_start - dist_from_start
                     last_start = None
                     len_removed_since_start = 0.0
 
@@ -168,7 +201,9 @@ class Curve:
             limit = BEZIER_TOLERANCE * BEZIER_TOLERANCE * 4.0
             is_flat = True
             for i in range(len(parent) - 2):
-                if ((parent[i] - (parent[i+1] * 2.0)) + parent[i+2].length_squared() > limit):
+                if (parent[i] - (parent[i + 1] * 2.0)) + parent[
+                    i + 2
+                ].length_squared() > limit:
                     is_flat = False
                     break
 
@@ -177,7 +212,7 @@ class Curve:
                 self.path.append(parent[0])
                 lr = l + r[1:]
                 for i in range(1, len(lr) - 2, 2):
-                    self.path.append((lr[i] + (lr[i+1] * 2.0) + lr[i+2]) * 0.25)
+                    self.path.append((lr[i] + (lr[i + 1] * 2.0) + lr[i + 2]) * 0.25)
             else:
                 left, right = self._bezier_subdivide(parent)
                 to_flatten.append(right)
@@ -195,14 +230,15 @@ class Curve:
             l[count - i - 1] = midpoints[0]
             r[i] = midpoints[i]
             for j in range(i):
-                midpoints[j] = (midpoints[j] + midpoints[j+1]) * 0.5
+                midpoints[j] = (midpoints[j] + midpoints[j + 1]) * 0.5
 
         l[count - 1] = midpoints[0]
         r[0] = midpoints[0]
         return l, r
 
     def _approximate_catmull(self, points: list[Pos]):
-        if len(points) == 1: return
+        if len(points) == 1:
+            return
         for i in range(len(points) - 1):
             v1 = points[i - 1] if i > 0 else points[i]
             v2 = points[i]
@@ -215,8 +251,20 @@ class Curve:
                 t3 = t2 * t1
 
                 pos = Pos(
-                    0.5 * (2.0 * v2.x + (-v1.x + v3.x) * t1 + (2.0 * v1.x - 5.0 * v2.x + 4.0 * v3.x - v4.x) * t2 + (-v1.x + 3.0 * (v2.x - v3.x) + v4.x) * t3),
-                    0.5 * (2.0 * v2.y + (-v1.y + v3.y) * t1 + (2.0 * v1.y - 5.0 * v2.y + 4.0 * v3.y - v4.y) * t2 + (-v1.y + 3.0 * (v2.y - v3.y) + v4.y) * t3)
+                    0.5
+                    * (
+                        2.0 * v2.x
+                        + (-v1.x + v3.x) * t1
+                        + (2.0 * v1.x - 5.0 * v2.x + 4.0 * v3.x - v4.x) * t2
+                        + (-v1.x + 3.0 * (v2.x - v3.x) + v4.x) * t3
+                    ),
+                    0.5
+                    * (
+                        2.0 * v2.y
+                        + (-v1.y + v3.y) * t1
+                        + (2.0 * v1.y - 5.0 * v2.y + 4.0 * v3.y - v4.y) * t2
+                        + (-v1.y + 3.0 * (v2.y - v3.y) + v4.y) * t3
+                    ),
                 )
                 self.path.append(pos)
 
@@ -229,7 +277,7 @@ class Curve:
 
         centre = Pos(
             (a_sq * (b - c).y + b_sq * (c - a).y + c_sq * (a - b).y) / d,
-            (a_sq * (c - b).x + b_sq * (a - c).x + c_sq * (b - a).x) / d
+            (a_sq * (c - b).x + b_sq * (a - c).x + c_sq * (b - a).x) / d,
         )
 
         radius = (a - centre).length()
@@ -248,9 +296,14 @@ class Curve:
             theta_range = 2.0 * math.pi - theta_range
 
         val = max(-1.0, min(1.0, 1.0 - (CIRCULAR_ARC_TOLERANCE / radius)))
-        sub_points = 2 if (2.0 * radius) <= CIRCULAR_ARC_TOLERANCE else max(2, math.ceil(theta_range / (2.0 * math.acos(val))))
+        sub_points = (
+            2
+            if (2.0 * radius) <= CIRCULAR_ARC_TOLERANCE
+            else max(2, math.ceil(theta_range / (2.0 * math.acos(val))))
+        )
 
-        if sub_points >= 1000: return False
+        if sub_points >= 1000:
+            return False
 
         for i in range(sub_points):
             fract = i / float(sub_points - 1)
@@ -269,11 +322,7 @@ class SliderPath:
 
     def curve(self) -> Curve:
         if self._curve is None:
-            self._curve = Curve(
-                self.mode,
-                self.control_points,
-                self.expected_dist
-            )
+            self._curve = Curve(self.mode, self.control_points, self.expected_dist)
         return self._curve
 
 
@@ -284,6 +333,7 @@ class SliderEventType(Enum):
     LastTick = 3
     Tail = 4
 
+
 @dataclass(slots=True)
 class SliderEvent:
     kind: SliderEventType
@@ -292,13 +342,14 @@ class SliderEvent:
     time: float
     path_progress: float
 
+
 def generate_slider_events(
-        start_time: float,
-        span_duration: float,
-        velocity: float,
-        tick_dist: float,
-        total_dist: float,
-        span_count: int
+    start_time: float,
+    span_duration: float,
+    velocity: float,
+    tick_dist: float,
+    total_dist: float,
+    span_count: int,
 ) -> Generator[SliderEvent, None, None]:
     MAX_LEN = 100000.0
     TAIL_LENIENCY = -36.0
@@ -310,7 +361,7 @@ def generate_slider_events(
     yield SliderEvent(SliderEventType.Head, 0, start_time, start_time, 0.0)
 
     for span in range(span_count):
-        reversed_span = (span % 2 == 1)
+        reversed_span = span % 2 == 1
         span_start = start_time + span * span_duration
         with_repeat = span < span_count - 1
 
@@ -318,28 +369,65 @@ def generate_slider_events(
         d = tick_dist
         if d > 0.0:
             while d <= length:
-                if d >= length -  min_dist_from_end: break
+                if d >= length - min_dist_from_end:
+                    break
                 progress = d / length
                 time_prog = 1.0 - progress if reversed_span else progress
-                span_ticks.append(SliderEvent(SliderEventType.Tick, span, span_start, span_start + time_prog * span_duration, progress))
+                span_ticks.append(
+                    SliderEvent(
+                        SliderEventType.Tick,
+                        span,
+                        span_start,
+                        span_start + time_prog * span_duration,
+                        progress,
+                    )
+                )
                 d += tick_dist
 
         if reversed_span:
             yield from reversed(span_ticks)
             if with_repeat:
-                yield SliderEvent(SliderEventType.Repeat, span, span_start, span_start + span_duration, float((span + 1) % 2))
+                yield SliderEvent(
+                    SliderEventType.Repeat,
+                    span,
+                    span_start,
+                    span_start + span_duration,
+                    float((span + 1) % 2),
+                )
         else:
             yield from span_ticks
             if with_repeat:
-                yield SliderEvent(SliderEventType.Repeat, span, span_start, span_start + span_duration, float((span + 1) % 2))
+                yield SliderEvent(
+                    SliderEventType.Repeat,
+                    span,
+                    span_start,
+                    span_start + span_duration,
+                    float((span + 1) % 2),
+                )
 
     total_duration = span_count * span_duration
     final_span_idx = span_count - 1
-    final_span_start = start_time +  final_span_idx * span_duration
+    final_span_start = start_time + final_span_idx * span_duration
 
-    last_tick_time = max(start_time + total_duration / 2.0, final_span_start + span_duration + TAIL_LENIENCY)
+    last_tick_time = max(
+        start_time + total_duration / 2.0,
+        final_span_start + span_duration + TAIL_LENIENCY,
+    )
     last_tick_progress = (last_tick_time - final_span_start) / span_duration
-    if span_count % 2 == 0: last_tick_progress = 1.0 - last_tick_progress
+    if span_count % 2 == 0:
+        last_tick_progress = 1.0 - last_tick_progress
 
-    yield SliderEvent(SliderEventType.LastTick, final_span_idx, final_span_start, last_tick_time, last_tick_progress)
-    yield SliderEvent(SliderEventType.Tail, final_span_idx, final_span_start, start_time + total_duration, float(span_count % 2))
+    yield SliderEvent(
+        SliderEventType.LastTick,
+        final_span_idx,
+        final_span_start,
+        last_tick_time,
+        last_tick_progress,
+    )
+    yield SliderEvent(
+        SliderEventType.Tail,
+        final_span_idx,
+        final_span_start,
+        start_time + total_duration,
+        float(span_count % 2),
+    )

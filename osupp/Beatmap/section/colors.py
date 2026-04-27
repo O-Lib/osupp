@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 
-from utils import KeyValue, parse_int, ParseNumberError, trim_comment
+from utils import KeyValue, ParseNumberError, parse_int, trim_comment
 
 
 class ParseColorsError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
 
 def parse_u8(s: str) -> int:
     try:
@@ -26,16 +28,18 @@ class Color:
     a: int = 255
 
     @classmethod
-    def from_str(cls, s: str) -> "Color":
-        parts = [part.strip() for part in s.split(',')]
+    def from_str(cls, s: str) -> Color:
+        parts = [part.strip() for part in s.split(",")]
 
         if len(parts) == 3:
-            r, g, b =parts
+            r, g, b = parts
             a = "255"
         elif len(parts) == 4:
             r, g, b, a = parts
         else:
-            raise ParseColorsError("color specified incorrect format (should be R,G,B or R,G,B,A")
+            raise ParseColorsError(
+                "color specified incorrect format (should be R,G,B or R,G,B,A"
+            )
 
         try:
             return cls(parse_u8(r), parse_u8(g), parse_u8(b), parse_u8(a))

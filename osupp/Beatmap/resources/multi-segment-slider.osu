@@ -21,4 +21,3 @@ osu file format v128
 
 // Explicit perfect-curve multi-segment (Should not convert to bezier)
 0,0,7000,2,0,P|75:145|P|170:75|300:145|410:20,1,650,0:0:0:0:
-

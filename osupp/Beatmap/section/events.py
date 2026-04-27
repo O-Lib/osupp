@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
-from utils import parse_float, ParseNumberError, trim_comment, clean_filename
+from utils import ParseNumberError, clean_filename, parse_float, trim_comment
+
 
 class ParseEventsError(Exception):
     def __init__(self, message: str):
@@ -19,7 +21,7 @@ class EventType(Enum):
     Animation = 6
 
     @classmethod
-    def from_str(cls, s: str) -> "EventType":
+    def from_str(cls, s: str) -> EventType:
         match s:
             case "0" | "Background":
                 return cls.Background
@@ -50,6 +52,7 @@ class BreakPeriod:
     def has_effect(self) -> bool:
         return self.duration() >= 650.0
 
+
 VIDEO_EXTENSIONS = {"mp4", "mov", "avi", "flv", "mpg", "wmv", "m4v"}
 
 
@@ -57,6 +60,7 @@ VIDEO_EXTENSIONS = {"mp4", "mov", "avi", "flv", "mpg", "wmv", "m4v"}
 class Events:
     background_file: str
     breaks: list[BreakPeriod]
+
     def __init__(self):
         self.background_file = ""
         self.breaks = []
@@ -101,12 +105,15 @@ class Events:
                     end_time_raw = parse_float(event_params)
 
                     end_time = max(start_time, end_time_raw)
-                    self.breaks.append(BreakPeriod(start_time=start_time, end_time=end_time))
+                    self.breaks.append(
+                        BreakPeriod(start_time=start_time, end_time=end_time)
+                    )
 
                 case EventType.Color | EventType.Sample | EventType.Animation:
                     pass
 
         except ParseNumberError as e:
             raise ParseEventsError(f"failed to parse number: {e}")
+
 
 EventsState = Events

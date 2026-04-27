@@ -1,9 +1,10 @@
-from typing import TypeVar, Type, Generic, Union
 from dataclasses import dataclass
+from typing import Generic, Type, TypeVar, Union
 
 # KEY VALUE
-#----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 K = TypeVar("K")
+
 
 class KeyValue(Generic[K]):
     __slots__ = ("key", "value")
@@ -13,7 +14,7 @@ class KeyValue(Generic[K]):
         self.value: str = value
 
     @classmethod
-    def parse(cls, s: str, key_type: Type[K]) -> "KeyValue[K] | None":
+    def parse(cls, s: str, key_type: type[K]) -> "KeyValue[K] | None":
         parts = [part.strip() for part in s.split(":", 1)]
 
         raw_key = parts[0] if parts else s.strip()
@@ -24,12 +25,15 @@ class KeyValue(Generic[K]):
             return cls(key=parsed_key, value=raw_value)
         except (ValueError, TypeError, KeyError):
             return None
-#----------------------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------------------
 
 # PARSE NUMBERS
-#----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 
 MAX_PARSE_VALUE = 2147483647
+
 
 class ParseNumberError(Exception):
     InvalidFloat = "invalid float"
@@ -41,7 +45,10 @@ class ParseNumberError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
 
-def parse_with_limits(s: str, limit: Union[int, float], target_type: type) -> Union[int, float]:
+
+def parse_with_limits(
+    s: str, limit: int | float, target_type: type
+) -> int | float:
     try:
         n = target_type(s.strip())
     except ValueError:
@@ -60,15 +67,20 @@ def parse_with_limits(s: str, limit: Union[int, float], target_type: type) -> Un
 
     return n
 
+
 def parse_int(s: str) -> int:
     return parse_with_limits(s, MAX_PARSE_VALUE, int)
 
+
 def parse_float(s: str) -> float:
     return parse_with_limits(s, float(MAX_PARSE_VALUE), float)
-#----------------------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------------------
 
 # POS
-#----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
+
 
 @dataclass(slots=True)
 class Pos:
@@ -120,7 +132,6 @@ class Pos:
         return self
 
     def __truediv__(self, other: float) -> "Pos":
-
         return Pos(self.x / other, self.y / other)
 
     def __itruediv__(self, other: float) -> "Pos":
@@ -133,21 +144,28 @@ class Pos:
 
     def __repr__(self) -> str:
         return f"Pos(x={self.x}, y={self.y})"
-#----------------------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------------------
+
 
 # STR EXTRA
-#----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 def trim_comment(s: str) -> str:
     index = s.find("//")
     if index == -1:
         return s.strip()
     return s[:index].rstrip()
 
+
 def to_standardized_path(s: str) -> str:
-    return s.replace('\\', '/')
+    return s.replace("\\", "/")
+
 
 def clean_filename(s: str) -> str:
     cleaned = s.strip('"')
     cleaned = cleaned.replace("\\\\", "\\")
     return to_standardized_path(cleaned)
-#----------------------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------------------

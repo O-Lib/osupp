@@ -1,12 +1,17 @@
-import unittest
 import io
+import unittest
 from enum import Enum
 
-from utils import KeyValue
+from beatmap import ParseBeatmapError, UnknownFileFormatError, try_version_from_line
 from reader import Decoder, Encoding
-from section.hit_objects.slider import generate_slider_events, SliderEventType, SliderPath
 from section.enums import GameMode, Section
-from beatmap import try_version_from_line, ParseBeatmapError, UnknownFileFormatError
+from section.hit_objects.slider import (
+    SliderEventType,
+    SliderPath,
+    generate_slider_events,
+)
+from utils import KeyValue
+
 
 class DummyKey(Enum):
     KEY = "key"
@@ -18,8 +23,8 @@ class DummyKey(Enum):
         except ValueError:
             raise ValueError()
 
-class TestKeyValue(unittest.TestCase):
 
+class TestKeyValue(unittest.TestCase):
     def test_key_and_value(self):
         kv = KeyValue.parse("key:value", DummyKey.from_str)
         self.assertIsNotNone(kv)
@@ -58,10 +63,45 @@ class TestReader(unittest.TestCase):
         self.assertEqual(decoder.read_line(), "hello world o/")
 
     def test_invalid_utf8(self):
-        src = bytes([
-            32, 209, 44, 49, 44, 55, 56, 50, 52, 53, 44, 57, 48, 50, 52, 53, 44,
-            48, 44, 48, 44, 48, 44, 50, 53, 53, 44, 50, 53, 53, 44, 50, 53, 53, 10
-        ])
+        src = bytes(
+            [
+                32,
+                209,
+                44,
+                49,
+                44,
+                55,
+                56,
+                50,
+                52,
+                53,
+                44,
+                57,
+                48,
+                50,
+                52,
+                53,
+                44,
+                48,
+                44,
+                48,
+                44,
+                48,
+                44,
+                50,
+                53,
+                53,
+                44,
+                50,
+                53,
+                53,
+                44,
+                50,
+                53,
+                53,
+                10,
+            ]
+        )
 
         stream = io.BufferedReader(io.BytesIO(src))
         decoder = Decoder(stream)
@@ -94,10 +134,16 @@ class TestSliderEvents(unittest.TestCase):
     SPAN_DURATION = 1000.0
 
     def test_single_span(self):
-        events = list(generate_slider_events(
-            self.START_TIME, self.SPAN_DURATION, 1.0,
-            self.SPAN_DURATION / 2.0, self.SPAN_DURATION, 1
-        ))
+        events = list(
+            generate_slider_events(
+                self.START_TIME,
+                self.SPAN_DURATION,
+                1.0,
+                self.SPAN_DURATION / 2.0,
+                self.SPAN_DURATION,
+                1,
+            )
+        )
 
         self.assertEqual(events[0].kind, SliderEventType.Head)
         self.assertAlmostEqual(events[0].time, self.START_TIME)
@@ -109,10 +155,16 @@ class TestSliderEvents(unittest.TestCase):
         self.assertAlmostEqual(events[3].time, self.SPAN_DURATION)
 
     def test_repeat(self):
-        events = list(generate_slider_events(
-            self.START_TIME, self.SPAN_DURATION, 1.0,
-            self.SPAN_DURATION / 2.0, self.SPAN_DURATION, 2
-        ))
+        events = list(
+            generate_slider_events(
+                self.START_TIME,
+                self.SPAN_DURATION,
+                1.0,
+                self.SPAN_DURATION / 2.0,
+                self.SPAN_DURATION,
+                2,
+            )
+        )
 
         self.assertEqual(events[0].kind, SliderEventType.Head)
         self.assertAlmostEqual(events[0].time, self.START_TIME)
@@ -124,16 +176,19 @@ class TestSliderEvents(unittest.TestCase):
         self.assertAlmostEqual(events[2].time, self.SPAN_DURATION)
 
         self.assertEqual(events[3].kind, SliderEventType.Tick)
-        self.assertAlmostEqual(events[3].time, self.SPAN_DURATION + self.SPAN_DURATION / 2.0)
+        self.assertAlmostEqual(
+            events[3].time, self.SPAN_DURATION + self.SPAN_DURATION / 2.0
+        )
 
         self.assertEqual(events[5].kind, SliderEventType.Tail)
         self.assertAlmostEqual(events[5].time, 2.0 * self.SPAN_DURATION)
 
     def test_non_even_ticks(self):
-        events = list(generate_slider_events(
-            self.START_TIME, self.SPAN_DURATION, 1.0,
-            300.0, self.SPAN_DURATION, 2
-        ))
+        events = list(
+            generate_slider_events(
+                self.START_TIME, self.SPAN_DURATION, 1.0, 300.0, self.SPAN_DURATION, 2
+            )
+        )
 
         self.assertEqual(events[0].kind, SliderEventType.Head)
         self.assertAlmostEqual(events[0].time, self.START_TIME)
@@ -163,10 +218,16 @@ class TestSliderEvents(unittest.TestCase):
         self.assertAlmostEqual(events[9].time, 2.0 * self.SPAN_DURATION)
 
     def test_last_tick_offset(self):
-        events = list(generate_slider_events(
-            self.START_TIME, self.SPAN_DURATION, 1.0,
-            self.SPAN_DURATION / 2.0, self.SPAN_DURATION, 1
-        ))
+        events = list(
+            generate_slider_events(
+                self.START_TIME,
+                self.SPAN_DURATION,
+                1.0,
+                self.SPAN_DURATION / 2.0,
+                self.SPAN_DURATION,
+                1,
+            )
+        )
 
         last_tick = events[2]
         self.assertEqual(last_tick.kind, SliderEventType.LastTick)
@@ -176,16 +237,22 @@ class TestSliderEvents(unittest.TestCase):
         velocity = 5.0
         min_dist = velocity * 10.0
 
-        events = list(generate_slider_events(
-            self.START_TIME, self.SPAN_DURATION, velocity,
-            velocity, self.SPAN_DURATION, 2
-        ))
+        events = list(
+            generate_slider_events(
+                self.START_TIME,
+                self.SPAN_DURATION,
+                velocity,
+                velocity,
+                self.SPAN_DURATION,
+                2,
+            )
+        )
 
         for event in events:
             if event.kind == SliderEventType.Tick:
                 self.assertTrue(
-                    event.time < self.SPAN_DURATION - min_dist or
-                    event.time > self.SPAN_DURATION + min_dist
+                    event.time < self.SPAN_DURATION - min_dist
+                    or event.time > self.SPAN_DURATION + min_dist
                 )
 
 
@@ -200,7 +267,6 @@ class TestSliderPath(unittest.TestCase):
 
 
 class TestSection(unittest.TestCase):
-
     def test_finds_valid_sections(self):
         # Garante que as strings corretas com parênteses retos são identificadas
         self.assertEqual(Section.try_from_line("[General]"), Section.General)

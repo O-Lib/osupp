@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 import io
 
-from section.enums import GameMode
+from section.enums import GameMode, HitSoundType
 from section.hit_objects.hit_objects import (
-    HitObjectCircle, HitObjectSlider, HitObjectSpinner, HitObjectHold,
-    HitObjectType
+    HitObjectCircle,
+    HitObjectHold,
+    HitObjectSlider,
+    HitObjectSpinner,
+    HitObjectType,
 )
-from section.enums import HitSoundType
 
 
 def encode_beatmap(beatmap, writer: io.TextIOBase) -> None:
@@ -44,20 +47,28 @@ def _encode_general(beatmap, writer) -> None:
     writer.write(f"PreviewTime: {beatmap.general.preview_time}\n")
     writer.write(f"Countdown: {beatmap.general.countdown.value}\n")
 
-    sample_set = beatmap.general.sample_bank.value if hasattr(beatmap.general, 'sample_bank') else 1
+    sample_set = (
+        beatmap.general.sample_bank.value
+        if hasattr(beatmap.general, "sample_bank")
+        else 1
+    )
     writer.write(f"SampleSet: {sample_set}\n")
     writer.write(f"StackLeniency: {beatmap.general.stack_leniency}\n")
     writer.write(f"Mode: {beatmap.general.mode.value}\n")
-    writer.write(f"LetterboxInBreaks: {1 if beatmap.general.letterbox_in_breaks else 0}\n")
+    writer.write(
+        f"LetterboxInBreaks: {1 if beatmap.general.letterbox_in_breaks else 0}\n"
+    )
 
     if beatmap.general.epilepsy_warning:
         writer.write("EpilepsyWarning: 1\n")
-    if getattr(beatmap.general, 'countdown_offset', 0) > 0:
+    if getattr(beatmap.general, "countdown_offset", 0) > 0:
         writer.write(f"CountdownOffset: {beatmap.general.countdown_offset}\n")
     if beatmap.general.mode == GameMode.Mania:
         writer.write(f"SpecialStyle: {1 if beatmap.general.special_style else 0}\n")
 
-    writer.write(f"WidescreenStoryboard: {1 if beatmap.general.widescreen_storyboard else 0}\n")
+    writer.write(
+        f"WidescreenStoryboard: {1 if beatmap.general.widescreen_storyboard else 0}\n"
+    )
 
     if beatmap.general.samples_match_playback_rate:
         writer.write("SamplesMatchPlaybackRate: 1\n")
@@ -114,7 +125,7 @@ def _encode_events(beatmap, writer) -> None:
     #
     writer.write("[Events]\n")
     if beatmap.events.background_file:
-        writer.write(f"0,0,\"{beatmap.events.background_file}\",0,0\n")
+        writer.write(f'0,0,"{beatmap.events.background_file}",0,0\n')
 
     for b in beatmap.events.breaks:
         writer.write(f"2,{b.start_time},{b.end_time}\n")
@@ -127,7 +138,9 @@ def _encode_colors(beatmap, writer) -> None:
         writer.write(f"Combo{i} : {color.red},{color.green},{color.blue}\n")
 
     for custom in beatmap.colors.custom_colors:
-        writer.write(f"{custom.name} : {custom.color.red},{custom.color.green},{custom.color.blue}\n")
+        writer.write(
+            f"{custom.name} : {custom.color.red},{custom.color.green},{custom.color.blue}\n"
+        )
 
 
 def _encode_timing_points(beatmap, writer) -> None:
@@ -136,15 +149,21 @@ def _encode_timing_points(beatmap, writer) -> None:
     writer.write("[TimingPoints]\n")
 
     all_times = set()
-    tps = getattr(timing_points_state, 'timing_points', getattr(timing_points_state, 'points', []))
-    dps = getattr(timing_points_state, 'difficulty_points', [])
-    sps = getattr(timing_points_state, 'sample_points', [])
-    eps = getattr(timing_points_state, 'effect_points', [])
+    tps = getattr(
+        timing_points_state, "timing_points", getattr(timing_points_state, "points", [])
+    )
+    dps = getattr(timing_points_state, "difficulty_points", [])
+    sps = getattr(timing_points_state, "sample_points", [])
+    eps = getattr(timing_points_state, "effect_points", [])
 
-    for tp in tps: all_times.add(tp.time)
-    for dp in dps: all_times.add(dp.time)
-    for sp in sps: all_times.add(sp.time)
-    for ep in eps: all_times.add(ep.time)
+    for tp in tps:
+        all_times.add(tp.time)
+    for dp in dps:
+        all_times.add(dp.time)
+    for sp in sps:
+        all_times.add(sp.time)
+    for ep in eps:
+        all_times.add(ep.time)
 
     sorted_times = sorted(list(all_times))
     last_props = None
@@ -155,7 +174,7 @@ def _encode_timing_points(beatmap, writer) -> None:
         sp = beatmap.timing_points.sample_point_at(time)
         ep = beatmap.timing_points.effect_point_at(time)
 
-        is_timing = (tp is not None and tp.time == time)
+        is_timing = tp is not None and tp.time == time
         beat_len = tp.beat_len if tp else (-100.0 / (dp.slider_velocity if dp else 1.0))
 
         meter = tp.time_signature.numerator if tp else 4
@@ -167,15 +186,37 @@ def _encode_timing_points(beatmap, writer) -> None:
         omit_bar = tp.omit_first_bar_line if tp else False
         effect_flags = (1 if kiai else 0) | (8 if omit_bar else 0)
 
-        current_props = (beat_len, meter, sample_set, sample_index, volume, effect_flags)
+        current_props = (
+            beat_len,
+            meter,
+            sample_set,
+            sample_index,
+            volume,
+            effect_flags,
+        )
 
         if is_timing:
-            writer.write(f"{time},{beat_len},{meter},{sample_set},{sample_index},{volume},1,{effect_flags}\n")
-            last_props = (1.0, meter, sample_set, sample_index, volume, effect_flags)  # velocity resets to 1.0
+            writer.write(
+                f"{time},{beat_len},{meter},{sample_set},{sample_index},{volume},1,{effect_flags}\n"
+            )
+            last_props = (
+                1.0,
+                meter,
+                sample_set,
+                sample_index,
+                volume,
+                effect_flags,
+            )  # velocity resets to 1.0
         else:
-            if last_props and abs(last_props[0] - beat_len) < 1e-7 and last_props[1:] == current_props[1:]:
+            if (
+                last_props
+                and abs(last_props[0] - beat_len) < 1e-7
+                and last_props[1:] == current_props[1:]
+            ):
                 continue
-            writer.write(f"{time},{beat_len},{meter},{sample_set},{sample_index},{volume},0,{effect_flags}\n")
+            writer.write(
+                f"{time},{beat_len},{meter},{sample_set},{sample_index},{volume},0,{effect_flags}\n"
+            )
             last_props = current_props
 
 
@@ -190,19 +231,22 @@ def _encode_hit_objects(beatmap, writer) -> None:
         if isinstance(obj.kind, HitObjectCircle):
             x, y = obj.kind.pos.x, obj.kind.pos.y
             type_flag = HitObjectType.CIRCLE
-            if obj.kind.new_combo: type_flag |= HitObjectType.NEW_COMBO
-            type_flag |= (obj.kind.combo_offset << 4)
+            if obj.kind.new_combo:
+                type_flag |= HitObjectType.NEW_COMBO
+            type_flag |= obj.kind.combo_offset << 4
 
         elif isinstance(obj.kind, HitObjectSlider):
             x, y = obj.kind.pos.x, obj.kind.pos.y
             type_flag = HitObjectType.SLIDER
-            if obj.kind.new_combo: type_flag |= HitObjectType.NEW_COMBO
-            type_flag |= (obj.kind.combo_offset << 4)
+            if obj.kind.new_combo:
+                type_flag |= HitObjectType.NEW_COMBO
+            type_flag |= obj.kind.combo_offset << 4
 
         elif isinstance(obj.kind, HitObjectSpinner):
             x, y = 256.0, 192.0
             type_flag = HitObjectType.SPINNER
-            if obj.kind.new_combo: type_flag |= HitObjectType.NEW_COMBO
+            if obj.kind.new_combo:
+                type_flag |= HitObjectType.NEW_COMBO
 
         elif isinstance(obj.kind, HitObjectHold):
             x, y = obj.kind.pos_x, 192.0
@@ -225,7 +269,9 @@ def _encode_hit_objects(beatmap, writer) -> None:
         def fmt(n):
             return f"{int(n)}" if n == int(n) else f"{n}"
 
-        writer.write(f"{fmt(x)},{fmt(y)},{fmt(obj.start_time)},{type_flag},{sound_flag},")
+        writer.write(
+            f"{fmt(x)},{fmt(y)},{fmt(obj.start_time)},{type_flag},{sound_flag},"
+        )
 
         if isinstance(obj.kind, HitObjectCircle):
             _write_sample_bank(writer, obj.samples, False, beatmap.general.mode)
@@ -256,7 +302,9 @@ def _write_slider_path(writer, slider) -> None:
     for i, p in enumerate(points):
         path_type = p.path_type
         if path_type:
-            needs_explicit = (path_type != last_type) or (path_type.kind.name == "PerfectCurve")
+            needs_explicit = (path_type != last_type) or (
+                path_type.kind.name == "PerfectCurve"
+            )
 
             if i > 1:
                 p1 = slider.pos + points[i - 1].pos
@@ -277,7 +325,9 @@ def _write_slider_path(writer, slider) -> None:
                 writer.write("," if i == len(points) - 1 else "|")
                 last_type = path_type
             else:
-                writer.write(f"{int(slider.pos.x + p.pos.x)}:{int(slider.pos.y + p.pos.y)}|")
+                writer.write(
+                    f"{int(slider.pos.x + p.pos.x)}:{int(slider.pos.y + p.pos.y)}|"
+                )
 
         if i != 0:
             writer.write(f"{int(slider.pos.x + p.pos.x)}:{int(slider.pos.y + p.pos.y)}")
@@ -302,11 +352,12 @@ def _write_sample_bank(writer, samples, banks_only: bool, mode: GameMode) -> Non
 
     if samples:
         s = samples[0]
-        normal_bank = s.bank.value if hasattr(s.bank, 'value') else 0
-        add_bank = s.bank.value if hasattr(s.bank, 'value') else 0
+        normal_bank = s.bank.value if hasattr(s.bank, "value") else 0
+        add_bank = s.bank.value if hasattr(s.bank, "value") else 0
         volume = s.volume
         custom_bank = s.custom_sample_bank
-        if s.name_file: filename = s.name_file
+        if s.name_file:
+            filename = s.name_file
 
     if mode != GameMode.Osu:
         custom_bank = 0

@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
-from utils import KeyValue, parse_float, ParseNumberError, trim_comment
+from utils import KeyValue, ParseNumberError, parse_float, trim_comment
+
 
 class ParseDifficultyError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
 
 class DifficultyKey(Enum):
     HPDrainRate = "HPDrainRate"
@@ -17,7 +20,7 @@ class DifficultyKey(Enum):
     SliderTickRate = "SliderTickRate"
 
     @classmethod
-    def from_str(cls, s: str) -> "DifficultyKey":
+    def from_str(cls, s: str) -> DifficultyKey:
         try:
             return cls(s)
         except ValueError:
@@ -66,7 +69,9 @@ class DifficultyState:
                     self.difficulty.overall_difficulty = parse_float(kv.value)
 
                     if not self.has_approach_rate:
-                        self.difficulty.approach_rate = self.difficulty.overall_difficulty
+                        self.difficulty.approach_rate = (
+                            self.difficulty.overall_difficulty
+                        )
 
                 case DifficultyKey.ApproachRate:
                     self.difficulty.approach_rate = parse_float(kv.value)

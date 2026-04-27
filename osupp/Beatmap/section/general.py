@@ -1,9 +1,18 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
-from utils import KeyValue, parse_int, parse_float, ParseNumberError, trim_comment, clean_filename
-from section.enums import GameMode, CountdownType, SampleBank
+from section.enums import CountdownType, GameMode, SampleBank
+from utils import (
+    KeyValue,
+    ParseNumberError,
+    clean_filename,
+    parse_float,
+    parse_int,
+    trim_comment,
+)
+
 
 class ParseGeneralError(Exception):
     def __init__(self, message: str):
@@ -32,7 +41,7 @@ class GeneralKey(Enum):
     SamplesMatchPlaybackRate = "SamplesMatchPlaybackRate"
 
     @classmethod
-    def from_str(cls, s: str) -> "GeneralKey":
+    def from_str(cls, s: str) -> GeneralKey:
         try:
             return cls(s)
         except ValueError:
@@ -116,5 +125,6 @@ class General:
 
         except (ParseNumberError, ValueError) as e:
             raise ParseGeneralError(f"failed to parse general: {e}")
+
 
 GeneralState = General

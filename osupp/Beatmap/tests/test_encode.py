@@ -1,5 +1,6 @@
-import unittest
 import os
+import unittest
+
 from beatmap import Beatmap
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -8,7 +9,6 @@ RESOURCES_DIR = os.path.join(root_dir, "resources")
 
 
 class TestEncode(unittest.TestCase):
-
     def test_stability(self):
         for filename in os.listdir(RESOURCES_DIR):
             if not (filename.endswith(".osu") or filename.endswith(".osb")):
@@ -25,7 +25,9 @@ class TestEncode(unittest.TestCase):
                     encoded_str = decoded_original.encode_to_string()
 
                     # 3. Decode the newly generated string
-                    decoded_after_encode = Beatmap.from_bytes(encoded_str.encode('utf-8'))
+                    decoded_after_encode = Beatmap.from_bytes(
+                        encoded_str.encode("utf-8")
+                    )
 
                     # 4. The ultimate test: both objects must be identical
                     self.assertEqual(decoded_original, decoded_after_encode)
@@ -38,7 +40,7 @@ class TestEncode(unittest.TestCase):
 
         decoded_original = Beatmap.from_path(filepath)
         encoded_str = decoded_original.encode_to_string()
-        decoded_after_encode = Beatmap.from_bytes(encoded_str.encode('utf-8'))
+        decoded_after_encode = Beatmap.from_bytes(encoded_str.encode("utf-8"))
 
         self.assertEqual(decoded_original, decoded_after_encode)
 
@@ -50,9 +52,9 @@ class TestEncode(unittest.TestCase):
 
         self.assertIn("B2|", encoded_str)
 
-        decoded_after_encode = Beatmap.from_bytes(encoded_str.encode('utf-8'))
+        decoded_after_encode = Beatmap.from_bytes(encoded_str.encode("utf-8"))
         self.assertEqual(decoded_original, decoded_after_encode)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

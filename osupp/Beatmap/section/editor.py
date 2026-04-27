@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
-from utils import KeyValue, parse_int, parse_float, ParseNumberError, trim_comment
+from utils import KeyValue, ParseNumberError, parse_float, parse_int, trim_comment
+
 
 class ParseEditorError(Exception):
     def __init__(self, message: str):
@@ -17,7 +19,7 @@ class EditorKey(Enum):
     TimelineZoom = "TimelineZoom"
 
     @classmethod
-    def from_str(cls, s: str) -> "EditorKey":
+    def from_str(cls, s: str) -> EditorKey:
         try:
             return cls(s)
         except ValueError:
@@ -51,7 +53,7 @@ class Editor:
                 case EditorKey.Bookmarks:
                     self.bookmarks = []
                     if kv.value:
-                        for part in kv.value.split(','):
+                        for part in kv.value.split(","):
                             part = part.strip()
                             if part:
                                 try:
@@ -69,5 +71,6 @@ class Editor:
 
         except ParseNumberError as e:
             raise ParseEditorError(f"failed to parse number: {e}")
+
 
 EditorState = Editor
