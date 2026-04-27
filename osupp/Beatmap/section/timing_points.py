@@ -43,7 +43,7 @@ class DifficultyPoint:
     generate_ticks: bool = True
 
     def is_redundant(self, existing: DifficultyPoint) -> bool:
-        return(
+        return (
             self.generate_ticks == existing.generate_ticks
             and abs(self.slider_velocity - existing.slider_velocity) < EPSILON
         )
