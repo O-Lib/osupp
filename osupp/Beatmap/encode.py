@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 
+from section.colors import Color
 from section.enums import GameMode, HitSoundType
 from section.hit_objects.hit_objects import (
     HitObjectCircle,
@@ -47,14 +48,10 @@ def _encode_general(beatmap, writer) -> None:
     writer.write(f"PreviewTime: {beatmap.general.preview_time}\n")
     writer.write(f"Countdown: {beatmap.general.countdown.value}\n")
 
-    sample_bank = getattr(
-        beatmap.general,
-        "default_sample_bank",
-        getattr(beatmap.general, "sample_bank", None),
-    )
+    sample_bank = getattr(beatmap.general, 'default_sample_bank', getattr(beatmap.general, 'sample_bank', None))
 
     if sample_bank is not None:
-        sample_set = sample_bank if hasattr(sample_bank, "value") else int(sample_bank)
+        sample_set = sample_bank if hasattr(sample_bank, 'value') else int(sample_bank)
     else:
         sample_set = 1
 

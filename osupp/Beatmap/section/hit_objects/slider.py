@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Generator
 from dataclasses import dataclass, field
 from enum import Enum
+from collections.abc import Generator
 
 from section.enums import GameMode, SplineType
 from utils import Pos
