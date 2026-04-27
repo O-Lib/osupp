@@ -28,7 +28,7 @@ class EffectFlags:
     OMIT_FIRST_BAR_LINE = 1 << 3
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class TimingPoint:
     time: float = 0.0
     beat_len: float = 60000.0 / 60.0
@@ -36,7 +36,7 @@ class TimingPoint:
     time_signature: int = 4
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class DifficultyPoint:
     time: float = 0.0
     slider_velocity: float = 1.0
@@ -49,7 +49,7 @@ class DifficultyPoint:
         )
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class SamplePoint:
     time: float = 0.0
     sample_bank: SampleBank = SampleBank.Normal
@@ -64,7 +64,7 @@ class SamplePoint:
         )
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class EffectPoint:
     time: float = 0.0
     kiai: bool = False
@@ -77,7 +77,7 @@ class EffectPoint:
         )
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class ControlPoints:
     timing_points: list[TimingPoint] = field(default_factory=list)
     difficulty_points: list[DifficultyPoint] = field(default_factory=list)

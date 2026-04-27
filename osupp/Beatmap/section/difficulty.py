@@ -27,7 +27,7 @@ class DifficultyKey(Enum):
             raise ValueError("invalid difficulty key")
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Difficulty:
     hp_drain_rate: float
     circle_size: float

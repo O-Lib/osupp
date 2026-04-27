@@ -42,7 +42,7 @@ def try_version_from_line(line: str) -> str | None:
     return LATEST_FORMAT_VERSION
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Beatmap:
     format_version: int
     general: General

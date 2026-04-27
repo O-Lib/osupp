@@ -20,12 +20,12 @@ def parse_u8(s: str) -> int:
         raise ValueError(str(e))
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Color:
-    r: int
-    g: int
-    b: int
-    a: int = 255
+    red: int
+    green: int
+    blue: int
+    alpha: int = 255
 
     @classmethod
     def from_str(cls, s: str) -> Color:
@@ -47,19 +47,19 @@ class Color:
             raise ParseColorsError(f"invalid color number: {e}")
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class CustomColor:
     name: str
     color: Color
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Colors:
-    custom_color_colors: list[Color]
+    custom_combo_colors: list[Color]
     custom_colors: list[CustomColor]
 
     def __init__(self):
-        self.custom_color_colors = []
+        self.custom_combo_colors = []
         self.custom_colors = []
 
     def parse_colors(self, line: str):
@@ -72,7 +72,7 @@ class Colors:
         color = Color.from_str(kv.value)
 
         if kv.key.startswith("Combo"):
-            self.custom_color_colors.append(color)
+            self.custom_combo_colors.append(color)
         else:
             for cc in self.custom_colors:
                 if cc.name == kv.key:

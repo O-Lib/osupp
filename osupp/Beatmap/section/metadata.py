@@ -31,7 +31,7 @@ class MetadataKey(Enum):
             raise ValueError("invalid metadata key")
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Metadata:
     title: str
     title_unicode: str

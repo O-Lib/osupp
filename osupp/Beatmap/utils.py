@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic, Type, TypeVar, Union
 
 # KEY VALUE
 # ----------------------------------------------------------------------------------
@@ -46,7 +46,9 @@ class ParseNumberError(Exception):
         super().__init__(message)
 
 
-def parse_with_limits(s: str, limit: int | float, target_type: type) -> int | float:
+def parse_with_limits(
+    s: str, limit: int | float, target_type: type
+) -> int | float:
     try:
         n = target_type(s.strip())
     except ValueError:
@@ -80,7 +82,7 @@ def parse_float(s: str) -> float:
 # ----------------------------------------------------------------------------------
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Pos:
     x: float = 0.0
     y: float = 0.0

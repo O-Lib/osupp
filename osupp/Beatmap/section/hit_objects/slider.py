@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Generator
 from dataclasses import dataclass, field
 from enum import Enum
+from collections.abc import Generator
 
 from section.enums import GameMode, SplineType
 from utils import Pos
@@ -13,7 +13,7 @@ CATMULL_DETAIL = 50
 CIRCULAR_ARC_TOLERANCE = 0.1
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class PathType:
     kind: SplineType
     degree: int | None = None
@@ -42,7 +42,7 @@ class PathType:
             return cls(SplineType.Catmull)
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class PathControlPoint:
     pos: Pos
     path_type: PathType | None = None
@@ -313,7 +313,7 @@ class Curve:
         return True
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class SliderPath:
     mode: GameMode
     control_points: list[PathControlPoint]
@@ -334,7 +334,7 @@ class SliderEventType(Enum):
     Tail = 4
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class SliderEvent:
     kind: SliderEventType
     span_idx: int

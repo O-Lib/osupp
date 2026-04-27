@@ -26,7 +26,7 @@ class EditorKey(Enum):
             raise ValueError("invalid editor key")
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Editor:
     bookmarks: list[int]
     distance_spacing: float

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 
+from section.colors import Color
 from section.enums import GameMode, HitSoundType
 from section.hit_objects.hit_objects import (
     HitObjectCircle,
@@ -47,11 +48,13 @@ def _encode_general(beatmap, writer) -> None:
     writer.write(f"PreviewTime: {beatmap.general.preview_time}\n")
     writer.write(f"Countdown: {beatmap.general.countdown.value}\n")
 
-    sample_set = (
-        beatmap.general.sample_bank.value
-        if hasattr(beatmap.general, "sample_bank")
-        else 1
-    )
+    sample_bank = getattr(beatmap.general, 'default_sample_bank', getattr(beatmap.general, 'sample_bank', None))
+
+    if sample_bank is not None:
+        sample_set = sample_bank if hasattr(sample_bank, 'value') else int(sample_bank)
+    else:
+        sample_set = 1
+
     writer.write(f"SampleSet: {sample_set}\n")
     writer.write(f"StackLeniency: {beatmap.general.stack_leniency}\n")
     writer.write(f"Mode: {beatmap.general.mode.value}\n")
@@ -221,7 +224,6 @@ def _encode_timing_points(beatmap, writer) -> None:
 
 
 def _encode_hit_objects(beatmap, writer) -> None:
-    # Construção precisa das flags e curvas
     writer.write("[HitObjects]\n")
 
     for obj in beatmap.hit_objects.hit_objects:
@@ -252,7 +254,6 @@ def _encode_hit_objects(beatmap, writer) -> None:
             x, y = obj.kind.pos_x, 192.0
             type_flag = HitObjectType.HOLD
 
-        # Calculate hitsound flag
         sound_flag = 0
         for sample in obj.samples:
             if sample.name_default:
@@ -265,7 +266,6 @@ def _encode_hit_objects(beatmap, writer) -> None:
                 elif sample.name_default.value == "hitnormal":
                     sound_flag |= HitSoundType.NORMAL
 
-        # Format float removing .0 if integer to match osu string exactly
         def fmt(n):
             return f"{int(n)}" if n == int(n) else f"{n}"
 
@@ -292,7 +292,6 @@ def _encode_hit_objects(beatmap, writer) -> None:
 
 
 def _write_slider_path(writer, slider) -> None:
-    # A máquina de conversão da curva do slider (B|1:2|3:4)
     points = slider.path.control_points
     if not points:
         writer.write("L|0:0,1,0,0|0,0:0|0:0,")

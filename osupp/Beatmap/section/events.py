@@ -41,7 +41,7 @@ class EventType(Enum):
                 raise ParseEventsError("invalid event type")
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class BreakPeriod:
     start_time: float
     end_time: float
@@ -56,7 +56,7 @@ class BreakPeriod:
 VIDEO_EXTENSIONS = {"mp4", "mov", "avi", "flv", "mpg", "wmv", "m4v"}
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Events:
     background_file: str
     breaks: list[BreakPeriod]

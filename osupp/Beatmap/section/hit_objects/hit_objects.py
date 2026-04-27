@@ -36,7 +36,7 @@ class HitSampleDefaultName(Enum):
     Clap = "hitclap"
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class HitSampleInfo:
     name_default: HitSampleDefaultName | None
     name_file: str | None
@@ -48,7 +48,7 @@ class HitSampleInfo:
     is_layered: bool
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class SampleBankInfo:
     filename: str | None = None
     bank_for_normal: SampleBank | None = None
@@ -164,27 +164,27 @@ class SampleBankInfo:
         return samples
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class HitObjectCircle:
     pos: Pos
     new_combo: bool
     combo_offset: int
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class HitObjectSpinner:
     pos: Pos
     duration: float
     new_combo: bool
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class HitObjectHold:
     pos_x: float
     duration: float
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class HitObjectSlider:
     pos: Pos
     new_combo: bool
@@ -195,7 +195,7 @@ class HitObjectSlider:
     velocity: float
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class HitObject:
     start_time: float
     kind: HitObjectCircle | HitObjectSpinner | HitObjectHold | HitObjectSlider

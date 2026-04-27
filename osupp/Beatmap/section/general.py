@@ -48,7 +48,7 @@ class GeneralKey(Enum):
             raise ValueError("invalid general key")
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class General:
     audio_filename: str
     audio_lead_in: int
