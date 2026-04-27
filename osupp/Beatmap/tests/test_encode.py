@@ -20,7 +20,7 @@ class TestEncode(unittest.TestCase):
                 decoded_original = Beatmap.from_path(filepath)
                 encoded_str_1 = decoded_original.encode_to_string()
 
-                decoded_after_encode = Beatmap.from_bytes(encoded_str_1.encode('utf-8'))
+                decoded_after_encode = Beatmap.from_bytes(encoded_str_1.encode("utf-8"))
                 encoded_str_2 = decoded_after_encode.encode_to_string()
 
                 self.assertEqual(encoded_str_1, encoded_str_2)
