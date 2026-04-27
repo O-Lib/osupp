@@ -1,11 +1,16 @@
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "osupp"
 version = "0.0.1"
 description = "osu! PP Calculation for Python"
-dependencies = [
-    "requests",
+authors = [
+    "DevilPedrow",
+    "Error44"
 ]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

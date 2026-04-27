@@ -1,116 +1,12 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
-from beatmap import Beatmap
-from utils import KeyValue, ParseNumber
+from utils import KeyValue, parse_float, ParseNumberError, trim_comment
 
-
-@dataclass
-class Difficulty:
-    hp_drain_rate: float = 5.0
-    circle_size: float = 5.0
-    overall_difficulty: float = 5.0
-    approach_rate: float = 5.0
-    slider_multiplier: float = 1.4
-    slider_tick_rate: float = 1.0
-
-    @classmethod
-    def default(cls) -> "Difficulty":
-        return cls()
-
-    def into_beatmap(self) -> "Beatmap":
-        return Beatmap(
-            hp_drain_rate=self.hp_drain_rate,
-            circle_size=self.circle_size,
-            overall_difficulty=self.overall_difficulty,
-            approach_rate=self.approach_rate,
-            slider_multiplier=self.slider_multiplier,
-            slider_tick_rate=self.slider_tick_rate,
-        )
-
-    @classmethod
-    def parse_general(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_editor(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_metadata(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_difficulty(cls, state: "DifficultyState", line: str) -> None:
-        clean_line = line.split("//")[0].strip()
-
-        kv = KeyValue.parse(clean_line, str)
-        if kv is None:
-            return
-
-        key_enum = DifficultyKey.from_str(kv.key)
-        if key_enum is None:
-            return
-
-        value = kv.value
-
-        try:
-            if key_enum == DifficultyKey.HPDrainRate:
-                state.difficulty.hp_drain_rate = ParseNumber.parse(value)
-
-            elif key_enum == DifficultyKey.CircleSize:
-                state.difficulty.circle_size = ParseNumber.parse(value)
-
-            elif key_enum == DifficultyKey.OverallDifficulty:
-                od = ParseNumber.parse(value)
-                state.difficulty.overall_difficulty = od
-                if not state.has_approach_rate:
-                    state.difficulty.approach_rate = od
-
-            elif key_enum == DifficultyKey.ApproachRate:
-                state.difficulty.approach_rate = ParseNumber.parse(value)
-                state.has_approach_rate = True
-
-            elif key_enum == DifficultyKey.SliderMultiplier:
-                val = ParseNumber.parse(value)
-                state.difficulty.slider_multiplier = max(0.4, min(3.6, val))
-
-            elif key_enum == DifficultyKey.SliderTickRate:
-                val = ParseNumber.parse(value)
-                state.difficulty.slider_tick_rate = max(0.5, min(8.0, val))
-
-        except ValueError as e:
-            raise ParseDifficultyError.from_number(e)
-
-    @classmethod
-    def parse_events(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_timing_points(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_colors(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_hit_objects(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_variables(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_catch_the_beat(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
-    @classmethod
-    def parse_mania(cls, state: "DifficultyState", line: str) -> None:
-        pass
-
+class ParseDifficultyError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
 
 class DifficultyKey(Enum):
     HPDrainRate = "HPDrainRate"
@@ -121,35 +17,66 @@ class DifficultyKey(Enum):
     SliderTickRate = "SliderTickRate"
 
     @classmethod
-    def from_str(cls, key: str) -> Optional["DifficultyKey"]:
-        return cls.__members__.get(key)
+    def from_str(cls, s: str) -> "DifficultyKey":
+        try:
+            return cls(s)
+        except ValueError:
+            raise ValueError("invalid difficulty key")
 
 
-class ParseDifficultyError(Exception):
-    def __init__(self, kind: str, source: Exception):
-        self.kind = kind
-        self.source = source
-        super().__init__(self.get_message())
-        self.__cause__ = source
+@dataclass(slots=True)
+class Difficulty:
+    hp_drain_rate: float
+    circle_size: float
+    overall_difficulty: float
+    approach_rate: float
+    slider_multiplier: float
+    slider_tick_rate: float
 
-    def get_message(self) -> str:
-        if self.kind == "Number":
-            return "failed to parse number"
-        return "failed to parse difficulty"
+    def __init__(self):
+        self.hp_drain_rate = 5.0
+        self.circle_size = 5.0
+        self.overall_difficulty = 5.0
+        self.approach_rate = 5.0
+        self.slider_multiplier = 1.4
+        self.slider_tick_rate = 1.0
 
-    @classmethod
-    def from_number(cls, err: Exception) -> "ParseDifficultyError":
-        return cls("Number", err)
 
-
-@dataclass
 class DifficultyState:
-    difficulty: Difficulty
-    has_approach_rate: bool
+    __slots__ = ("has_approach_rate", "difficulty")
 
-    @classmethod
-    def create(cls, _version: int) -> "DifficultyState":
-        return cls(difficulty=Difficulty.default(), has_approach_rate=False)
+    def __init__(self, format_version: int = 14):
+        self.has_approach_rate: bool = False
+        self.difficulty: Difficulty = Difficulty()
 
-    def to_result(self) -> Difficulty:
-        return self.difficulty
+    def parse_difficulty(self, line: str) -> None:
+        clean_line = trim_comment(line)
+
+        kv = KeyValue.parse(clean_line, DifficultyKey.from_str)
+        if kv is None:
+            return
+
+        try:
+            match kv.key:
+                case DifficultyKey.HPDrainRate:
+                    self.difficulty.hp_drain_rate = parse_float(kv.value)
+                case DifficultyKey.CircleSize:
+                    self.difficulty.circle_size = parse_float(kv.value)
+                case DifficultyKey.OverallDifficulty:
+                    self.difficulty.overall_difficulty = parse_float(kv.value)
+
+                    if not self.has_approach_rate:
+                        self.difficulty.approach_rate = self.difficulty.overall_difficulty
+
+                case DifficultyKey.ApproachRate:
+                    self.difficulty.approach_rate = parse_float(kv.value)
+                    self.has_approach_rate = True
+                case DifficultyKey.SliderMultiplier:
+                    val = parse_float(kv.value)
+                    self.difficulty.slider_multiplier = max(0.4, min(3.6, val))
+                case DifficultyKey.SliderTickRate:
+                    val = parse_float(kv.value)
+                    self.difficulty.slider_tick_rate = max(0.5, min(8.0, val))
+
+        except ParseNumberError as e:
+            raise ParseDifficultyError(f"failed to parse number: {e}")
