@@ -22,56 +22,167 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import pytest
 from osupp_mods import (
-    GameMode, GameModKind, Acronym,
-    GameMod, GameMods,
-    GameModIntermode, GameModsIntermode,
-    GameModsLegacy,
-    GameModSimple, SettingSimple,
-    # All osu! mods
-    EasyOsu, NoFailOsu, HalfTimeOsu, DaycoreOsu, HardRockOsu,
-    SuddenDeathOsu, PerfectOsu, DoubleTimeOsu, NightcoreOsu, HiddenOsu,
-    TraceableOsu, FlashlightOsu, BlindsOsu, StrictTrackingOsu,
-    AccuracyChallengeOsu, TargetPracticeOsu, DifficultyAdjustOsu,
-    ClassicOsu, RandomOsu, MirrorOsu, AlternateOsu, SingleTapOsu,
-    AutoplayOsu, CinemaOsu, RelaxOsu, AutopilotOsu, SpunOutOsu,
-    TransformOsu, WiggleOsu, SpinInOsu, GrowOsu, DeflateOsu,
-    WindUpOsu, WindDownOsu, BarrelRollOsu, ApproachDifferentOsu,
-    MutedOsu, NoScopeOsu, MagnetisedOsu, RepelOsu, AdaptiveSpeedOsu,
-    FreezeFrameOsu, BubblesOsu, SynesthesiaOsu, DepthOsu, BloomOsu,
-    TouchDeviceOsu, ScoreV2Osu,
-    # All taiko mods
-    EasyTaiko, NoFailTaiko, HalfTimeTaiko, DaycoreTaiko,
-    SimplifiedRhythmTaiko, HardRockTaiko, SuddenDeathTaiko, PerfectTaiko,
-    DoubleTimeTaiko, NightcoreTaiko, HiddenTaiko, FlashlightTaiko,
-    AccuracyChallengeTaiko, RandomTaiko, DifficultyAdjustTaiko,
-    ClassicTaiko, SwapTaiko, SingleTapTaiko, ConstantSpeedTaiko,
-    AutoplayTaiko, CinemaTaiko, RelaxTaiko, WindUpTaiko, WindDownTaiko,
-    MutedTaiko, AdaptiveSpeedTaiko, ScoreV2Taiko,
+    AccuracyChallengeCatch,
+    AccuracyChallengeMania,
+    AccuracyChallengeOsu,
+    AccuracyChallengeTaiko,
+    Acronym,
+    AdaptiveSpeedMania,
+    AdaptiveSpeedOsu,
+    AdaptiveSpeedTaiko,
+    AlternateOsu,
+    ApproachDifferentOsu,
+    AutopilotOsu,
+    AutoplayCatch,
+    AutoplayMania,
+    AutoplayOsu,
+    AutoplayTaiko,
+    BarrelRollOsu,
+    BlindsOsu,
+    BloomOsu,
+    BubblesOsu,
+    CinemaCatch,
+    CinemaMania,
+    CinemaOsu,
+    CinemaTaiko,
+    ClassicCatch,
+    ClassicMania,
+    ClassicOsu,
+    ClassicTaiko,
+    ConstantSpeedMania,
+    ConstantSpeedTaiko,
+    CoverMania,
+    DaycoreCatch,
+    DaycoreMania,
+    DaycoreOsu,
+    DaycoreTaiko,
+    DeflateOsu,
+    DepthOsu,
+    DifficultyAdjustCatch,
+    DifficultyAdjustMania,
+    DifficultyAdjustOsu,
+    DifficultyAdjustTaiko,
+    DoubleTimeCatch,
+    DoubleTimeMania,
+    DoubleTimeOsu,
+    DoubleTimeTaiko,
+    DualStagesMania,
     # All catch mods
-    EasyCatch, NoFailCatch, HalfTimeCatch, DaycoreCatch, HardRockCatch,
-    SuddenDeathCatch, PerfectCatch, DoubleTimeCatch, NightcoreCatch,
-    HiddenCatch, FlashlightCatch, AccuracyChallengeCatch,
-    DifficultyAdjustCatch, ClassicCatch, MirrorCatch, AutoplayCatch,
-    CinemaCatch, RelaxCatch, WindUpCatch, WindDownCatch,
-    FloatingFruitsCatch, MutedCatch, NoScopeCatch, MovingFastCatch,
-    ScoreV2Catch,
+    EasyCatch,
     # All mania mods
-    EasyMania, NoFailMania, HalfTimeMania, DaycoreMania, NoReleaseMania,
-    HardRockMania, SuddenDeathMania, PerfectMania, DoubleTimeMania,
-    NightcoreMania, FadeInMania, HiddenMania, CoverMania, FlashlightMania,
-    AccuracyChallengeMania, RandomMania, DualStagesMania, MirrorMania,
-    DifficultyAdjustMania, ClassicMania, InvertMania, ConstantSpeedMania,
-    HoldOffMania, OneKeyMania, TwoKeysMania, ThreeKeysMania, FourKeysMania,
-    FiveKeysMania, SixKeysMania, SevenKeysMania, EightKeysMania,
-    NineKeysMania, TenKeysMania, AutoplayMania, CinemaMania,
-    WindUpMania, WindDownMania, MutedMania, AdaptiveSpeedMania,
+    EasyMania,
+    # All osu! mods
+    EasyOsu,
+    # All taiko mods
+    EasyTaiko,
+    EightKeysMania,
+    FadeInMania,
+    FiveKeysMania,
+    FlashlightCatch,
+    FlashlightMania,
+    FlashlightOsu,
+    FlashlightTaiko,
+    FloatingFruitsCatch,
+    FourKeysMania,
+    FreezeFrameOsu,
+    GameMod,
+    GameMode,
+    GameModIntermode,
+    GameModKind,
+    GameMods,
+    GameModSimple,
+    GameModsIntermode,
+    GameModsLegacy,
+    GrowOsu,
+    HalfTimeCatch,
+    HalfTimeMania,
+    HalfTimeOsu,
+    HalfTimeTaiko,
+    HardRockCatch,
+    HardRockMania,
+    HardRockOsu,
+    HardRockTaiko,
+    HiddenCatch,
+    HiddenMania,
+    HiddenOsu,
+    HiddenTaiko,
+    HoldOffMania,
+    InvertMania,
+    MagnetisedOsu,
+    MirrorCatch,
+    MirrorMania,
+    MirrorOsu,
+    MovingFastCatch,
+    MutedCatch,
+    MutedMania,
+    MutedOsu,
+    MutedTaiko,
+    NightcoreCatch,
+    NightcoreMania,
+    NightcoreOsu,
+    NightcoreTaiko,
+    NineKeysMania,
+    NoFailCatch,
+    NoFailMania,
+    NoFailOsu,
+    NoFailTaiko,
+    NoReleaseMania,
+    NoScopeCatch,
+    NoScopeOsu,
+    OneKeyMania,
+    PerfectCatch,
+    PerfectMania,
+    PerfectOsu,
+    PerfectTaiko,
+    RandomMania,
+    RandomOsu,
+    RandomTaiko,
+    RelaxCatch,
+    RelaxOsu,
+    RelaxTaiko,
+    RepelOsu,
+    ScoreV2Catch,
     ScoreV2Mania,
-    UnknownMod,
+    ScoreV2Osu,
+    ScoreV2Taiko,
+    SettingSimple,
+    SevenKeysMania,
+    SimplifiedRhythmTaiko,
+    SingleTapOsu,
+    SingleTapTaiko,
+    SixKeysMania,
+    SpinInOsu,
+    SpunOutOsu,
+    StrictTrackingOsu,
+    SuddenDeathCatch,
+    SuddenDeathMania,
+    SuddenDeathOsu,
+    SuddenDeathTaiko,
+    SwapTaiko,
+    SynesthesiaOsu,
+    TargetPracticeOsu,
+    TenKeysMania,
+    ThreeKeysMania,
+    TouchDeviceOsu,
+    TraceableOsu,
+    TransformOsu,
+    TwoKeysMania,
+    WiggleOsu,
+    WindDownCatch,
+    WindDownMania,
+    WindDownOsu,
+    WindDownTaiko,
+    WindUpCatch,
+    WindUpMania,
+    WindUpOsu,
+    WindUpTaiko,
 )
 
 
@@ -137,46 +248,151 @@ class TestGameModKind:
 
 # Individual Mod Dataclasses (141)
 OSU_MODS = [
-    EasyOsu, NoFailOsu, HalfTimeOsu, DaycoreOsu, HardRockOsu,
-    SuddenDeathOsu, PerfectOsu, DoubleTimeOsu, NightcoreOsu, HiddenOsu,
-    TraceableOsu, FlashlightOsu, BlindsOsu, StrictTrackingOsu,
-    AccuracyChallengeOsu, TargetPracticeOsu, DifficultyAdjustOsu,
-    ClassicOsu, RandomOsu, MirrorOsu, AlternateOsu, SingleTapOsu,
-    AutoplayOsu, CinemaOsu, RelaxOsu, AutopilotOsu, SpunOutOsu,
-    TransformOsu, WiggleOsu, SpinInOsu, GrowOsu, DeflateOsu,
-    WindUpOsu, WindDownOsu, BarrelRollOsu, ApproachDifferentOsu,
-    MutedOsu, NoScopeOsu, MagnetisedOsu, RepelOsu, AdaptiveSpeedOsu,
-    FreezeFrameOsu, BubblesOsu, SynesthesiaOsu, DepthOsu, BloomOsu,
-    TouchDeviceOsu, ScoreV2Osu,
+    EasyOsu,
+    NoFailOsu,
+    HalfTimeOsu,
+    DaycoreOsu,
+    HardRockOsu,
+    SuddenDeathOsu,
+    PerfectOsu,
+    DoubleTimeOsu,
+    NightcoreOsu,
+    HiddenOsu,
+    TraceableOsu,
+    FlashlightOsu,
+    BlindsOsu,
+    StrictTrackingOsu,
+    AccuracyChallengeOsu,
+    TargetPracticeOsu,
+    DifficultyAdjustOsu,
+    ClassicOsu,
+    RandomOsu,
+    MirrorOsu,
+    AlternateOsu,
+    SingleTapOsu,
+    AutoplayOsu,
+    CinemaOsu,
+    RelaxOsu,
+    AutopilotOsu,
+    SpunOutOsu,
+    TransformOsu,
+    WiggleOsu,
+    SpinInOsu,
+    GrowOsu,
+    DeflateOsu,
+    WindUpOsu,
+    WindDownOsu,
+    BarrelRollOsu,
+    ApproachDifferentOsu,
+    MutedOsu,
+    NoScopeOsu,
+    MagnetisedOsu,
+    RepelOsu,
+    AdaptiveSpeedOsu,
+    FreezeFrameOsu,
+    BubblesOsu,
+    SynesthesiaOsu,
+    DepthOsu,
+    BloomOsu,
+    TouchDeviceOsu,
+    ScoreV2Osu,
 ]
 TAIKO_MODS = [
-    EasyTaiko, NoFailTaiko, HalfTimeTaiko, DaycoreTaiko,
-    SimplifiedRhythmTaiko, HardRockTaiko, SuddenDeathTaiko, PerfectTaiko,
-    DoubleTimeTaiko, NightcoreTaiko, HiddenTaiko, FlashlightTaiko,
-    AccuracyChallengeTaiko, RandomTaiko, DifficultyAdjustTaiko,
-    ClassicTaiko, SwapTaiko, SingleTapTaiko, ConstantSpeedTaiko,
-    AutoplayTaiko, CinemaTaiko, RelaxTaiko, WindUpTaiko, WindDownTaiko,
-    MutedTaiko, AdaptiveSpeedTaiko, ScoreV2Taiko,
+    EasyTaiko,
+    NoFailTaiko,
+    HalfTimeTaiko,
+    DaycoreTaiko,
+    SimplifiedRhythmTaiko,
+    HardRockTaiko,
+    SuddenDeathTaiko,
+    PerfectTaiko,
+    DoubleTimeTaiko,
+    NightcoreTaiko,
+    HiddenTaiko,
+    FlashlightTaiko,
+    AccuracyChallengeTaiko,
+    RandomTaiko,
+    DifficultyAdjustTaiko,
+    ClassicTaiko,
+    SwapTaiko,
+    SingleTapTaiko,
+    ConstantSpeedTaiko,
+    AutoplayTaiko,
+    CinemaTaiko,
+    RelaxTaiko,
+    WindUpTaiko,
+    WindDownTaiko,
+    MutedTaiko,
+    AdaptiveSpeedTaiko,
+    ScoreV2Taiko,
 ]
 CATCH_MODS = [
-    EasyCatch, NoFailCatch, HalfTimeCatch, DaycoreCatch, HardRockCatch,
-    SuddenDeathCatch, PerfectCatch, DoubleTimeCatch, NightcoreCatch,
-    HiddenCatch, FlashlightCatch, AccuracyChallengeCatch,
-    DifficultyAdjustCatch, ClassicCatch, MirrorCatch, AutoplayCatch,
-    CinemaCatch, RelaxCatch, WindUpCatch, WindDownCatch,
-    FloatingFruitsCatch, MutedCatch, NoScopeCatch, MovingFastCatch,
+    EasyCatch,
+    NoFailCatch,
+    HalfTimeCatch,
+    DaycoreCatch,
+    HardRockCatch,
+    SuddenDeathCatch,
+    PerfectCatch,
+    DoubleTimeCatch,
+    NightcoreCatch,
+    HiddenCatch,
+    FlashlightCatch,
+    AccuracyChallengeCatch,
+    DifficultyAdjustCatch,
+    ClassicCatch,
+    MirrorCatch,
+    AutoplayCatch,
+    CinemaCatch,
+    RelaxCatch,
+    WindUpCatch,
+    WindDownCatch,
+    FloatingFruitsCatch,
+    MutedCatch,
+    NoScopeCatch,
+    MovingFastCatch,
     ScoreV2Catch,
 ]
 MANIA_MODS = [
-    EasyMania, NoFailMania, HalfTimeMania, DaycoreMania, NoReleaseMania,
-    HardRockMania, SuddenDeathMania, PerfectMania, DoubleTimeMania,
-    NightcoreMania, FadeInMania, HiddenMania, CoverMania, FlashlightMania,
-    AccuracyChallengeMania, RandomMania, DualStagesMania, MirrorMania,
-    DifficultyAdjustMania, ClassicMania, InvertMania, ConstantSpeedMania,
-    HoldOffMania, OneKeyMania, TwoKeysMania, ThreeKeysMania, FourKeysMania,
-    FiveKeysMania, SixKeysMania, SevenKeysMania, EightKeysMania,
-    NineKeysMania, TenKeysMania, AutoplayMania, CinemaMania,
-    WindUpMania, WindDownMania, MutedMania, AdaptiveSpeedMania,
+    EasyMania,
+    NoFailMania,
+    HalfTimeMania,
+    DaycoreMania,
+    NoReleaseMania,
+    HardRockMania,
+    SuddenDeathMania,
+    PerfectMania,
+    DoubleTimeMania,
+    NightcoreMania,
+    FadeInMania,
+    HiddenMania,
+    CoverMania,
+    FlashlightMania,
+    AccuracyChallengeMania,
+    RandomMania,
+    DualStagesMania,
+    MirrorMania,
+    DifficultyAdjustMania,
+    ClassicMania,
+    InvertMania,
+    ConstantSpeedMania,
+    HoldOffMania,
+    OneKeyMania,
+    TwoKeysMania,
+    ThreeKeysMania,
+    FourKeysMania,
+    FiveKeysMania,
+    SixKeysMania,
+    SevenKeysMania,
+    EightKeysMania,
+    NineKeysMania,
+    TenKeysMania,
+    AutoplayMania,
+    CinemaMania,
+    WindUpMania,
+    WindDownMania,
+    MutedMania,
+    AdaptiveSpeedMania,
     ScoreV2Mania,
 ]
 ALL_MOD_CLASSES = OSU_MODS + TAIKO_MODS + CATCH_MODS + MANIA_MODS
@@ -316,8 +532,7 @@ class TestGameMod:
 
     def test_from_dict_with_settings(self):
         gm = GameMod.from_dict(
-            {"acronym": "DA", "settings": {"circle_size": 3.5}},
-            mode=GameMode.Osu
+            {"acronym": "DA", "settings": {"circle_size": 3.5}}, mode=GameMode.Osu
         )
         assert isinstance(gm.inner, DifficultyAdjustOsu)
         assert gm.inner.circle_size == 3.5
@@ -334,7 +549,13 @@ class TestGameMod:
         assert str(GameMod(HiddenOsu())) == "HD"
 
     def test_unknown_variants(self):
-        from osupp_mods.generated_mods import UnknownOsu, UnknownTaiko, UnknownCatch, UnknownMania
+        from osupp_mods.generated_mods import (
+            UnknownCatch,
+            UnknownMania,
+            UnknownOsu,
+            UnknownTaiko,
+        )
+
         osu_unk = GameMod.new("XX", GameMode.Osu)
         assert isinstance(osu_unk.inner, UnknownOsu)
         tai_unk = GameMod.new("XX", GameMode.Taiko)
@@ -358,6 +579,7 @@ class TestGameMod:
 
     def test_all_141_via_new(self):
         from osupp_mods.game_mod import _ACR_MODE_MAP
+
         assert len(_ACR_MODE_MAP) == 140
 
 
@@ -472,14 +694,16 @@ class TestGameModIntermode:
         assert GameModIntermode.try_from_bits(99999) is None
 
     def test_ordering(self):
-        mods = sorted([
-            GameModIntermode.Wiggle,
-            GameModIntermode.DoubleTime,
-            GameModIntermode.Hidden,
-        ])
-        assert mods[0] == GameModIntermode.DoubleTime   
-        assert mods[1] == GameModIntermode.Hidden       
-        assert mods[2] == GameModIntermode.Wiggle       
+        mods = sorted(
+            [
+                GameModIntermode.Wiggle,
+                GameModIntermode.DoubleTime,
+                GameModIntermode.Hidden,
+            ]
+        )
+        assert mods[0] == GameModIntermode.DoubleTime
+        assert mods[1] == GameModIntermode.Hidden
+        assert mods[2] == GameModIntermode.Wiggle
 
     def test_str(self):
         assert str(GameModIntermode.Hidden) == "HD"
@@ -494,12 +718,14 @@ class TestGameModsIntermode:
         assert not mods.contains(GameModIntermode.HardRock)
 
     def test_sorted_str(self):
-        mods = GameModsIntermode([
-            GameModIntermode.Wiggle,
-            GameModIntermode.FadeIn,
-            GameModIntermode.Easy,
-            GameModIntermode.HardRock,
-        ])
+        mods = GameModsIntermode(
+            [
+                GameModIntermode.Wiggle,
+                GameModIntermode.FadeIn,
+                GameModIntermode.Easy,
+                GameModIntermode.HardRock,
+            ]
+        )
         assert str(mods) == "EZFIHRWG"
 
     def test_len(self):
@@ -561,7 +787,9 @@ class TestGameModsIntermode:
         assert not c.contains(GameModIntermode.Hidden)
 
     def test_with_mode(self):
-        intermode = GameModsIntermode([GameModIntermode.Hidden, GameModIntermode.HardRock])
+        intermode = GameModsIntermode(
+            [GameModIntermode.Hidden, GameModIntermode.HardRock]
+        )
         mods = intermode.with_mode(GameMode.Osu)
         assert mods.contains_acronym("HD")
         assert mods.contains_acronym("HR")
@@ -589,6 +817,7 @@ class TestGameModsIntermode:
         mods = GameModsIntermode([GameModIntermode.Hidden, GameModIntermode.DoubleTime])
         j = mods.to_json()
         import json
+
         raw = json.loads(j)
         mods2 = GameModsIntermode.parse(raw)
         assert mods == mods2
@@ -681,6 +910,7 @@ class TestGameModsLegacy:
 
     def test_all_32_named_bits(self):
         from osupp_mods.game_mods_legacy import _NAMED_BITS
+
         assert len(_NAMED_BITS) == 32
 
     def test_mania_keys(self):
@@ -733,17 +963,21 @@ class TestGameModSimple:
 # Cross-type integration
 class TestIntegration:
     def test_bits_roundtrip_legacy_to_intermode(self):
-        legacy = GameModsLegacy.Hidden | GameModsLegacy.HardRock | GameModsLegacy.DoubleTime
+        legacy = (
+            GameModsLegacy.Hidden | GameModsLegacy.HardRock | GameModsLegacy.DoubleTime
+        )
         intermode = GameModsIntermode.from_bits(legacy.bits())
         assert intermode.contains(GameModIntermode.Hidden)
         assert intermode.contains(GameModIntermode.HardRock)
         assert intermode.contains(GameModIntermode.DoubleTime)
 
     def test_intermode_to_gamemods_and_back(self):
-        intermode = GameModsIntermode([
-            GameModIntermode.Hidden,
-            GameModIntermode.DoubleTime,
-        ])
+        intermode = GameModsIntermode(
+            [
+                GameModIntermode.Hidden,
+                GameModIntermode.DoubleTime,
+            ]
+        )
         mods = intermode.with_mode(GameMode.Taiko)
         assert mods.contains_acronym("HD")
         assert mods.contains_acronym("DT")
@@ -765,6 +999,7 @@ class TestIntegration:
 
     def test_gamemod_new_all_known(self):
         from osupp_mods.game_mod import _ACR_MODE_MAP
+
         for (acr, mode), inner_cls in _ACR_MODE_MAP.items():
             gm = GameMod.new(acr, mode)
             assert not gm.is_unknown(), f"{acr} on {mode} should not be unknown"
