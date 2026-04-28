@@ -23,11 +23,14 @@ SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Iterator, Iterable, Optional, Union
+
+from typing import Optional, Union
+from collections.abc import Iterable, Iterator
+
+from .acronym import Acronym
 from .game_mod import GameMod
 from .game_mod_intermode import GameModIntermode
 from .game_mode import GameMode
-from .acronym import Acronym
 
 
 class GameMods:
@@ -56,7 +59,7 @@ class GameMods:
             return True
         return False
 
-    def remove_acronym(self, acronym: Union[str, Acronym]) -> bool:
+    def remove_acronym(self, acronym: str | Acronym) -> bool:
         s = str(acronym).upper()
         keys = [k for k in self._inner if k[2] == s]
         for k in keys:
@@ -82,11 +85,13 @@ class GameMods:
     def contains(self, gamemod: GameMod) -> bool:
         return self._key(gamemod) in self._inner
 
-    def contains_acronym(self, acronym: Union[str, Acronym]) -> bool:
+    def contains_acronym(self, acronym: str | Acronym) -> bool:
         s = str(acronym).upper()
         return any(k[2] == s for k in self._inner)
 
-    def get(self, acronym: Union[str, Acronym], mode: Optional[GameMode] = None) -> Optional[GameMod]:
+    def get(
+        self, acronym: str | Acronym, mode: GameMode | None = None
+    ) -> GameMod | None:
         s = str(acronym).upper()
         for k, m in self._inner.items():
             if k[2] == s:
@@ -102,7 +107,7 @@ class GameMods:
                 result |= b
         return result
 
-    def checked_bits(self) -> Optional[int]:
+    def checked_bits(self) -> int | None:
         result = 0
         for m in self._inner.values():
             b = m.bits()
@@ -113,6 +118,7 @@ class GameMods:
 
     def to_intermode(self):
         from .game_mods_intermode import GameModsIntermode
+
         result = GameModsIntermode()
         for m in self._inner.values():
             intermode = GameModIntermode.from_acronym(str(m.acronym()))
@@ -127,11 +133,11 @@ class GameMods:
             return self.contains(item)
         return False
 
-    def __ior__(self, other: "GameMods") -> "GameMods":
+    def __ior__(self, other: GameMods) -> GameMods:
         self.extend(other)
         return self
 
-    def __or__(self, other: "GameMods") -> "GameMods":
+    def __or__(self, other: GameMods) -> GameMods:
         result = GameMods(self._sorted())
         result.extend(other)
         return result
@@ -153,11 +159,11 @@ class GameMods:
         return hash(tuple(self._key(m) for m in self._sorted()))
 
     @classmethod
-    def from_iter(cls, mods: Iterable[GameMod]) -> "GameMods":
+    def from_iter(cls, mods: Iterable[GameMod]) -> GameMods:
         return cls(mods)
 
 
-def _gamemods_clock_rate(self) -> "Optional[float]":
+def _gamemods_clock_rate(self) -> Optional[float]:
     result = 1.0
     for gm in self:
         cr = gm.clock_rate()
@@ -168,23 +174,54 @@ def _gamemods_clock_rate(self) -> "Optional[float]":
     return result
 
 
-def _gamemod_clock_rate(self) -> "Optional[float]":
+def _gamemod_clock_rate(self) -> Optional[float]:
     from osupp_mods.generated_mods import (
-        DoubleTimeOsu, DoubleTimeTaiko, DoubleTimeCatch, DoubleTimeMania,
-        NightcoreOsu, NightcoreTaiko, NightcoreCatch, NightcoreMania,
-        HalfTimeOsu, HalfTimeTaiko, HalfTimeCatch, HalfTimeMania,
-        DaycoreOsu, DaycoreTaiko, DaycoreCatch, DaycoreMania,
-        WindUpOsu, WindUpTaiko, WindUpCatch, WindUpMania,
-        WindDownOsu, WindDownTaiko, WindDownCatch, WindDownMania,
-        AdaptiveSpeedOsu, AdaptiveSpeedTaiko, AdaptiveSpeedMania,
+        AdaptiveSpeedMania,
+        AdaptiveSpeedOsu,
+        AdaptiveSpeedTaiko,
+        DaycoreCatch,
+        DaycoreMania,
+        DaycoreOsu,
+        DaycoreTaiko,
+        DoubleTimeCatch,
+        DoubleTimeMania,
+        DoubleTimeOsu,
+        DoubleTimeTaiko,
+        HalfTimeCatch,
+        HalfTimeMania,
+        HalfTimeOsu,
+        HalfTimeTaiko,
+        NightcoreCatch,
+        NightcoreMania,
+        NightcoreOsu,
+        NightcoreTaiko,
+        WindDownCatch,
+        WindDownMania,
+        WindDownOsu,
+        WindDownTaiko,
+        WindUpCatch,
+        WindUpMania,
+        WindUpOsu,
+        WindUpTaiko,
     )
+
     _DT = (DoubleTimeOsu, DoubleTimeTaiko, DoubleTimeCatch, DoubleTimeMania)
     _NC = (NightcoreOsu, NightcoreTaiko, NightcoreCatch, NightcoreMania)
     _HT = (HalfTimeOsu, HalfTimeTaiko, HalfTimeCatch, HalfTimeMania)
     _DC = (DaycoreOsu, DaycoreTaiko, DaycoreCatch, DaycoreMania)
-    _NONE = (WindUpOsu, WindUpTaiko, WindUpCatch, WindUpMania,
-             WindDownOsu, WindDownTaiko, WindDownCatch, WindDownMania,
-             AdaptiveSpeedOsu, AdaptiveSpeedTaiko, AdaptiveSpeedMania)
+    _NONE = (
+        WindUpOsu,
+        WindUpTaiko,
+        WindUpCatch,
+        WindUpMania,
+        WindDownOsu,
+        WindDownTaiko,
+        WindDownCatch,
+        WindDownMania,
+        AdaptiveSpeedOsu,
+        AdaptiveSpeedTaiko,
+        AdaptiveSpeedMania,
+    )
 
     inner = self._inner
     if isinstance(inner, _NONE):
@@ -230,11 +267,13 @@ def _gamemods_sanitize(self) -> None:
 
 def _gamemods_as_legacy(self):
     from osupp_mods.game_mods_legacy import GameModsLegacy
+
     return GameModsLegacy.from_bits(self.bits())
 
 
 def _gamemods_try_as_legacy(self):
     from osupp_mods.game_mods_legacy import GameModsLegacy
+
     b = self.checked_bits()
     return GameModsLegacy.from_bits(b) if b is not None else None
 
@@ -266,14 +305,15 @@ def _gamemods_remove_all_intermode(self, mods) -> None:
         self._gamemods_remove_intermode(self, m)
 
 
-def _gamemods_intersects(self, other: "GameMods") -> bool:
+def _gamemods_intersects(self, other: GameMods) -> bool:
     self_acrs = {k[2] for k in self._inner}
     other_acrs = {k[2] for k in other._inner}
     return bool(self_acrs & other_acrs)
 
 
-def _gamemods_intersection(self, other: "GameMods") -> "GameMods":
+def _gamemods_intersection(self, other: GameMods) -> GameMods:
     from osupp_mods.game_mods import GameMods
+
     result = GameMods()
     for k, m in self._inner.items():
         if k in other._inner:
@@ -281,17 +321,16 @@ def _gamemods_intersection(self, other: "GameMods") -> "GameMods":
     return result
 
 
-def _gamemods_try_from_intermode(intermode, mode) -> "Optional[GameMods]":
+def _gamemods_try_from_intermode(intermode, mode) -> Optional[GameMods]:
     return intermode.try_with_mode(mode)
 
 
-def _gamemods_from_intermode(intermode, mode) -> "GameMods":
+def _gamemods_from_intermode(intermode, mode) -> GameMods:
     return intermode.with_mode(mode)
 
 
-from osupp_mods.game_mods import GameMods
 from osupp_mods.game_mod import GameMod
-from typing import Optional
+from osupp_mods.game_mods import GameMods
 
 GameMods.clock_rate = _gamemods_clock_rate
 GameMods.is_valid = _gamemods_is_valid
@@ -302,7 +341,9 @@ GameMods.contains_intermode = lambda self, m: _gamemods_contains_intermode(self,
 GameMods.contains_any = lambda self, mods: _gamemods_contains_any(self, mods)
 GameMods.remove_intermode = lambda self, m: _gamemods_remove_intermode(self, m)
 GameMods.remove_all = lambda self, mods: _gamemods_remove_all(self, mods)
-GameMods.remove_all_intermode = lambda self, mods: _gamemods_remove_all_intermode(self, mods)
+GameMods.remove_all_intermode = lambda self, mods: _gamemods_remove_all_intermode(
+    self, mods
+)
 GameMods.intersects = _gamemods_intersects
 GameMods.intersection = _gamemods_intersection
 GameMods.try_from_intermode = staticmethod(_gamemods_try_from_intermode)
@@ -310,12 +351,14 @@ GameMods.from_intermode = staticmethod(_gamemods_from_intermode)
 GameMod.clock_rate = _gamemod_clock_rate
 
 
-def _gamemods_from_acronyms(s: str, mode=None) -> "GameMods":
-    from osupp_mods.game_mods_intermode import GameModsIntermode
+def _gamemods_from_acronyms(s: str, mode=None) -> GameMods:
     from osupp_mods.game_mode import GameMode
+    from osupp_mods.game_mods_intermode import GameModsIntermode
+
     intermode = GameModsIntermode.parse(s)
     return intermode.with_mode(mode if mode is not None else GameMode.Osu)
 
 
 from osupp_mods.game_mods import GameMods
+
 GameMods.from_acronyms = staticmethod(_gamemods_from_acronyms)
