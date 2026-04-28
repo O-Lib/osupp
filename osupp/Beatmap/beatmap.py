@@ -8,7 +8,7 @@ from reader import Decoder
 from section.colors import Colors
 from section.difficulty import Difficulty, DifficultyState
 from section.editor import Editor
-from section.enums import Section, SampleBank
+from section.enums import SampleBank, Section
 from section.events import Events
 from section.general import General
 from section.hit_objects.hit_objects import HitObjectsState
