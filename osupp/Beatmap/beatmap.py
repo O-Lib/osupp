@@ -26,7 +26,7 @@ class UnknownFileFormatError(ParseBeatmapError):
     pass
 
 
-def try_version_from_line(line: str) -> str | None:
+def try_version_from_line(line: str) -> int | None:
     if not line.startswith("osu file format v"):
         if not line:
             return None
@@ -57,13 +57,12 @@ class Beatmap:
     @classmethod
     def from_path(cls, path: str) -> Beatmap:
         with open(path, "rb") as f:
-            reader = io.BufferedReader(f)
             decoder = Decoder(reader)
             return cls._decode(decoder)
 
     @classmethod
     def from_bytes(cls, data: bytes) -> Beatmap:
-        reader = io.BufferedReader(io.BytesIO(data))
+        reader = io.BytesIO(io.BytesIO(data))
         decoder = Decoder(reader)
         return cls._decode(decoder)
 
@@ -81,7 +80,7 @@ class Beatmap:
             try:
                 version = try_version_from_line(line)
                 if version is not None:
-                    format_version = version
+                    format_version = int(version)
                     break
 
             except Exception:

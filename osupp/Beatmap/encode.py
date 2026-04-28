@@ -212,7 +212,7 @@ def _encode_timing_points(beatmap, writer) -> None:
                 sample_index,
                 volume,
                 effect_flags,
-            )  # velocity resets to 1.0
+            )
         else:
             if (
                 last_props
@@ -230,7 +230,7 @@ def _encode_hit_objects(beatmap, writer) -> None:
     writer.write("[HitObjects]\n")
 
     for obj in beatmap.hit_objects.hit_objects:
-        x, y = 0, 0
+        x, y = 0.0, 0.0
         type_flag = 0
 
         if isinstance(obj.kind, HitObjectCircle):
@@ -338,14 +338,12 @@ def _write_slider_path(writer, slider) -> None:
     dist = slider.path.expected_dist if slider.path.expected_dist is not None else 0
     writer.write(f"{slider.repeat_count + 1},{dist},")
 
-    # Placeholder node samples
     nodes = slider.repeat_count + 2
     writer.write("0|" * (nodes - 1) + "0,")
     writer.write("0:0|" * (nodes - 1) + "0:0,")
 
 
 def _write_sample_bank(writer, samples, banks_only: bool, mode: GameMode) -> None:
-    # Lógica de seleção do banco de som com volume fallback
     normal_bank = 0
     add_bank = 0
     volume = 0

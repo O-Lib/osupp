@@ -111,7 +111,6 @@ class ControlPoints:
         )
 
     def add_timing(self, point: TimingPoint):
-        # TimingPoints nunca são redundantes
         idx = bisect.bisect_left(self.timing_points, point.time, key=lambda x: x.time)
         if (
             idx < len(self.timing_points)

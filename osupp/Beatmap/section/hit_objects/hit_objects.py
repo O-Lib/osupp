@@ -212,7 +212,7 @@ def convert_points(
     end_points: str | None,
     first: bool,
     offset: Pos,
-):
+) -> None:
     path_type = PathType.new_from_str(points[0])
 
     def read_point(val: str) -> Pos:
@@ -336,6 +336,8 @@ class HitObjectsState:
                 is_first_obj or self.last_object_was_spinner() or new_combo
             )
 
+            kind: HitObjectCircle | HitObjectSpinner | HitObjectHold | HitObjectSlider
+
             if HitObjectType.has_flag(type_flag, HitObjectType.CIRCLE):
                 if len(split) > 5:
                     bank_info.read_custom_sample_bank(split[5].split(":"), False)
@@ -350,9 +352,8 @@ class HitObjectsState:
                 duration = max(0.0, end_time - start_time)
 
                 if len(split) > 6:
-                    bank_info.read_custom_sample_banks(split[6].split(":"), False)
+                    bank_info.read_custom_sample_bank(split[6].split(":"), False)
 
-                # Rust força o pos do spinner para o meio do ecrã (512/2, 384/2)
                 spinner = HitObjectSpinner(Pos(256.0, 192.0), duration, new_combo)
                 kind = spinner
 
@@ -361,7 +362,7 @@ class HitObjectsState:
                 if len(split) > 5 and split[5]:
                     ss = split[5].split(":")
                     end_time_raw = parse_float(ss[0])
-                    bank_info.read_custom_sample_banks(ss[1:], False)
+                    bank_info.read_custom_sample_bank(ss[1:], False)
 
                 hold = HitObjectHold(pos.x, max(start_time, end_time_raw) - start_time)
                 kind = hold

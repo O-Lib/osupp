@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "osupp"
-version = "0.17.0"
-description = "osu! PP Calculation for Python"
+version = "0.17.16"
+description = "osu! Library"
 authors = [
     "DevilPedrow",
     "Error44"

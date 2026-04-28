@@ -8,6 +8,8 @@ from enum import Enum
 from section.enums import GameMode, SplineType
 from utils import Pos
 
+from osupp.Beatmap.section.enums import SplineType
+
 BEZIER_TOLERANCE = 0.25
 CATMULL_DETAIL = 50
 CIRCULAR_ARC_TOLERANCE = 0.1
@@ -79,9 +81,10 @@ class Curve:
             if len(segment_vertices) == 1:
                 self.path.append(segment_vertices[0])
             elif len(segment_vertices) > 1:
+                pt = points[start].path_type
                 segment_kind = (
-                    points[start].path_type.kind
-                    if points[start].path_type
+                    pt.kind
+                    if pt is not None
                     else SplineType.Linear
                 )
                 path_len = len(self.path)

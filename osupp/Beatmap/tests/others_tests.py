@@ -268,37 +268,31 @@ class TestSliderPath(unittest.TestCase):
 
 class TestSection(unittest.TestCase):
     def test_finds_valid_sections(self):
-        # Garante que as strings corretas com parênteses retos são identificadas
         self.assertEqual(Section.try_from_line("[General]"), Section.General)
         self.assertEqual(Section.try_from_line("[Difficulty]"), Section.Difficulty)
         self.assertEqual(Section.try_from_line("[HitObjects]"), Section.HitObjects)
 
     def test_requires_brackets(self):
-        # Garante que a ausência de parênteses retos (ou parênteses incompletos) é rejeitada
         self.assertIsNone(Section.try_from_line("General"))
         self.assertIsNone(Section.try_from_line("[General"))
         self.assertIsNone(Section.try_from_line("General]"))
 
     def test_denies_invalid_sections(self):
-        # Garante que nomes de secção inválidos não causam falhas e retornam None
         self.assertIsNone(Section.try_from_line("abc"))
         self.assertIsNone(Section.try_from_line("HitObject"))
 
 
 class TestFormatVersion(unittest.TestCase):
     def test_finds_version(self):
-        #
         line = "osu file format v42"
         self.assertEqual(try_version_from_line(line), 42)
 
     def test_fails_on_comment(self):
-        #
         line = "osu file format v42 // comment"
         with self.assertRaises(ParseBeatmapError):
             try_version_from_line(line)
 
     def test_fails_on_wrong_prefix(self):
-        #
         line = "file format v42 // comment"
         with self.assertRaises(UnknownFileFormatError):
             try_version_from_line(line)
