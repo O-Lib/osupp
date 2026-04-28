@@ -80,11 +80,7 @@ class Curve:
                 self.path.append(segment_vertices[0])
             elif len(segment_vertices) > 1:
                 pt = points[start].path_type
-                segment_kind = (
-                    pt.kind
-                    if pt is not None
-                    else SplineType.Linear
-                )
+                segment_kind = pt.kind if pt is not None else SplineType.Linear
                 path_len = len(self.path)
 
                 self._calculate_subpath(
