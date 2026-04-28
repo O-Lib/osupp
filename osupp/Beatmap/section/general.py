@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from section.enums import CountdownType, GameMode, SampleBank
 from utils import (
     KeyValue,
     ParseNumberError,
@@ -12,6 +11,8 @@ from utils import (
     parse_int,
     trim_comment,
 )
+
+from section.enums import CountdownType, GameMode, SampleBank
 
 
 class ParseGeneralError(Exception):

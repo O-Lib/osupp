@@ -4,7 +4,6 @@ import bisect
 import math
 from dataclasses import dataclass, field
 
-from section.enums import GameMode, SampleBank
 from utils import (
     MAX_PARSE_VALUE,
     ParseNumberError,
@@ -12,6 +11,8 @@ from utils import (
     parse_int,
     trim_comment,
 )
+
+from section.enums import GameMode, SampleBank
 
 
 class ParseTimingPointsError(Exception):
