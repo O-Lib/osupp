@@ -26,8 +26,7 @@ import re
 
 
 class Acronym:
-    
-    _VALID = re.compile(r'^[A-Z0-9]{2,4}$')
+    _VALID = re.compile(r"^[A-Z0-9]{2,4}$")
 
     __slots__ = ("_s",)
 
