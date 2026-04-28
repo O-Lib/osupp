@@ -45,10 +45,19 @@ class GameMode(IntEnum):
     @classmethod
     def from_str(cls, s: str) -> "GameMode":
         mapping = {
-            "0": cls.Osu, "osu": cls.Osu, "osu!": cls.Osu,
-            "1": cls.Taiko, "taiko": cls.Taiko, "tko": cls.Taiko,
-            "2": cls.Catch, "catch": cls.Catch, "ctb": cls.Catch, "fruits": cls.Catch,
-            "3": cls.Mania, "mania": cls.Mania, "mna": cls.Mania,
+            "0": cls.Osu,
+            "osu": cls.Osu,
+            "osu!": cls.Osu,
+            "1": cls.Taiko,
+            "taiko": cls.Taiko,
+            "tko": cls.Taiko,
+            "2": cls.Catch,
+            "catch": cls.Catch,
+            "ctb": cls.Catch,
+            "fruits": cls.Catch,
+            "3": cls.Mania,
+            "mania": cls.Mania,
+            "mna": cls.Mania,
         }
         key = s.lower()
         if key in mapping:
