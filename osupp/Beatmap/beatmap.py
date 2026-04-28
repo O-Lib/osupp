@@ -57,12 +57,12 @@ class Beatmap:
     @classmethod
     def from_path(cls, path: str) -> Beatmap:
         with open(path, "rb") as f:
-            decoder = Decoder(reader)
+            decoder = Decoder(f)
             return cls._decode(decoder)
 
     @classmethod
     def from_bytes(cls, data: bytes) -> Beatmap:
-        reader = io.BytesIO(io.BytesIO(data))
+        reader = io.BytesIO(data)
         decoder = Decoder(reader)
         return cls._decode(decoder)
 

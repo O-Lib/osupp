@@ -8,8 +8,6 @@ from enum import Enum
 from section.enums import GameMode, SplineType
 from utils import Pos
 
-from osupp.Beatmap.section.enums import SplineType
-
 BEZIER_TOLERANCE = 0.25
 CATMULL_DETAIL = 50
 CIRCULAR_ARC_TOLERANCE = 0.1

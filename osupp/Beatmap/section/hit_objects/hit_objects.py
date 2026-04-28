@@ -9,7 +9,7 @@ from utils import ParseNumberError, Pos, parse_float, parse_int, trim_comment
 
 
 class ParseHitObjectsError(Exception):
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message)
 
 
@@ -303,7 +303,7 @@ def convert_path_str(point_str: str, offset: Pos) -> list[PathControlPoint]:
 
 
 class HitObjectsState:
-    def __init__(self):
+    def __init__(self) -> None:
         self.last_object_type: int | None = None
         self.hit_objects: list[HitObject] = []
 
