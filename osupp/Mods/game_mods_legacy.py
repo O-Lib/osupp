@@ -24,9 +24,7 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import List
 from collections.abc import Iterator
-
 
 _NOMOD = 0
 _NOFAIL = 1 << 0
