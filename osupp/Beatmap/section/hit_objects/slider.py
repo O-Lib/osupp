@@ -199,9 +199,7 @@ class Curve:
             limit = BEZIER_TOLERANCE * BEZIER_TOLERANCE * 4.0
             is_flat = True
             for i in range(len(parent) - 2):
-                if (parent[i] - (parent[i + 1] * 2.0)) + parent[
-                    i + 2
-                ].length_squared() > limit:
+                if ((parent[i] - (parent[i + 1] * 2.0)) + parent[i + 2]).length_squared() > limit:
                     is_flat = False
                     break
 

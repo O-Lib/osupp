@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from encode import encode_beatmap
 from reader import Decoder
 from section.colors import Colors
-from section.difficulty import Difficulty
+from section.difficulty import Difficulty, DifficultyState
 from section.editor import Editor
 from section.enums import Section
 from section.events import Events
@@ -91,10 +91,10 @@ class Beatmap:
         general = General()
         editor = Editor()
         metadata = Metadata()
-        difficulty = Difficulty()
+        difficulty = DifficultyState()
         events = Events()
         timing_points = TimingPointsState(
-            general.mode, getattr(general, "sample_bank", 1), 100
+            general.mode, getattr(general, "sample_bank", 1, 100)
         )
         colors = Colors()
         hit_objects = HitObjectsState()
