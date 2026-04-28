@@ -64,7 +64,6 @@ class General:
     samples_match_playback_rate: bool
 
     def __init__(self):
-        # Valores por defeito exatos do rosu-map
         self.audio_filename = ""
         self.audio_lead_in = 0
         self.preview_time = -1

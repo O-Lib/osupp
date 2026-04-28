@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Callable
 
 # KEY VALUE
 # ----------------------------------------------------------------------------------
@@ -15,7 +15,7 @@ class KeyValue(Generic[K]):
         self.value: str = value
 
     @classmethod
-    def parse(cls, s: str, key_type: type[K]) -> "KeyValue[K] | None":
+    def parse(cls, s: str, key_type: Callable[[str], K]) -> "KeyValue[K] | None":
         parts = [part.strip() for part in s.split(":", 1)]
 
         raw_key = parts[0] if parts else s.strip()
@@ -35,6 +35,8 @@ class KeyValue(Generic[K]):
 
 MAX_PARSE_VALUE = 2147483647
 
+T_Num = TypeVar("T_Num", int, float)
+
 
 class ParseNumberError(Exception):
     InvalidFloat = "invalid float"
@@ -47,7 +49,7 @@ class ParseNumberError(Exception):
         super().__init__(message)
 
 
-def parse_with_limits(s: str, limit: int | float, target_type: type) -> int | float:
+def parse_with_limits(s: str, limit: int | float, target_type: type[T_Num]) -> T_Num:
     try:
         n = target_type(s.strip())
     except ValueError:
