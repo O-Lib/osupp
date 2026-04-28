@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "osupp"
-version = "0.17.40"
+version = "0.17.41"
 description = "osu! Library"
 authors = [
     "DevilPedrow",

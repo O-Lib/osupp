@@ -8,7 +8,7 @@ from reader import Decoder
 from section.colors import Colors
 from section.difficulty import Difficulty, DifficultyState
 from section.editor import Editor
-from section.enums import Section
+from section.enums import Section, SampleBank
 from section.events import Events
 from section.general import General
 from section.hit_objects.hit_objects import HitObjectsState
@@ -91,10 +91,10 @@ class Beatmap:
         general = General()
         editor = Editor()
         metadata = Metadata()
-        difficulty = DifficultyState
+        difficulty = DifficultyState()
         events = Events()
         timing_points = TimingPointsState(
-            general.mode, getattr(general, "sample_bank", 1), 100
+            general.mode, getattr(general, "sample_bank", SampleBank.Normal), 100
         )
         colors = Colors()
         hit_objects = HitObjectsState()
@@ -160,7 +160,7 @@ class Beatmap:
             general=general,
             editor=editor,
             metadata=metadata,
-            difficulty=difficulty,
+            difficulty=difficulty.difficulty,
             events=events,
             timing_points=timing_points,
             colors=colors,
