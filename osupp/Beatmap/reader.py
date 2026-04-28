@@ -1,4 +1,5 @@
 import io
+import typing
 from enum import Enum
 
 
@@ -20,13 +21,15 @@ class Encoding(Enum):
 
 
 class Decoder:
-    def __init__(self, stream: io.BufferedReader):
+    def __init__(self, stream: typing.BinaryIO | io.BytesIO):
         self.stream = stream
 
-        bom_candidate = self.stream.peek(3)[:3]
+        start_pos = self.stream.tell()
+
+        bom_candidate = self.stream.read(3)
         self.encoding, consumed = Encoding.from_bom(bom_candidate)
 
-        self.stream.read(consumed)
+        self.stream.seek(start_pos + consumed)
 
     def read_line(self) -> str | None:
         raw_line = self.stream.readline()
