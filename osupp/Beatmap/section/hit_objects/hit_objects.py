@@ -5,7 +5,6 @@ from enum import Enum
 
 from utils import ParseNumberError, Pos, parse_float, parse_int, trim_comment
 
-from osupp.Beatmap.section.enums import GameMode
 from section.enums import GameMode, HitSoundType, SampleBank, SplineType
 from section.hit_objects.slider import PathControlPoint, PathType, SliderPath
 
