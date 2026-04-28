@@ -24,24 +24,23 @@ SOFTWARE.
 
 from enum import Enum
 
-
 _KIND_RANK = {
     "DifficultyReduction": 0,
-    "DifficultyIncrease":  1,
-    "Conversion":          2,
-    "Automation":          3,
-    "Fun":                 4,
-    "System":              5,
+    "DifficultyIncrease": 1,
+    "Conversion": 2,
+    "Automation": 3,
+    "Fun": 4,
+    "System": 5,
 }
 
 
 class GameModKind(Enum):
     DifficultyReduction = "DifficultyReduction"
-    DifficultyIncrease  = "DifficultyIncrease"
-    Conversion          = "Conversion"
-    Automation          = "Automation"
-    Fun                 = "Fun"
-    System              = "System"
+    DifficultyIncrease = "DifficultyIncrease"
+    Conversion = "Conversion"
+    Automation = "Automation"
+    Fun = "Fun"
+    System = "System"
 
     def __str__(self) -> str:
         return self.value

@@ -25,7 +25,7 @@ SOFTWARE.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional, Union
+from typing import Union
 
 from .acronym import Acronym
 from .game_mod_kind import GameModKind
