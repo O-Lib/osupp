@@ -23,10 +23,12 @@ SOFTWARE.
 """
 
 from __future__ import annotations
+
 from enum import Enum
 from typing import Optional, Union
-from .game_mod_kind import GameModKind
+
 from .acronym import Acronym
+from .game_mod_kind import GameModKind
 
 
 class UnknownGameMod:
@@ -38,11 +40,12 @@ class UnknownGameMod:
     def acronym(self) -> Acronym:
         return _RawAcronym(self._acronym)
 
-    def bits(self) -> Optional[int]:
+    def bits(self) -> int | None:
         return None
 
-    def kind(self) -> "GameModKind":
+    def kind(self) -> GameModKind:
         from .game_mod_kind import GameModKind
+
         return GameModKind.System
 
     def _order_key(self) -> tuple:
@@ -109,7 +112,7 @@ class _RawAcronym:
         return hash(self._s)
 
 
-def _order_key_of(m: "AnyIntermode") -> tuple:
+def _order_key_of(m: AnyIntermode) -> tuple:
     if isinstance(m, UnknownGameMod):
         return m._order_key()
     return (m.kind().rank(), _ACRONYM_MAP[m])
@@ -193,37 +196,37 @@ class GameModIntermode(Enum):
     def acronym(self) -> Acronym:
         return Acronym(_ACRONYM_MAP[self])
 
-    def bits(self) -> Optional[int]:
+    def bits(self) -> int | None:
         return _BITS_MAP.get(self)
 
     def kind(self) -> GameModKind:
         return _KIND_MAP[self]
 
     @classmethod
-    def from_acronym(cls, acronym) -> "AnyIntermode":
+    def from_acronym(cls, acronym) -> AnyIntermode:
         s = str(acronym).upper()
         if s in _FROM_ACRONYM:
             return _FROM_ACRONYM[s]
         return UnknownGameMod(s)
 
     @classmethod
-    def try_from_bits(cls, bits: int) -> Optional["GameModIntermode"]:
+    def try_from_bits(cls, bits: int) -> GameModIntermode | None:
         """Convert a legacy bit value to a ``GameModIntermode``, or ``None``."""
         return _FROM_BITS.get(bits)
 
     def _order_key(self) -> tuple:
         return (self.kind().rank(), _ACRONYM_MAP[self])
 
-    def __lt__(self, other: "AnyIntermode") -> bool:
+    def __lt__(self, other: AnyIntermode) -> bool:
         return self._order_key() < _order_key_of(other)
 
-    def __le__(self, other: "AnyIntermode") -> bool:
+    def __le__(self, other: AnyIntermode) -> bool:
         return self._order_key() <= _order_key_of(other)
 
-    def __gt__(self, other: "AnyIntermode") -> bool:
+    def __gt__(self, other: AnyIntermode) -> bool:
         return self._order_key() > _order_key_of(other)
 
-    def __ge__(self, other: "AnyIntermode") -> bool:
+    def __ge__(self, other: AnyIntermode) -> bool:
         return self._order_key() >= _order_key_of(other)
 
     def __str__(self) -> str:
@@ -420,7 +423,8 @@ _KIND_MAP: dict[GameModIntermode, GameModKind] = {
 }
 
 
-_DESCRIPTION_MAP: dict["GameModIntermode", str] = {}
+_DESCRIPTION_MAP: dict[GameModIntermode, str] = {}
+
 
 def _build_description_map():
     desc = {
@@ -483,15 +487,21 @@ def _build_description_map():
         "WD": "Sloooow doooown...",
         "WG": "They just won't stay still...",
         "WU": "Can you keep up?",
-        "1K": "Play with one key.", "2K": "Play with two keys.",
-        "3K": "Play with three keys.", "4K": "Play with four keys.",
-        "5K": "Play with five keys.", "6K": "Play with six keys.",
-        "7K": "Play with seven keys.", "8K": "Play with eight keys.",
-        "9K": "Play with nine keys.", "10K": "Play with ten keys.",
+        "1K": "Play with one key.",
+        "2K": "Play with two keys.",
+        "3K": "Play with three keys.",
+        "4K": "Play with four keys.",
+        "5K": "Play with five keys.",
+        "6K": "Play with six keys.",
+        "7K": "Play with seven keys.",
+        "8K": "Play with eight keys.",
+        "9K": "Play with nine keys.",
+        "10K": "Play with ten keys.",
     }
     for intermode, acronym in _ACRONYM_MAP.items():
         if acronym in desc:
             _DESCRIPTION_MAP[intermode] = desc[acronym]
+
 
 _build_description_map()
 
@@ -501,8 +511,9 @@ def _intermode_description(self) -> str:
 
 
 def _intermode_as_simple(self):
-    from osupp_mods.game_mod_simple import GameModSimple
     from osupp_mods.acronym import Acronym
+    from osupp_mods.game_mod_simple import GameModSimple
+
     return GameModSimple(acronym=Acronym(str(self)), settings={})
 
 
