@@ -23,19 +23,21 @@ SOFTWARE.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Union, Dict
+from typing import Dict, Union
+
 from .acronym import Acronym
 
 
 class SettingSimple:
     __slots__ = ("_value",)
 
-    def __init__(self, value: Union[bool, float, str]) -> None:
+    def __init__(self, value: bool | float | str) -> None:
         self._value = value
 
     @property
-    def value(self) -> Union[bool, float, str]:
+    def value(self) -> bool | float | str:
         return self._value
 
     def is_bool(self) -> bool:
@@ -80,7 +82,7 @@ class SettingSimple:
 @dataclass
 class GameModSimple:
     acronym: Acronym
-    settings: Dict[str, SettingSimple] = field(default_factory=dict)
+    settings: dict[str, SettingSimple] = field(default_factory=dict)
 
     def __repr__(self) -> str:
         return f"GameModSimple(acronym={self.acronym!r}, settings={self.settings!r})"
