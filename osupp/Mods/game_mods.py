@@ -328,7 +328,6 @@ def _gamemods_from_intermode(intermode, mode) -> GameMods:
     return intermode.with_mode(mode)
 
 
-from .game_mod import GameMod
 from .game_mods import GameMods
 
 GameMods.clock_rate = _gamemods_clock_rate

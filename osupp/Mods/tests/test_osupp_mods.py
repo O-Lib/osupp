@@ -687,7 +687,9 @@ class TestGameModIntermode:
         assert GameModIntermode.from_acronym("HD") == GameModIntermode.Hidden
         assert GameModIntermode.from_acronym("10K") == GameModIntermode.TenKeys
         assert GameModIntermode.from_acronym("SV2") == GameModIntermode.ScoreV2
-        assert GameModIntermode.from_acronym("XX").__class__.__name__ == "UnknownGameMod"
+        assert (
+            GameModIntermode.from_acronym("XX").__class__.__name__ == "UnknownGameMod"
+        )
 
     def test_try_from_bits(self):
         assert GameModIntermode.try_from_bits(8) == GameModIntermode.Hidden
