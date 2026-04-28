@@ -26,7 +26,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import fields as dc_fields
-from typing import List, Optional
 
 from .acronym import Acronym
 from .game_mod_kind import GameModKind
