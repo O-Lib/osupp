@@ -1,7 +1,7 @@
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
-from collections.abc import Callable
 
 # KEY VALUE
 # ----------------------------------------------------------------------------------
