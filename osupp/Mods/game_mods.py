@@ -24,8 +24,8 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Optional, Union
 from collections.abc import Iterable, Iterator
+from typing import Optional
 
 from .acronym import Acronym
 from .game_mod import GameMod
@@ -163,7 +163,7 @@ class GameMods:
         return cls(mods)
 
 
-def _gamemods_clock_rate(self) -> Optional[float]:
+def _gamemods_clock_rate(self) -> float | None:
     result = 1.0
     for gm in self:
         cr = gm.clock_rate()
@@ -174,7 +174,7 @@ def _gamemods_clock_rate(self) -> Optional[float]:
     return result
 
 
-def _gamemod_clock_rate(self) -> Optional[float]:
+def _gamemod_clock_rate(self) -> float | None:
     from osupp_mods.generated_mods import (
         AdaptiveSpeedMania,
         AdaptiveSpeedOsu,
@@ -321,7 +321,7 @@ def _gamemods_intersection(self, other: GameMods) -> GameMods:
     return result
 
 
-def _gamemods_try_from_intermode(intermode, mode) -> Optional[GameMods]:
+def _gamemods_try_from_intermode(intermode, mode) -> GameMods | None:
     return intermode.try_with_mode(mode)
 
 

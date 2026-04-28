@@ -23,9 +23,12 @@ SOFTWARE.
 """
 
 from __future__ import annotations
-from typing import Iterator, Iterable, Optional, Union
-from .game_mod_intermode import GameModIntermode, UnknownGameMod, AnyIntermode
+
+from typing import Optional, Union
+from collections.abc import Iterable, Iterator
+
 from .acronym import Acronym
+from .game_mod_intermode import GameModIntermode, UnknownGameMod
 
 
 class GameModsIntermode:
@@ -65,12 +68,12 @@ class GameModsIntermode:
     def __len__(self) -> int:
         return len(self._inner)
 
-    def contains(self, gamemod: Union[GameModIntermode, str]) -> bool:
+    def contains(self, gamemod: GameModIntermode | str) -> bool:
         if isinstance(gamemod, str):
             gamemod = GameModIntermode.from_acronym(gamemod)
         return gamemod in self._inner
 
-    def contains_acronym(self, acronym: Union[Acronym, str]) -> bool:
+    def contains_acronym(self, acronym: Acronym | str) -> bool:
         s = str(acronym).upper()
         return any(str(m) == s for m in self._inner)
 
@@ -82,7 +85,7 @@ class GameModsIntermode:
                 result |= b
         return result
 
-    def checked_bits(self) -> Optional[int]:
+    def checked_bits(self) -> int | None:
         result = 0
         for m in self._inner:
             b = m.bits()
@@ -91,19 +94,19 @@ class GameModsIntermode:
             result |= b
         return result
 
-    def intersection(self, other: "GameModsIntermode") -> "GameModsIntermode":
+    def intersection(self, other: GameModsIntermode) -> GameModsIntermode:
         return GameModsIntermode(m for m in self._inner if m in other._inner)
 
-    def union(self, other: "GameModsIntermode") -> "GameModsIntermode":
+    def union(self, other: GameModsIntermode) -> GameModsIntermode:
         result = GameModsIntermode(self._inner)
         result.extend(other._inner)
         return result
 
-    def difference(self, other: "GameModsIntermode") -> "GameModsIntermode":
+    def difference(self, other: GameModsIntermode) -> GameModsIntermode:
         return GameModsIntermode(m for m in self._inner if m not in other._inner)
 
     @classmethod
-    def from_bits(cls, bits: int) -> "GameModsIntermode":
+    def from_bits(cls, bits: int) -> GameModsIntermode:
         NC_BITS = 576
         DT_BITS = 64
         PF_BITS = 16416
@@ -120,37 +123,37 @@ class GameModsIntermode:
             bits &= ~(1 << 14)
 
         BITFLAG_MODS = [
-            GameModIntermode.NoFail,        
-            GameModIntermode.Easy,          
-            GameModIntermode.TouchDevice,   
-            GameModIntermode.Hidden,        
-            GameModIntermode.HardRock,      
-            GameModIntermode.SuddenDeath,   
-            GameModIntermode.DoubleTime,    
-            GameModIntermode.Relax,         
-            GameModIntermode.HalfTime,      
-            GameModIntermode.Nightcore,     
-            GameModIntermode.Flashlight,    
-            GameModIntermode.Autoplay,      
-            GameModIntermode.SpunOut,       
-            GameModIntermode.Autopilot,     
-            GameModIntermode.Perfect,       
-            GameModIntermode.FourKeys,      
-            GameModIntermode.FiveKeys,      
-            GameModIntermode.SixKeys,       
-            GameModIntermode.SevenKeys,     
-            GameModIntermode.EightKeys,     
-            GameModIntermode.FadeIn,        
-            GameModIntermode.Random,        
-            GameModIntermode.Cinema,        
+            GameModIntermode.NoFail,
+            GameModIntermode.Easy,
+            GameModIntermode.TouchDevice,
+            GameModIntermode.Hidden,
+            GameModIntermode.HardRock,
+            GameModIntermode.SuddenDeath,
+            GameModIntermode.DoubleTime,
+            GameModIntermode.Relax,
+            GameModIntermode.HalfTime,
+            GameModIntermode.Nightcore,
+            GameModIntermode.Flashlight,
+            GameModIntermode.Autoplay,
+            GameModIntermode.SpunOut,
+            GameModIntermode.Autopilot,
+            GameModIntermode.Perfect,
+            GameModIntermode.FourKeys,
+            GameModIntermode.FiveKeys,
+            GameModIntermode.SixKeys,
+            GameModIntermode.SevenKeys,
+            GameModIntermode.EightKeys,
+            GameModIntermode.FadeIn,
+            GameModIntermode.Random,
+            GameModIntermode.Cinema,
             GameModIntermode.TargetPractice,
-            GameModIntermode.NineKeys,      
-            GameModIntermode.DualStages,    
-            GameModIntermode.OneKey,        
-            GameModIntermode.ThreeKeys,     
-            GameModIntermode.TwoKeys,       
-            GameModIntermode.ScoreV2,       
-            GameModIntermode.Mirror,        
+            GameModIntermode.NineKeys,
+            GameModIntermode.DualStages,
+            GameModIntermode.OneKey,
+            GameModIntermode.ThreeKeys,
+            GameModIntermode.TwoKeys,
+            GameModIntermode.ScoreV2,
+            GameModIntermode.Mirror,
         ]
 
         result = cls()
@@ -160,15 +163,17 @@ class GameModsIntermode:
         return result
 
     @classmethod
-    def from_acronyms(cls, acronyms: Iterable[Union[str, Acronym]]) -> "GameModsIntermode":
+    def from_acronyms(
+        cls, acronyms: Iterable[str | Acronym]
+    ) -> GameModsIntermode:
         result = cls()
         for a in acronyms:
             result.insert(GameModIntermode.from_acronym(str(a)))
         return result
 
     @classmethod
-    def parse(cls, s: str) -> "GameModsIntermode":
-        from .game_mod_intermode import _FROM_ACRONYM, UnknownGameMod
+    def parse(cls, s: str) -> GameModsIntermode:
+        from .game_mod_intermode import _FROM_ACRONYM
 
         result = cls()
         s = s.upper()
@@ -186,12 +191,12 @@ class GameModsIntermode:
                     tokens[-1] = tokens[-1] + s[i]
                 i += 1
 
-            elif s[i:i+3] in _FROM_ACRONYM:
-                tokens.append(s[i:i+3])
+            elif s[i : i + 3] in _FROM_ACRONYM:
+                tokens.append(s[i : i + 3])
                 i += 3
 
             else:
-                tokens.append(s[i:i+2])
+                tokens.append(s[i : i + 2])
                 i += 2
 
         for token in tokens:
@@ -208,17 +213,17 @@ class GameModsIntermode:
     def __contains__(self, item: object) -> bool:
         return item in self._inner
 
-    def __ior__(self, other: "GameModsIntermode") -> "GameModsIntermode":
+    def __ior__(self, other: GameModsIntermode) -> GameModsIntermode:
         self.extend(other)
         return self
 
-    def __or__(self, other: "GameModsIntermode") -> "GameModsIntermode":
+    def __or__(self, other: GameModsIntermode) -> GameModsIntermode:
         return self.union(other)
 
-    def __sub__(self, other: "GameModsIntermode") -> "GameModsIntermode":
+    def __sub__(self, other: GameModsIntermode) -> GameModsIntermode:
         return self.difference(other)
 
-    def __isub__(self, other: "GameModsIntermode") -> "GameModsIntermode":
+    def __isub__(self, other: GameModsIntermode) -> GameModsIntermode:
         self.remove_all(other)
         return self
 
