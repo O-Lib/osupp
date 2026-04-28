@@ -91,10 +91,10 @@ class Beatmap:
         general = General()
         editor = Editor()
         metadata = Metadata()
-        difficulty = DifficultyState()
+        difficulty = DifficultyState
         events = Events()
         timing_points = TimingPointsState(
-            general.mode, getattr(general, "sample_bank", 1, 100)
+            general.mode, getattr(general, "sample_bank", 1), 100
         )
         colors = Colors()
         hit_objects = HitObjectsState()
