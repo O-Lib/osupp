@@ -28,7 +28,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import pytest
-from osupp_mods import (
+
+from osupp.Mods import (
     AccuracyChallengeCatch,
     AccuracyChallengeMania,
     AccuracyChallengeOsu,
@@ -549,7 +550,7 @@ class TestGameMod:
         assert str(GameMod(HiddenOsu())) == "HD"
 
     def test_unknown_variants(self):
-        from osupp_mods.generated_mods import (
+        from osupp.Mods.generated_mods import (
             UnknownCatch,
             UnknownMania,
             UnknownOsu,
@@ -578,7 +579,7 @@ class TestGameMod:
         assert GameMod(DaycoreOsu()).bits() is None
 
     def test_all_141_via_new(self):
-        from osupp_mods.game_mod import _ACR_MODE_MAP
+        from osupp.Mods.game_mod import _ACR_MODE_MAP
 
         assert len(_ACR_MODE_MAP) == 140
 
@@ -686,7 +687,7 @@ class TestGameModIntermode:
         assert GameModIntermode.from_acronym("HD") == GameModIntermode.Hidden
         assert GameModIntermode.from_acronym("10K") == GameModIntermode.TenKeys
         assert GameModIntermode.from_acronym("SV2") == GameModIntermode.ScoreV2
-        assert GameModIntermode.from_acronym("XX") == GameModIntermode.Unknown
+        assert GameModIntermode.from_acronym("XX").__class__.__name__ == "UnknownGameMod"
 
     def test_try_from_bits(self):
         assert GameModIntermode.try_from_bits(8) == GameModIntermode.Hidden
@@ -909,7 +910,7 @@ class TestGameModsLegacy:
         assert not c.contains(GameModsLegacy.HardRock)
 
     def test_all_32_named_bits(self):
-        from osupp_mods.game_mods_legacy import _NAMED_BITS
+        from osupp.Mods.game_mods_legacy import _NAMED_BITS
 
         assert len(_NAMED_BITS) == 32
 
@@ -998,7 +999,7 @@ class TestIntegration:
             assert len(str(acr)) >= 1
 
     def test_gamemod_new_all_known(self):
-        from osupp_mods.game_mod import _ACR_MODE_MAP
+        from osupp.Mods.game_mod import _ACR_MODE_MAP
 
         for (acr, mode), inner_cls in _ACR_MODE_MAP.items():
             gm = GameMod.new(acr, mode)

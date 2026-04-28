@@ -174,7 +174,7 @@ def _gamemods_clock_rate(self) -> float | None:
 
 
 def _gamemod_clock_rate(self) -> float | None:
-    from osupp_mods.generated_mods import (
+    from .generated_mods import (
         AdaptiveSpeedMania,
         AdaptiveSpeedOsu,
         AdaptiveSpeedTaiko,
@@ -265,13 +265,13 @@ def _gamemods_sanitize(self) -> None:
 
 
 def _gamemods_as_legacy(self):
-    from osupp_mods.game_mods_legacy import GameModsLegacy
+    from .game_mods_legacy import GameModsLegacy
 
     return GameModsLegacy.from_bits(self.bits())
 
 
 def _gamemods_try_as_legacy(self):
-    from osupp_mods.game_mods_legacy import GameModsLegacy
+    from .game_mods_legacy import GameModsLegacy
 
     b = self.checked_bits()
     return GameModsLegacy.from_bits(b) if b is not None else None
@@ -311,7 +311,7 @@ def _gamemods_intersects(self, other: GameMods) -> bool:
 
 
 def _gamemods_intersection(self, other: GameMods) -> GameMods:
-    from osupp_mods.game_mods import GameMods
+    from .game_mods import GameMods
 
     result = GameMods()
     for k, m in self._inner.items():
@@ -328,8 +328,8 @@ def _gamemods_from_intermode(intermode, mode) -> GameMods:
     return intermode.with_mode(mode)
 
 
-from osupp_mods.game_mod import GameMod
-from osupp_mods.game_mods import GameMods
+from .game_mod import GameMod
+from .game_mods import GameMods
 
 GameMods.clock_rate = _gamemods_clock_rate
 GameMods.is_valid = _gamemods_is_valid
@@ -351,13 +351,13 @@ GameMod.clock_rate = _gamemod_clock_rate
 
 
 def _gamemods_from_acronyms(s: str, mode=None) -> GameMods:
-    from osupp_mods.game_mode import GameMode
-    from osupp_mods.game_mods_intermode import GameModsIntermode
+    from .game_mode import GameMode
+    from .game_mods_intermode import GameModsIntermode
 
     intermode = GameModsIntermode.parse(s)
     return intermode.with_mode(mode if mode is not None else GameMode.Osu)
 
 
-from osupp_mods.game_mods import GameMods
+from .game_mods import GameMods
 
 GameMods.from_acronyms = staticmethod(_gamemods_from_acronyms)

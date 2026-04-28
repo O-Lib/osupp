@@ -511,8 +511,8 @@ def _intermode_description(self) -> str:
 
 
 def _intermode_as_simple(self):
-    from osupp_mods.acronym import Acronym
-    from osupp_mods.game_mod_simple import GameModSimple
+    from .acronym import Acronym
+    from .game_mod_simple import GameModSimple
 
     return GameModSimple(acronym=Acronym(str(self)), settings={})
 

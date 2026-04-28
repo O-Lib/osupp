@@ -201,9 +201,9 @@ _patch_gamemods()
 
 
 def _patch_gamemods_intermode_extra():
-    from osupp_mods.game_mod_intermode import GameModIntermode
-    from osupp_mods.game_mods_intermode import GameModsIntermode
-    from osupp_mods.game_mods_legacy import GameModsLegacy
+    from .game_mod_intermode import GameModIntermode
+    from .game_mods_intermode import GameModsIntermode
+    from .game_mods_legacy import GameModsLegacy
 
     def intersects(self, other) -> bool:
         return bool(set(self._inner) & set(other._inner))
@@ -239,10 +239,10 @@ def _patch_gamemods_intermode_extra():
 
 
 def _patch_legacy_extra():
-    from osupp_mods.game_mods_legacy import GameModsLegacy
+    from .game_mods_legacy import GameModsLegacy
 
     def to_intermode(self):
-        from osupp_mods.game_mods_intermode import GameModsIntermode
+        from .game_mods_intermode import GameModsIntermode
 
         return GameModsIntermode.from_bits(self._bits)
 
@@ -281,8 +281,8 @@ _patch_legacy_extra()
 
 
 def _patch_intermode_acronym_methods():
-    from osupp_mods.game_mod_intermode import GameModIntermode
-    from osupp_mods.game_mods_intermode import GameModsIntermode
+    from .game_mod_intermode import GameModIntermode
+    from .game_mods_intermode import GameModsIntermode
 
     @classmethod
     def from_acronyms_str(cls, s: str) -> GameModsIntermode:
@@ -300,7 +300,7 @@ def _patch_intermode_acronym_methods():
         result = cls()
         s = s.upper()
         i = 0
-        from osupp_mods.game_mod_intermode import _FROM_ACRONYM
+        from .game_mod_intermode import _FROM_ACRONYM
 
         while i < len(s):
             matched = False

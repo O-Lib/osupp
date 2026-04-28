@@ -59,7 +59,8 @@ _KEY2 = 1 << 28
 _SCOREV2 = 1 << 29
 _MIRROR = 1 << 30
 
-_VALID_LEGACY_MASK = _SCOREV2 | (_SCOREV2 - 1)
+_VALID_LEGACY_MASK = _MIRROR | (_MIRROR - 1)
+
 
 _NAMED_BITS: dict[str, int] = {
     "NoMod": _NOMOD,
@@ -93,6 +94,7 @@ _NAMED_BITS: dict[str, int] = {
     "Key3": _KEY3,
     "Key2": _KEY2,
     "ScoreV2": _SCOREV2,
+    "Mirror": _MIRROR,
 }
 
 _ACRONYM_TO_BIT: dict[str, int] = {
@@ -126,6 +128,7 @@ _ACRONYM_TO_BIT: dict[str, int] = {
     "3K": _KEY3,
     "2K": _KEY2,
     "V2": _SCOREV2,
+    "MR": _MIRROR,
 }
 
 _ITER_ORDER: list[tuple[int, str]] = [
@@ -159,6 +162,7 @@ _ITER_ORDER: list[tuple[int, str]] = [
     (_KEY3, "Key3"),
     (_KEY2, "Key2"),
     (_SCOREV2, "ScoreV2"),
+    (_MIRROR, "Mirror"),
 ]
 
 _NAME_TO_ACRONYM: dict[str, str] = {
@@ -193,6 +197,7 @@ _NAME_TO_ACRONYM: dict[str, str] = {
     "Key3": "3K",
     "Key2": "2K",
     "ScoreV2": "V2",
+    "Mirror": "MR",
 }
 
 
