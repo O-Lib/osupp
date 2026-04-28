@@ -25,7 +25,6 @@ SOFTWARE.
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
-from typing import Optional
 
 from .acronym import Acronym
 from .game_mod import GameMod

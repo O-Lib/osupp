@@ -24,7 +24,6 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Optional, Union
 from collections.abc import Iterable, Iterator
 
 from .acronym import Acronym
@@ -163,9 +162,7 @@ class GameModsIntermode:
         return result
 
     @classmethod
-    def from_acronyms(
-        cls, acronyms: Iterable[str | Acronym]
-    ) -> GameModsIntermode:
+    def from_acronyms(cls, acronyms: Iterable[str | Acronym]) -> GameModsIntermode:
         result = cls()
         for a in acronyms:
             result.insert(GameModIntermode.from_acronym(str(a)))
