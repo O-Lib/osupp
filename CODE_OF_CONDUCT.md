@@ -98,4 +98,4 @@ For answers to common questions about this code of conduct, see the FAQ at [http
 
 **Contact:** conduct@olib.dev
 
-*– The osupp Team*
+*– The O!Lib Team*
