@@ -46,7 +46,7 @@ class DifficultyPoint:
     slider_velocity: float = 1.0
     generate_ticks: bool = True
 
-    def is_redundant(self, existing: "DifficultyPoint") -> bool:
+    def is_redundant(self, existing: DifficultyPoint) -> bool:
         return (
             self.generate_ticks == existing.generate_ticks
             and abs(self.slider_velocity - existing.slider_velocity) < EPSILON
@@ -63,7 +63,7 @@ class SamplePoint:
     sample_volume: int = 100
     custom_sample_bank: int = 0
 
-    def is_redundant(self, existing: "SamplePoint") -> bool:
+    def is_redundant(self, existing: SamplePoint) -> bool:
         return (
             self.sample_bank == existing.sample_bank
             and self.sample_volume == existing.sample_volume
@@ -77,7 +77,7 @@ class EffectPoint:
     kiai: bool = False
     scroll_speed: float = 1.0
 
-    def is_redundant(self, existing: "EffectPoint") -> bool:
+    def is_redundant(self, existing: EffectPoint) -> bool:
         return (
             self.kiai == existing.kiai
             and abs(self.scroll_speed - existing.scroll_speed) < EPSILON
