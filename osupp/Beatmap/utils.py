@@ -3,8 +3,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-# KEY VALUE
-# ----------------------------------------------------------------------------------
+
 K = TypeVar("K")
 
 
@@ -28,11 +27,6 @@ class KeyValue(Generic[K]):
         except (ValueError, TypeError, KeyError):
             return None
 
-
-# ----------------------------------------------------------------------------------
-
-# PARSE NUMBERS
-# ----------------------------------------------------------------------------------
 
 MAX_PARSE_VALUE = 2147483647
 
@@ -77,11 +71,6 @@ def parse_int(s: str) -> int:
 def parse_float(s: str) -> float:
     return parse_with_limits(s, float(MAX_PARSE_VALUE), float)
 
-
-# ----------------------------------------------------------------------------------
-
-# POS
-# ----------------------------------------------------------------------------------
 
 
 @dataclass(slots=True, eq=True)
@@ -148,11 +137,6 @@ class Pos:
         return f"Pos(x={self.x}, y={self.y})"
 
 
-# ----------------------------------------------------------------------------------
-
-
-# STR EXTRA
-# ----------------------------------------------------------------------------------
 def trim_comment(s: str) -> str:
     index = s.find("//")
     if index == -1:
@@ -168,6 +152,3 @@ def clean_filename(s: str) -> str:
     cleaned = s.strip('"')
     cleaned = cleaned.replace("\\\\", "\\")
     return to_standardized_path(cleaned)
-
-
-# ----------------------------------------------------------------------------------
