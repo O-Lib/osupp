@@ -37,17 +37,23 @@ class TimingPoint:
     time_signature: int = 4
 
 
+_DEFAULT_DIFFICULTY = None
+
+
 @dataclass(slots=True, eq=True)
 class DifficultyPoint:
     time: float = 0.0
     slider_velocity: float = 1.0
     generate_ticks: bool = True
 
-    def is_redundant(self, existing: DifficultyPoint) -> bool:
+    def is_redundant(self, existing: "DifficultyPoint") -> bool:
         return (
             self.generate_ticks == existing.generate_ticks
             and abs(self.slider_velocity - existing.slider_velocity) < EPSILON
         )
+
+
+_DEFAULT_DIFFICULTY = DifficultyPoint()
 
 
 @dataclass(slots=True, eq=True)
@@ -57,7 +63,7 @@ class SamplePoint:
     sample_volume: int = 100
     custom_sample_bank: int = 0
 
-    def is_redundant(self, existing: SamplePoint) -> bool:
+    def is_redundant(self, existing: "SamplePoint") -> bool:
         return (
             self.sample_bank == existing.sample_bank
             and self.sample_volume == existing.sample_volume
@@ -71,7 +77,7 @@ class EffectPoint:
     kiai: bool = False
     scroll_speed: float = 1.0
 
-    def is_redundant(self, existing: EffectPoint) -> bool:
+    def is_redundant(self, existing: "EffectPoint") -> bool:
         return (
             self.kiai == existing.kiai
             and abs(self.scroll_speed - existing.scroll_speed) < EPSILON
@@ -111,7 +117,7 @@ class ControlPoints:
             self.timing_points[max(0, idx - 1)] if self.timing_points else TimingPoint()
         )
 
-    def add_timing(self, point: TimingPoint):
+    def add_timing(self, point: TimingPoint) -> None:
         idx = bisect.bisect_left(self.timing_points, point.time, key=lambda x: x.time)
         if (
             idx < len(self.timing_points)
@@ -121,44 +127,96 @@ class ControlPoints:
         else:
             self.timing_points.insert(idx, point)
 
-    def add_difficulty(self, point: DifficultyPoint):
-        if not point.is_redundant(self.difficulty_point_at(point.time)):
-            idx = bisect.bisect_left(
-                self.difficulty_points, point.time, key=lambda x: x.time
-            )
-            if (
-                idx < len(self.difficulty_points)
-                and abs(self.difficulty_points[idx].time - point.time) < EPSILON
-            ):
-                self.difficulty_points[idx] = point
-            else:
-                self.difficulty_points.insert(idx, point)
+    def add_difficulty(self, point: DifficultyPoint) -> None:
+        existing_at = self._exact_at(self.difficulty_points, point.time)
+        if existing_at is not None:
+            if point.is_redundant(existing_at):
+                return
 
-    def add_effect(self, point: EffectPoint):
-        if not point.is_redundant(self.effect_point_at(point.time)):
             idx = bisect.bisect_left(
-                self.effect_points, point.time, key=lambda x: x.time
+                self.difficulty_points,
+                point.time,
+                key=lambda x: x.time,
             )
-            if (
-                idx < len(self.effect_points)
-                and abs(self.effect_points[idx].time - point.time) < EPSILON
-            ):
-                self.effect_points[idx] = point
-            else:
-                self.effect_points.insert(idx, point)
+            self.difficulty_points[idx] = point
+            return
 
-    def add_sample(self, point: SamplePoint):
-        if not point.is_redundant(self.sample_point_at(point.time)):
+        if self.difficulty_points:
+            active = self.difficulty_point_at(point.time)
+            if point.is_redundant(active):
+                return
+        elif point.is_redundant(_DEFAULT_DIFFICULTY):
+            return
+
+        idx = bisect.bisect_left(
+            self.difficulty_points,
+            point.time,
+            key=lambda x: x.time,
+        )
+        self.difficulty_points.insert(idx, point)
+
+    def add_effect(self, point: EffectPoint) -> None:
+        existing_at = self._exact_at(self.effect_points, point.time)
+        if existing_at is not None:
+            if point.is_redundant(existing_at):
+                return
+
             idx = bisect.bisect_left(
-                self.sample_points, point.time, key=lambda x: x.time
+                self.effect_points,
+                point.time,
+                key=lambda x: x.time,
             )
-            if (
-                idx < len(self.sample_points)
-                and abs(self.sample_points[idx].time - point.time) < EPSILON
-            ):
-                self.sample_points[idx] = point
-            else:
-                self.sample_points.insert(idx, point)
+            self.effect_points[idx] = point
+            return
+
+        if self.effect_points:
+            active = self.effect_point_at(point.time)
+            if point.is_redundant(active):
+                return
+        elif point.is_redundant(EffectPoint()):
+            return
+
+        idx = bisect.bisect_left(
+            self.effect_points,
+            point.time,
+            key=lambda x: x.time,
+        )
+        self.effect_points.insert(idx, point)
+
+    def add_sample(self, point: SamplePoint) -> None:
+        existing_at = self._exact_at(self.sample_points, point.time)
+        if existing_at is not None:
+            if point.is_redundant(existing_at):
+                return
+
+            idx = bisect.bisect_left(
+                self.sample_points,
+                point.time,
+                key=lambda x: x.time,
+            )
+            self.sample_points[idx] = point
+            return
+
+        if self.sample_points:
+            active = self.sample_point_at(point.time)
+            if point.is_redundant(active):
+                return
+
+        idx = bisect.bisect_left(
+            self.sample_points,
+            point.time,
+            key=lambda x: x.time,
+        )
+        self.sample_points.insert(idx, point)
+
+    @staticmethod
+    def _exact_at(points: list, time: float):
+        if not points:
+            return None
+        idx = bisect.bisect_left(points, time, key=lambda x: x.time)
+        if idx < len(points) and abs(points[idx].time - time) < EPSILON:
+            return points[idx]
+        return None
 
 
 class TimingPointsState:
@@ -186,14 +244,14 @@ class TimingPointsState:
         self.pending_sample: SamplePoint | None = None
         self.control_points = ControlPoints()
 
-    def flush_pending(self):
-        if self.pending_timing:
+    def flush_pending(self) -> None:
+        if self.pending_timing is not None:
             self.control_points.add_timing(self.pending_timing)
-        if self.pending_difficulty:
+        if self.pending_difficulty is not None:
             self.control_points.add_difficulty(self.pending_difficulty)
-        if self.pending_effect:
+        if self.pending_effect is not None:
             self.control_points.add_effect(self.pending_effect)
-        if self.pending_sample:
+        if self.pending_sample is not None:
             self.control_points.add_sample(self.pending_sample)
 
         self.pending_timing = None
@@ -201,7 +259,7 @@ class TimingPointsState:
         self.pending_effect = None
         self.pending_sample = None
 
-    def push_point(self, time: float, point, timing_change: bool):
+    def push_point(self, time: float, point, timing_change: bool) -> None:
         if abs(time - self.pending_time) >= EPSILON:
             self.flush_pending()
 
@@ -229,16 +287,16 @@ class TimingPointsState:
         try:
             time = parse_float(parts[0])
             beat_len_raw = parts[1]
-
             try:
                 beat_len = float(beat_len_raw)
             except ValueError:
                 raise ParseNumberError("invalid float")
 
-            if beat_len < -MAX_PARSE_VALUE:
-                raise ParseNumberError(ParseNumberError.Underflow)
-            if beat_len > MAX_PARSE_VALUE:
-                raise ParseNumberError(ParseNumberError.Overflow)
+            if not math.isnan(beat_len):
+                if beat_len < -MAX_PARSE_VALUE:
+                    raise ParseNumberError(ParseNumberError.Underflow)
+                if beat_len > MAX_PARSE_VALUE:
+                    raise ParseNumberError(ParseNumberError.Overflow)
 
             speed_multiplier = 100.0 / -beat_len if beat_len < 0.0 else 1.0
 
@@ -248,35 +306,45 @@ class TimingPointsState:
 
             sample_set = self.general_default_sample_bank
             if len(parts) > 3:
-                val = parse_int(parts[3])
-                if val in (1, 2, 3):
-                    sample_set = SampleBank(val)
+                try:
+                    val = parse_int(parts[3])
+                    if val in (1, 2, 3):
+                        sample_set = SampleBank(val)
+                except ParseNumberError:
+                    pass
 
-            custom_sample_bank = parse_int(parts[4]) if len(parts) > 4 else 0
-            sample_volume = (
-                parse_int(parts[5])
-                if len(parts) > 5
-                else self.general_default_sample_volume
-            )
+            try:
+                custom_sample_bank = parse_int(parts[4]) if len(parts) > 4 else 0
+            except ParseNumberError:
+                custom_sample_bank = 0
+
+            try:
+                sample_volume = (
+                    parse_int(parts[5])
+                    if len(parts) > 5
+                    else self.general_default_sample_volume
+                )
+            except ParseNumberError:
+                sample_volume = self.general_default_sample_volume
 
             timing_change = parts[6].startswith("1") if len(parts) > 6 else True
 
             kiai_mode = False
             omit_first_bar = False
             if len(parts) > 7:
-                flags = parse_int(parts[7])
-                kiai_mode = (flags & EffectFlags.KIAI) != 0
-                omit_first_bar = (flags & EffectFlags.OMIT_FIRST_BAR_LINE) != 0
+                try:
+                    flags = parse_int(parts[7])
+                    kiai_mode = (flags & EffectFlags.KIAI) != 0
+                    omit_first_bar = (flags & EffectFlags.OMIT_FIRST_BAR_LINE) != 0
+                except ParseNumberError:
+                    pass
 
             if sample_set == SampleBank.None_:
                 sample_set = SampleBank.Normal
 
             if timing_change:
                 if math.isnan(beat_len):
-                    raise ParseTimingPointsError(
-                        "beat length cannot be NaN in a timing control point"
-                    )
-
+                    return
                 timing = TimingPoint(
                     time,
                     max(6.0, min(60000.0, beat_len)),
@@ -285,8 +353,11 @@ class TimingPointsState:
                 )
                 self.push_point(time, timing, timing_change)
 
+            generate_ticks = not math.isnan(beat_len)
             difficulty = DifficultyPoint(
-                time, max(0.1, min(10.0, speed_multiplier)), not math.isnan(beat_len)
+                time,
+                max(0.1, min(10.0, speed_multiplier)) if generate_ticks else 1.0,
+                generate_ticks,
             )
             self.push_point(time, difficulty, timing_change)
 
