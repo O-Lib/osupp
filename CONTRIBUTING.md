@@ -11,7 +11,6 @@ Following these guidelines helps communicate that you respect the time of the ma
 * [Code of Conduct](#code-of-conduct)
 * [What We Accept](#what-we-accept)
 * [What We Do Not Accept](#what-we-do-not-accept)
-* [No AI-Generated Contributions](#no-ai-generated-contributions)
 * [Getting Started](#getting-started)
 
   * [Reporting Bugs](#reporting-bugs)
