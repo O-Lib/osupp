@@ -30,7 +30,7 @@ Following these guidelines helps communicate that you respect the time of the ma
 
 This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
-Please report unacceptable behavior to **[security@osupp.dev](mailto:security@olib.dev)**.
+Please report unacceptable behavior to **[security@olib.dev](mailto:security@olib.dev)**.
 
 ---
 
