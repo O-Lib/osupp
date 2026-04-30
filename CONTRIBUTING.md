@@ -326,4 +326,4 @@ If unsure, open an issue first.
 ---
 
 **Thank you for contributing to osupp! 🚀**
-- The osupp Team
+- The O!Lib Team
