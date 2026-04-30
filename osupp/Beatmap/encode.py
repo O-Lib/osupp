@@ -1,18 +1,35 @@
 from __future__ import annotations
 
+import bisect
 import io
+import math
 
-from section.enums import GameMode, HitSoundType
+from section.enums import GameMode, HitSoundType, SampleBank
 from section.hit_objects.hit_objects import (
     HitObjectCircle,
     HitObjectHold,
     HitObjectSlider,
     HitObjectSpinner,
     HitObjectType,
+    HitSampleDefaultName,
+)
+from section.hit_objects.slider import (
+    SliderEventType,
+    generate_slider_events,
+)
+from section.timing_points import (
+    ControlPoints,
+    DifficultyPoint,
+    SamplePoint,
+    TimingPoint,
 )
 
+_BASE_SCORING_DIST = 100.0
 
-def encode_beatmap(beatmap, writer: io.TextIOBase) -> None:
+_bisect_right = bisect.bisect_right
+
+
+def encode_beatmap(beatmap, writer: io.TextIOBase, *, lazer_compatible: bool = False) -> None:
     writer.write(f"osu file format v{beatmap.format_version}\n\n")
 
     _encode_general(beatmap, writer)
@@ -30,7 +47,7 @@ def encode_beatmap(beatmap, writer: io.TextIOBase) -> None:
     _encode_events(beatmap, writer)
     writer.write("\n")
 
-    _encode_timing_points(beatmap, writer)
+    _encode_timing_points(beatmap, writer, lazer_compatible=lazer_compatible)
     writer.write("\n")
 
     _encode_colors(beatmap, writer)
@@ -40,7 +57,6 @@ def encode_beatmap(beatmap, writer: io.TextIOBase) -> None:
 
 
 def _encode_general(beatmap, writer) -> None:
-    #
     writer.write("[General]\n")
     writer.write(f"AudioFilename: {beatmap.general.audio_filename}\n")
     writer.write(f"AudioLeadIn: {beatmap.general.audio_lead_in}\n")
@@ -81,7 +97,6 @@ def _encode_general(beatmap, writer) -> None:
 
 
 def _encode_editor(beatmap, writer) -> None:
-    #
     writer.write("[Editor]\n")
     if beatmap.editor.bookmarks:
         bookmarks_str = ",".join(str(b) for b in beatmap.editor.bookmarks)
@@ -94,7 +109,6 @@ def _encode_editor(beatmap, writer) -> None:
 
 
 def _encode_metadata(beatmap, writer) -> None:
-    #
     writer.write("[Metadata]\n")
     writer.write(f"Title:{beatmap.metadata.title}\n")
     if beatmap.metadata.title_unicode:
@@ -117,7 +131,6 @@ def _encode_metadata(beatmap, writer) -> None:
 
 
 def _encode_difficulty(beatmap, writer) -> None:
-    #
     writer.write("[Difficulty]\n")
     writer.write(f"HPDrainRate:{beatmap.difficulty.hp_drain_rate}\n")
     writer.write(f"CircleSize:{beatmap.difficulty.circle_size}\n")
@@ -128,7 +141,6 @@ def _encode_difficulty(beatmap, writer) -> None:
 
 
 def _encode_events(beatmap, writer) -> None:
-    #
     writer.write("[Events]\n")
     if beatmap.events.background_file:
         writer.write(f'0,0,"{beatmap.events.background_file}",0,0\n')
@@ -138,7 +150,6 @@ def _encode_events(beatmap, writer) -> None:
 
 
 def _encode_colors(beatmap, writer) -> None:
-    #
     writer.write("[Colours]\n")
     for i, color in enumerate(beatmap.colors.custom_combo_colors, start=1):
         writer.write(f"Combo{i} : {color.red},{color.green},{color.blue}\n")
@@ -149,81 +160,326 @@ def _encode_colors(beatmap, writer) -> None:
         )
 
 
-def _encode_timing_points(beatmap, writer) -> None:
-    timing_points_state = beatmap.timing_points
+def _precision_adjusted_beat_len(
+    slider_velocity: float, beat_len: float, mode: GameMode
+) -> float:
+    sv_as_beat_len = -100.0 / slider_velocity
+    if sv_as_beat_len < 0.0:
+        if mode in (GameMode.Osu, GameMode.Catch):
+            bpm_multiplier = max(10.0, min(10_000.0, -sv_as_beat_len)) / 100.0
+        else:  # Taiko, Mania
+            bpm_multiplier = max(10.0, min(1000.0, -sv_as_beat_len)) / 100.0
+    else:
+        bpm_multiplier = 1.0
+    return beat_len * bpm_multiplier
+
+
+def _saturating_difficulty_at(cp: ControlPoints, time: float) -> DifficultyPoint | None:
+    if not cp.difficulty_points:
+        return None
+    lo, hi = 0, len(cp.difficulty_points)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if cp.difficulty_points[mid].time <= time:
+            lo = mid + 1
+        else:
+            hi = mid
+    if lo == 0:
+        return None
+    return cp.difficulty_points[lo - 1]
+
+
+def _saturating_timing_at(cp: ControlPoints, time: float) -> TimingPoint | None:
+    if not cp.timing_points:
+        return None
+    lo, hi = 0, len(cp.timing_points)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if cp.timing_points[mid].time <= time:
+            lo = mid + 1
+        else:
+            hi = mid
+    return cp.timing_points[max(0, lo - 1)]
+
+
+def _slider_velocity_for(
+    slider: HitObjectSlider,
+    start_time: float,
+    cp: ControlPoints,
+    slider_multiplier: float,
+    mode: GameMode,
+) -> float:
+    tp = _saturating_timing_at(cp, start_time)
+    beat_len = tp.beat_len if tp is not None else 60_000.0 / 60.0
+
+    dp = _saturating_difficulty_at(cp, start_time)
+    sv = dp.slider_velocity if dp is not None else 1.0
+
+    adjusted = _precision_adjusted_beat_len(sv, beat_len, mode)
+    if adjusted == 0.0:
+        return 0.0
+    return _BASE_SCORING_DIST * slider_multiplier / adjusted
+
+
+def _collect_sample_from_hit_samples(
+    samples: list, time: float, *, lazer_compatible: bool = False
+) -> SamplePoint | None:
+    if not samples:
+        return None
+    volume = max(s.volume for s in samples)
+    custom = max(s.custom_sample_bank for s in samples)
+
+    if lazer_compatible:
+        bank: SampleBank | None = None
+        for s in samples:
+            if s.name_default == HitSampleDefaultName.Normal:
+                bank = s.bank
+                break
+        if bank is None:
+            bank = samples[0].bank
+    else:
+        bank = SampleBank.Normal
+
+    return SamplePoint(
+        time=time,
+        sample_bank=bank,
+        sample_volume=volume,
+        custom_sample_bank=custom,
+    )
+
+
+def _collect_samples(beatmap, cp: ControlPoints, *, lazer_compatible: bool = False) -> None:
+    mode = beatmap.general.mode
+    slider_multiplier = beatmap.difficulty.slider_multiplier
+
+    collected: list[SamplePoint] = []
+
+    for h in beatmap.hit_objects.hit_objects:
+        kind = h.kind
+
+        if isinstance(kind, HitObjectCircle):
+            end_time = h.start_time
+        elif isinstance(kind, HitObjectSpinner):
+            end_time = h.start_time + kind.duration
+        elif isinstance(kind, HitObjectHold):
+            end_time = h.start_time + kind.duration
+        elif isinstance(kind, HitObjectSlider):
+            curve_dist = kind.path.curve().dist()
+            velocity = _slider_velocity_for(
+                kind, h.start_time, beatmap.control_points, slider_multiplier, mode
+            )
+            span_count = kind.repeat_count + 1
+            if velocity > 0.0:
+                duration = span_count * curve_dist / velocity
+            else:
+                duration = 0.0
+            end_time = h.start_time + duration
+        else:
+            end_time = h.start_time
+
+        sp = _collect_sample_from_hit_samples(h.samples, end_time, lazer_compatible=lazer_compatible)
+        if sp is not None:
+            collected.append(sp)
+
+        if isinstance(kind, HitObjectSlider):
+            if mode == GameMode.Osu:
+                tick_dist_factor = velocity * 60_000.0
+                tp = _saturating_timing_at(beatmap.control_points, h.start_time)
+                beat_len = tp.beat_len if tp is not None else 1000.0
+                dp = _saturating_difficulty_at(beatmap.control_points, h.start_time)
+                sv = dp.slider_velocity if dp is not None else 1.0
+                gen_ticks = dp.generate_ticks if dp is not None else True
+                tick_dist_multiplier = (1.0 / sv) if beatmap.format_version < 8 else 1.0
+                scoring_dist = velocity * beat_len
+                if gen_ticks:
+                    tick_dist = scoring_dist / beatmap.difficulty.slider_tick_rate * tick_dist_multiplier
+                else:
+                    tick_dist = math.inf
+
+                span_duration = (curve_dist / velocity) if velocity > 0.0 else 0.0
+
+                if span_duration <= 0.0 or curve_dist <= 0.0:
+                    continue
+
+                events = list(
+                    generate_slider_events(
+                        h.start_time,
+                        span_duration,
+                        velocity,
+                        tick_dist,
+                        curve_dist,
+                        span_count,
+                    )
+                )
+
+                for ev in events:
+                    if ev.kind == SliderEventType.Head:
+                        node_samples = (
+                            kind.node_samples[0] if kind.node_samples else h.samples
+                        )
+                        sp = _collect_sample_from_hit_samples(node_samples, ev.time, lazer_compatible=lazer_compatible)
+                        if sp is not None:
+                            collected.append(sp)
+                    elif ev.kind == SliderEventType.Repeat:
+                        idx = ev.span_idx + 1
+                        node_samples = (
+                            kind.node_samples[idx]
+                            if idx < len(kind.node_samples)
+                            else h.samples
+                        )
+                        sp = _collect_sample_from_hit_samples(node_samples, ev.time, lazer_compatible=lazer_compatible)
+                        if sp is not None:
+                            collected.append(sp)
+                    elif ev.kind == SliderEventType.Tail:
+                        idx = kind.repeat_count + 1
+                        node_samples = (
+                            kind.node_samples[idx]
+                            if idx < len(kind.node_samples)
+                            else h.samples
+                        )
+                        sp = _collect_sample_from_hit_samples(node_samples, ev.time, lazer_compatible=lazer_compatible)
+                        if sp is not None:
+                            collected.append(sp)
+            elif mode == GameMode.Catch:
+                dp = _saturating_difficulty_at(beatmap.control_points, h.start_time)
+                sv = dp.slider_velocity if dp is not None else 1.0
+                tick_dist_multiplier = (1.0 / sv) if beatmap.format_version < 8 else 1.0
+                tick_dist = (
+                    _BASE_SCORING_DIST
+                    * slider_multiplier
+                    / beatmap.difficulty.slider_tick_rate
+                    * tick_dist_multiplier
+                )
+
+                span_duration = (curve_dist / velocity) if velocity > 0.0 else 0.0
+
+                if span_duration <= 0.0 or curve_dist <= 0.0:
+                    continue
+
+                events = list(
+                    generate_slider_events(
+                        h.start_time,
+                        span_duration,
+                        velocity,
+                        tick_dist,
+                        curve_dist,
+                        span_count,
+                    )
+                )
+
+                node_idx = 0
+                for ev in events:
+                    if ev.kind in (
+                        SliderEventType.Head,
+                        SliderEventType.Repeat,
+                        SliderEventType.Tail,
+                    ):
+                        node_samples = (
+                            kind.node_samples[node_idx]
+                            if node_idx < len(kind.node_samples)
+                            else h.samples
+                        )
+                        sp = _collect_sample_from_hit_samples(node_samples, ev.time, lazer_compatible=lazer_compatible)
+                        if sp is not None:
+                            collected.append(sp)
+                        node_idx += 1
+            elif mode == GameMode.Mania:
+                sp = _collect_sample_from_hit_samples(h.samples, h.start_time, lazer_compatible=lazer_compatible)
+                if sp is not None:
+                    collected.append(sp)
+
+    collected.sort(key=lambda s: s.time)
+    if not collected:
+        return
+
+    iterator = iter(collected)
+    first = next(iterator)
+    cp.add_sample(first)
+    last = first
+    for s in iterator:
+        if not s.is_redundant(last):
+            cp.add_sample(s)
+            last = s
+
+
+def _clone_control_points(cp: ControlPoints) -> ControlPoints:
+    new = ControlPoints()
+    new.timing_points = list(cp.timing_points)
+    new.difficulty_points = list(cp.difficulty_points)
+    new.effect_points = list(cp.effect_points)
+    new.sample_points = list(cp.sample_points)
+    return new
+
+
+def _encode_timing_points(beatmap, writer, *, lazer_compatible: bool = False) -> None:
+    if lazer_compatible:
+        cp = _clone_control_points(beatmap.timing_points.control_points)
+        _collect_samples(beatmap, cp, lazer_compatible=True)
+    else:
+        cp = beatmap.timing_points.control_points
 
     writer.write("[TimingPoints]\n")
 
-    all_times = set()
-    tps = getattr(
-        timing_points_state, "timing_points", getattr(timing_points_state, "points", [])
+    timing_by_time = {tp.time: tp for tp in cp.timing_points}
+    diff_by_time = {dp.time: dp for dp in cp.difficulty_points}
+    eff_by_time = {ep.time: ep for ep in cp.effect_points}
+    sample_by_time = {sp.time: sp for sp in cp.sample_points}
+
+    all_times = sorted(
+        set(timing_by_time)
+        | set(diff_by_time)
+        | set(eff_by_time)
+        | set(sample_by_time)
     )
-    dps = getattr(timing_points_state, "difficulty_points", [])
-    sps = getattr(timing_points_state, "sample_points", [])
-    eps = getattr(timing_points_state, "effect_points", [])
 
-    for tp in tps:
-        all_times.add(tp.time)
-    for dp in dps:
-        all_times.add(dp.time)
-    for sp in sps:
-        all_times.add(sp.time)
-    for ep in eps:
-        all_times.add(ep.time)
+    active_meter = 4
+    active_sv = 1.0
+    active_generate_ticks = True
+    active_kiai = False
+    active_bank = 1
+    active_volume = 100
+    active_custom_bank = 0
 
-    sorted_times = sorted(list(all_times))
-    last_props = None
+    for time in all_times:
+        tp = timing_by_time.get(time)
+        dp = diff_by_time.get(time)
+        ep = eff_by_time.get(time)
+        sp = sample_by_time.get(time)
 
-    for time in sorted_times:
-        tp = beatmap.timing_points.timing_point_at(time)
-        dp = beatmap.timing_points.difficulty_point_at(time)
-        sp = beatmap.timing_points.sample_point_at(time)
-        ep = beatmap.timing_points.effect_point_at(time)
+        if dp is not None:
+            active_sv = dp.slider_velocity
+            active_generate_ticks = dp.generate_ticks
+        if ep is not None:
+            active_kiai = ep.kiai
+        if sp is not None:
+            active_bank = sp.sample_bank.value
+            active_volume = sp.sample_volume
+            active_custom_bank = sp.custom_sample_bank
 
-        is_timing = tp is not None and tp.time == time
-        beat_len = tp.beat_len if tp else (-100.0 / (dp.slider_velocity if dp else 1.0))
-
-        meter = tp.time_signature.numerator if tp else 4
-        sample_set = sp.sample_bank.value if sp else 1
-        sample_index = sp.custom_sample_bank if sp else 0
-        volume = sp.sample_volume if sp else 100
-
-        kiai = ep.kiai if ep else False
-        omit_bar = tp.omit_first_bar_line if tp else False
-        effect_flags = (1 if kiai else 0) | (8 if omit_bar else 0)
-
-        current_props = (
-            beat_len,
-            meter,
-            sample_set,
-            sample_index,
-            volume,
-            effect_flags,
-        )
-
-        if is_timing:
+        if tp is not None:
+            active_meter = tp.time_signature
+            omit_bar = tp.omit_first_bar_line
+            effect_flags = (1 if active_kiai else 0) | (8 if omit_bar else 0)
             writer.write(
-                f"{time},{beat_len},{meter},{sample_set},{sample_index},{volume},1,{effect_flags}\n"
+                f"{time},{tp.beat_len},{active_meter},"
+                f"{active_bank},{active_custom_bank},{active_volume},"
+                f"1,{effect_flags}\n"
             )
-            last_props = (
-                1.0,
-                meter,
-                sample_set,
-                sample_index,
-                volume,
-                effect_flags,
-            )
-        else:
-            if (
-                last_props
-                and abs(last_props[0] - beat_len) < 1e-7
-                and last_props[1:] == current_props[1:]
-            ):
+
+            if abs(active_sv - 1.0) <= 1e-9 and active_generate_ticks:
                 continue
-            writer.write(
-                f"{time},{beat_len},{meter},{sample_set},{sample_index},{volume},0,{effect_flags}\n"
-            )
-            last_props = current_props
+
+        if not active_generate_ticks:
+            beat_len_str = "NaN"
+        else:
+            beat_len = -100.0 / active_sv if active_sv != 0 else -100.0
+            beat_len_str = f"{beat_len}"
+        effect_flags = 1 if active_kiai else 0
+        writer.write(
+            f"{time},{beat_len_str},{active_meter},"
+            f"{active_bank},{active_custom_bank},{active_volume},"
+            f"0,{effect_flags}\n"
+        )
 
 
 def _encode_hit_objects(beatmap, writer) -> None:
