@@ -1,0 +1,21 @@
+# CODEOWNERS for osupp
+# This file automatically assigns reviewers based on changed files.
+# Syntax: pattern @owner
+# Last matching pattern takes precedence.
+
+# Default: Fallback for everything else
+* @Error44s @DevilPedrow
+
+# Core logic and calculations (PP, mods)
+/osupp/Mods/ @Error44s @DevilPedrow
+/osupp/Beatmap/ @DevilPedrow @Error44s
+
+# GitHub workflows and configurations
+/.github/ @Error44s @DevilPedrow
+
+# Documentation files
+/docs/ @Error44s @DevilPedrow
+*.md @Error44s @DevilPedrow
+
+# Tests
+/tests/ @Error44s @DevilPedrow
