@@ -8,7 +8,7 @@ from reader import Decoder
 from section.colors import Colors
 from section.difficulty import Difficulty, DifficultyState
 from section.editor import Editor
-from section.enums import SampleBank, Section, GameMode
+from section.enums import GameMode, SampleBank, Section
 from section.events import Events
 from section.general import General
 from section.hit_objects.hit_objects import HitObjectsState
@@ -167,19 +167,19 @@ class Beatmap:
 
     # Construction
     @classmethod
-    def from_path(cls, path: str) -> "Beatmap":
+    def from_path(cls, path: str) -> Beatmap:
         with open(path, "rb") as f:
             decoder = Decoder(f)
             return cls._decode(decoder)
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> "Beatmap":
+    def from_bytes(cls, data: bytes) -> Beatmap:
         reader = io.BytesIO(data)
         decoder = Decoder(reader)
         return cls._decode(decoder)
 
     @classmethod
-    def _decode(cls, decoder: Decoder) -> "Beatmap":
+    def _decode(cls, decoder: Decoder) -> Beatmap:
         format_version = LATEST_FORMAT_VERSION
         use_current_line = False
         current_line_content = ""
