@@ -5,9 +5,8 @@ from collections.abc import Generator
 from dataclasses import dataclass, field
 from enum import Enum
 
-from utils import Pos
-
 from section.enums import GameMode, SplineType
+from utils import Pos
 
 BEZIER_TOLERANCE = 0.25
 CATMULL_DETAIL = 50
