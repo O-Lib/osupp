@@ -1,405 +1,300 @@
-from dataclasses import dataclass, field
-from typing import List, TYPE_CHECKING, Union
+from __future__ import annotations
 
-from section.timing_points import TimingPoints
+import io
+from dataclasses import dataclass
 
-if TYPE_CHECKING:
-    from section.colors import Color, Colors, ColorsState, CustomColor, ParseColorsError
-    from section.editor import Editor, EditorState, ParseEditorError
-    from section.events import BreakPeriod
-    from section.general import CountdownType, GameMode
-    from section.hit_objects import (
-    SampleBank, HitObject, HitObjects,HitObjectsState, ParseHitObjectsError
-    )
-    from section.metadata import Metadata, MetadataState, ParseMetadataError
-    from section.timing_points import ControlPoints
-from format_version import LATEST_FORMAT_VERSION
+from encode import encode_beatmap
+from reader import Decoder
+from section.colors import Colors
+from section.difficulty import Difficulty, DifficultyState
+from section.editor import Editor
+from section.enums import GameMode, SampleBank, Section
+from section.events import Events
+from section.general import General
+from section.hit_objects.hit_objects import HitObjectsState
+from section.metadata import Metadata
+from section.timing_points import ControlPoints, TimingPointsState
 
-@dataclass
-class Beatmap:
-    format_version: int = LATEST_FORMAT_VERSION
+LATEST_FORMAT_VERSION = 14
 
-    #General
-    audio_file: str = ""
-    audio_lead_in: float = 0.0
-    preview_time: int = 0
-    default_sample_bank: "SampleBank" = field(default_factory=lambda: SampleBank.Normal)
-    default_sample_volume: int = 100
-    stack_leniency: float = 0.7
-    mode: "GameMode" = field(default_factory=lambda: GameMode.Osu)
-    letterbox_in_breaks: bool = False
-    special_style: bool = False
-    widescreen_storyboard: bool = False
-    epilepsy_warning: bool = False
-    samples_match_playback_rate: bool = False
-    countdown: "CountdownType" = field(default_factory=lambda: CountdownType.Normal)
-    countdown_offset: int = 0
-
-    #Editor
-    bookmarks: List[int] = field(default_factory=list)
-    distance_spacing: float = 1.0
-    beat_divisor: int = 4
-    grid_size: int = 4
-    timeline_zoom: float = 1.0
-
-    #Metadata
-    title: str = ""
-    title_unicode: str = ""
-    artist: str = ""
-    artist_unicode: str = ""
-    creator: str = ""
-    version: str = ""
-    source: str = ""
-    tags: str = ""
-    beatmap_id: int = -1
-    beatmap_set_id: int = -1
-
-    #Difficulty
-    hp_drain_rate: float = 5.0
-    circle_size: float = 5.0
-    overall_difficulty: float = 5.0
-    approach_rate: float = 5.0
-    slider_multiplier: float = 1.4
-    slider_tick_rate: float = 1.0
-
-    #Events
-    background_file: str = ""
-    breaks: List["BreakPeriod"] = field(default_factory=list)
-
-    #TimingPoints
-    control_points: "ControlPoints" = field(default_factory=lambda: ControlPoints())
-
-    #Colors
-    custom_combo_colors: List["Color"] = field(default_factory=list)
-    custom_colors: List["CustomColor"] = field(default_factory=list)
-
-    #HitObjects
-    hit_objects: List["HitObject"] = field(default_factory=list)
-
-    @staticmethod
-    def from_path(path: Union[str, Path]) -> "Beatmap":
-        from decode import from_path
-        return from_path(path)
-
-    @staticmethod
-    def from_bytes(bytes_data: bytes) -> "Beatmap":
-        from decode import from_bytes
-        return from_bytes(bytes_data)
-
-    @staticmethod
-    def from_str(s: str) -> "Beatmap":
-        from decode import from_str
-        return from_str(s)
-
-    @classmethod
-    def default(cls) -> "Beatmap":
-        editor = Editor.default()
-        metadata = Metadata.default()
-        colors = Colors.default()
-        hit_objects = HitObjects.default()
-
-        return cls(
-            format_version=LATEST_FORMAT_VERSION,
-
-            # General
-            audio_file=hit_objects.audio_file,
-            audio_lead_in=hit_objects.audio_lead_in,
-            preview_time=hit_objects.preview_time,
-            default_sample_bank=hit_objects.default_sample_bank,
-            default_sample_volume=hit_objects.default_sample_volume,
-            stack_leniency=hit_objects.stack_leniency,
-            mode=hit_objects.mode,
-            letterbox_in_breaks=hit_objects.letterbox_in_breaks,
-            special_style=hit_objects.special_style,
-            widescreen_storyboard=hit_objects.widescreen_storyboard,
-            epilepsy_warning=hit_objects.epilepsy_warning,
-            samples_match_playback_rate=hit_objects.samples_match_playback_rate,
-            countdown=hit_objects.countdown,
-            countdown_offset=hit_objects.countdown_offset,
-
-            # Editor
-            bookmarks=editor.bookmarks,
-            distance_spacing=editor.distance_spacing,
-            beat_divisor=editor.beat_divisor,
-            grid_size=editor.grid_size,
-            timeline_zoom=editor.timeline_zoom,
-
-            # Metadata
-            title=metadata.title,
-            title_unicode=metadata.title_unicode,
-            artist=metadata.artist,
-            artist_unicode=metadata.artist_unicode,
-            creator=metadata.creator,
-            version=metadata.version,
-            source=metadata.source,
-            tags=metadata.tags,
-            beatmap_id=metadata.beatmap_id,
-            beatmap_set_id=metadata.beatmap_set_id,
-
-            # Difficulty
-            hp_drain_rate=hit_objects.hp_drain_rate,
-            circle_size=hit_objects.circle_size,
-            overall_difficulty=hit_objects.overall_difficulty,
-            approach_rate=hit_objects.approach_rate,
-            slider_multiplier=hit_objects.slider_multiplier,
-            slider_tick_rate=hit_objects.slider_tick_rate,
-
-            # Events
-            background_file=hit_objects.background_file,
-            breaks=hit_objects.breaks,
-
-            # TimingPoints
-            control_points=hit_objects.control_points,
-
-            # Colors
-            custom_combo_colors=colors.custom_combo_colors,
-            custom_colors=colors.custom_colors,
-
-            # HitObjects
-            hit_objects=hit_objects.hit_objects,
-        )
-
-    @classmethod
-    def from_timing_points(cls, timing_points: "TimingPoints"):
-        beatmap = cls.default()
-
-        beatmap.audio_file = timing_points.audio_file
-        beatmap.audio_lead_in = timing_points.audio_lead_in
-        beatmap.preview_time = timing_points.preview_time
-        beatmap.default_sample_bank = timing_points.default_sample_bank
-        beatmap.default_sample_volume = timing_points.default_sample_volume
-        beatmap.stack_leniency = timing_points.stack_leniency
-        beatmap.mode = timing_points.mode
-        beatmap.letterbox_in_breaks = timing_points.letterbox_in_breaks
-        beatmap.special_style = timing_points.special_style
-        beatmap.widescreen_storyboard = timing_points.widescreen_storyboard
-        beatmap.epilepsy_warning = timing_points.epilepsy_warning
-        beatmap.samples_match_playback_rate = timing_points.samples_match_playback_rate
-        beatmap.countdown = timing_points.countdown
-        beatmap.countdown_offset = timing_points.countdown_offset
-        beatmap.control_points = timing_points.control_points
-
-        return beatmap
-
-    @classmethod
-    def from_hit_objects(cls, hit_objects: 'HitObjects') -> 'Beatmap':
-        beatmap = cls()
-
-        # Mapeamos os campos do container para o objeto real
-        beatmap.audio_file = hit_objects.audio_file
-        beatmap.audio_lead_in = hit_objects.audio_lead_in
-        beatmap.preview_time = hit_objects.preview_time
-        beatmap.default_sample_bank = hit_objects.default_sample_bank
-        beatmap.default_sample_volume = hit_objects.default_sample_volume
-        beatmap.stack_leniency = hit_objects.stack_leniency
-        beatmap.mode = hit_objects.mode
-        beatmap.letterbox_in_breaks = hit_objects.letterbox_in_breaks
-        beatmap.special_style = hit_objects.special_style
-        beatmap.widescreen_storyboard = hit_objects.widescreen_storyboard
-        beatmap.epilepsy_warning = hit_objects.epilepsy_warning
-        beatmap.samples_match_playback_rate = hit_objects.samples_match_playback_rate
-        beatmap.countdown = hit_objects.countdown
-        beatmap.countdown_offset = hit_objects.countdown_offset
-
-        # Difficulty
-        beatmap.hp_drain_rate = hit_objects.hp_drain_rate
-        beatmap.circle_size = hit_objects.circle_size
-        beatmap.overall_difficulty = hit_objects.overall_difficulty
-        beatmap.approach_rate = hit_objects.approach_rate
-        beatmap.slider_multiplier = hit_objects.slider_multiplier
-        beatmap.slider_tick_rate = hit_objects.slider_tick_rate
-
-        # Events & Timing
-        beatmap.background_file = hit_objects.background_file
-        beatmap.breaks = hit_objects.breaks
-        beatmap.control_points = hit_objects.control_points
-        beatmap.hit_objects = hit_objects.hit_objects
-
-        return beatmap
-
-    @classmethod
-    def parse_general(cls, state: BeatmapState, line: str):
-        try:
-            HitObjects.parse_general(state.hit_objects, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_hit_objects(e)
-
-    @classmethod
-    def parse_editor(cls, state: BeatmapState, line: str):
-        try:
-            Editor.parse_editor(state.editor, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_editor(e)
-
-    @classmethod
-    def parse_metadata(cls, state: BeatmapState, line: str):
-        try:
-            Metadata.parse_metadata(state.metadata, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_metadata(e)
-
-    @classmethod
-    def parse_difficulty(cls, state: BeatmapState, line: str):
-        try:
-            HitObjects.parse_difficulty(state.hit_objects, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_hit_objects(e)
-
-    @classmethod
-    def parse_events(cls, state: BeatmapState, line: str):
-        try:
-            HitObjects.parse_events(state.hit_objects, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_hit_objects(e)
-
-    @classmethod
-    def parse_timing_points(cls, state: BeatmapState, line: str):
-        try:
-            HitObjects.parse_timing_points(state.hit_objects, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_hit_objects(e)
-
-    @classmethod
-    def parse_colors(cls, state: BeatmapState, line: str):
-        try:
-            Colors.parse_colors(state.colors, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_colors(e)
-
-    @classmethod
-    def parse_hit_objects(cls, state: BeatmapState, line: str):
-        try:
-            HitObjects.parse_hit_objects(state.hit_objects, line)
-        except Exception as e:
-            raise ParseBeatmapError.from_hit_objects(e)
-
-    @classmethod
-    def parse_variables(cls, state: BeatmapState, line: str):
-        pass
-
-    @classmethod
-    def parse_catch_the_beat(cls, state: BeatmapState, line: str):
-        pass
-
-    @classmethod
-    def parse_mania(cls, state: BeatmapState, line: str):
-        pass
 
 class ParseBeatmapError(Exception):
-    def __init__(self, kind: str, soruce: Exception):
-        self.kind = kind
-        self.soruce = soruce
-        super().__init__(self.get_message)
-        self.__cause__ = soruce
+    pass
 
-    def get_message(self) -> str:
-        if self.kind == "Colors":
-            return "failed to parse colors section"
-        elif self.kind == "Editor":
-            return "failed to parse editor section"
-        elif self.kind == "HitObjects":
-            return "failed to parse hit objects"
-        elif self.kind == "Metadata":
-            return "failed to parse metadata section"
-        return "failed to parse beatmap"
+
+class UnknownFileFormatError(ParseBeatmapError):
+    pass
+
+
+def try_version_from_line(line: str) -> int | None:
+    if not line.startswith("osu file format v"):
+        if not line:
+            return None
+        raise UnknownFileFormatError("unknown file format")
+
+    parts = line.split("v", 1)
+    if len(parts) > 1:
+        try:
+            return int(parts[-1])
+        except ValueError:
+            raise ParseBeatmapError("failed to parse number in format version")
+
+    return LATEST_FORMAT_VERSION
+
+
+@dataclass(slots=True, eq=True)
+class Beatmap:
+    format_version: int
+    general: General
+    editor: Editor
+    metadata: Metadata
+    difficulty: Difficulty
+    events: Events
+    timing_points: TimingPointsState
+    colors: Colors
+    hit_objects: HitObjectsState
+
+    @property
+    def control_points(self) -> ControlPoints:
+        return self.timing_points.control_points
+
+    # General
+    @property
+    def mode(self) -> GameMode:
+        return self.general.mode
+
+    @property
+    def audio_filename(self) -> str:
+        return self.general.audio_filename
+
+    @property
+    def audio_lead_in(self) -> int:
+        return self.general.audio_lead_in
+
+    @property
+    def preview_time(self) -> int:
+        return self.general.preview_time
+
+    @property
+    def stack_leniency(self) -> float:
+        return self.general.stack_leniency
+
+    @property
+    def letterbox_in_breaks(self) -> bool:
+        return self.general.letterbox_in_breaks
+
+    @property
+    def widescreen_storyboard(self) -> bool:
+        return self.general.widescreen_storyboard
+
+    @property
+    def epilepsy_warning(self) -> bool:
+        return self.general.epilepsy_warning
+
+    @property
+    def special_style(self) -> bool:
+        return self.general.special_style
+
+    @property
+    def samples_match_playback_rate(self) -> bool:
+        return self.general.samples_match_playback_rate
+
+    # Metadata
+    @property
+    def title(self) -> str:
+        return self.metadata.title
+
+    @property
+    def title_unicode(self) -> str:
+        return self.metadata.title_unicode
+
+    @property
+    def artist(self) -> str:
+        return self.metadata.artist
+
+    @property
+    def artist_unicode(self) -> str:
+        return self.metadata.artist_unicode
+
+    @property
+    def creator(self) -> str:
+        return self.metadata.creator
+
+    @property
+    def version(self) -> str:
+        return self.metadata.version
+
+    @property
+    def source(self) -> str:
+        return self.metadata.source
+
+    @property
+    def tags(self) -> str:
+        return self.metadata.tags
+
+    @property
+    def beatmap_id(self) -> int:
+        return self.metadata.beatmap_id
+
+    @property
+    def beatmap_set_id(self) -> int:
+        return self.metadata.beatmap_set_id
+
+    # Difficulty
+    @property
+    def hp_drain_rate(self) -> float:
+        return self.difficulty.hp_drain_rate
+
+    @property
+    def circle_size(self) -> float:
+        return self.difficulty.circle_size
+
+    @property
+    def overall_difficulty(self) -> float:
+        return self.difficulty.overall_difficulty
+
+    @property
+    def approach_rate(self) -> float:
+        return self.difficulty.approach_rate
+
+    @property
+    def slider_multiplier(self) -> float:
+        return self.difficulty.slider_multiplier
+
+    @property
+    def slider_tick_rate(self) -> float:
+        return self.difficulty.slider_tick_rate
+
+    # Construction
+    @classmethod
+    def from_path(cls, path: str) -> Beatmap:
+        with open(path, "rb") as f:
+            decoder = Decoder(f)
+            return cls._decode(decoder)
 
     @classmethod
-    def from_colors(cls, err: "ParseColorsError") -> "ParseBeatmapError":
-        return cls("Colors", err)
+    def from_bytes(cls, data: bytes) -> Beatmap:
+        reader = io.BytesIO(data)
+        decoder = Decoder(reader)
+        return cls._decode(decoder)
 
     @classmethod
-    def from_editor(cls, err: "ParseEditorError") -> "ParseBeatmapError":
-        return cls("Editor", err)
+    def _decode(cls, decoder: Decoder) -> Beatmap:
+        format_version = LATEST_FORMAT_VERSION
+        use_current_line = False
+        current_line_content = ""
 
-    @classmethod
-    def from_hit_objects(cls, err: "ParseHitObjectsError") -> "ParseBeatmapError":
-        return cls("HitObjects", err)
+        while True:
+            line = decoder.read_line()
+            if line is None:
+                break
+            try:
+                version = try_version_from_line(line)
+                if version is not None:
+                    format_version = int(version)
+                    break
+            except Exception:
+                use_current_line = True
+                current_line_content = line
+                break
 
-    @classmethod
-    def from_metadata(cls, err: "ParseMetadataError") -> "ParseBeatmapError":
-        return cls("Metadata", err)
+        general = General()
+        editor = Editor()
+        metadata = Metadata()
+        difficulty = DifficultyState()
+        events = Events()
+        colors = Colors()
+        hit_objects = HitObjectsState()
+        timing_points = TimingPointsState(
+            general.mode, general.sample_bank, 100
+        )
 
-@dataclass
-class BeatmapState:
-    version: int
-    editor: "EditorState"
-    metadata: "MetadataState"
-    colors: "ColorsState"
-    hit_objects: "HitObjectsState"
+        current_section: Section | None = None
 
-    @classmethod
-    def create(cls, version: int) -> "BeatmapState":
+        if use_current_line:
+            sec = Section.try_from_line(current_line_content)
+            if sec is not None:
+                current_section = sec
+
+        if current_section is None:
+            while True:
+                line = decoder.read_line()
+                if line is None:
+                    break
+                sec = Section.try_from_line(line)
+                if sec is not None:
+                    current_section = sec
+                    break
+
+        while True:
+            line = decoder.read_line()
+            if line is None:
+                break
+
+            if not line or line.lstrip().startswith("//"):
+                continue
+
+            next_section = Section.try_from_line(line)
+            if next_section is not None:
+                current_section = next_section
+                continue
+
+            if current_section is None:
+                continue
+
+            try:
+                if current_section == Section.General:
+                    general.parse_general(line)
+                    timing_points.general_mode = general.mode
+                    timing_points.general_default_sample_bank = general.sample_bank
+                elif current_section == Section.Editor:
+                    editor.parse_editor(line)
+                elif current_section == Section.Metadata:
+                    metadata.parse_metadata(line)
+                elif current_section == Section.Difficulty:
+                    difficulty.parse_difficulty(line)
+                elif current_section == Section.Events:
+                    events.parse_events(line)
+                elif current_section == Section.TimingPoints:
+                    timing_points.parse_timing_points(line)
+                elif current_section == Section.Colors:
+                    colors.parse_colors(line)
+                elif current_section == Section.HitObjects:
+                    hit_objects.parse_hit_object(line)
+            except Exception:
+                pass
+
+        timing_points.flush_pending()
+
+        for break_period in events.breaks:
+            if not break_period.has_effect():
+                continue
+
+            for obj in hit_objects.hit_objects:
+                if obj.start_time > break_period.end_time and hasattr(obj.kind, "new_combo"):
+                    obj.kind.new_combo = True
+                    break
+
         return cls(
-            version=version,
-            editor=EditorState.create(version),
-            metadata=MetadataState.create(version),
-            colors=ColorsState.create(version),
-            hit_objects=HitObjectsState.create(version),
+            format_version=format_version,
+            general=general,
+            editor=editor,
+            metadata=metadata,
+            difficulty=difficulty.difficulty,
+            events=events,
+            timing_points=timing_points,
+            colors=colors,
+            hit_objects=hit_objects,
         )
 
-    def to_beatmap(self) -> "Beatmap":
-        editor = self.editor.to_result()
-        metadata = self.metadata.to_result()
-        colors = self.colors.to_result()
-        hit_objects = self.hit_objects.to_result()
+    def to_bytes(self, *, lazer_compatible: bool = False) -> bytes:
+        return self.encode_to_string(lazer_compatible=lazer_compatible).encode("utf-8")
 
-        return Beatmap(
-            format_version=self.version,
+    def encode_to_path(self, path: str, *, lazer_compatible: bool = False) -> None:
+        with open(path, "w", encoding="utf-8") as f:
+            encode_beatmap(self, f, lazer_compatible=lazer_compatible)
 
-            # General
-            audio_file=hit_objects.audio_file,
-            audio_lead_in=hit_objects.audio_lead_in,
-            preview_time=hit_objects.preview_time,
-            default_sample_bank=hit_objects.default_sample_bank,
-            default_sample_volume=hit_objects.default_sample_volume,
-            stack_leniency=hit_objects.stack_leniency,
-            mode=hit_objects.mode,
-            letterbox_in_breaks=hit_objects.letterbox_in_breaks,
-            special_style=hit_objects.special_style,
-            widescreen_storyboard=hit_objects.widescreen_storyboard,
-            epilepsy_warning=hit_objects.epilepsy_warning,
-            samples_match_playback_rate=hit_objects.samples_match_playback_rate,
-            countdown=hit_objects.countdown,
-            countdown_offset=hit_objects.countdown_offset,
-
-            # Editor
-            bookmarks=editor.bookmarks,
-            distance_spacing=editor.distance_spacing,
-            beat_divisor=editor.beat_divisor,
-            grid_size=editor.grid_size,
-            timeline_zoom=editor.timeline_zoom,
-
-            # Metadata
-            title=metadata.title,
-            title_unicode=metadata.title_unicode,
-            artist=metadata.artist,
-            artist_unicode=metadata.artist_unicode,
-            creator=metadata.creator,
-            version=metadata.version,
-            source=metadata.source,
-            tags=metadata.tags,
-            beatmap_id=metadata.beatmap_id,
-            beatmap_set_id=metadata.beatmap_set_id,
-
-            # Difficulty
-            hp_drain_rate=hit_objects.hp_drain_rate,
-            circle_size=hit_objects.circle_size,
-            overall_difficulty=hit_objects.overall_difficulty,
-            approach_rate=hit_objects.approach_rate,
-            slider_multiplier=hit_objects.slider_multiplier,
-            slider_tick_rate=hit_objects.slider_tick_rate,
-
-            # Events
-            background_file=hit_objects.background_file,
-            breaks=hit_objects.breaks,
-
-            # TimingPoints
-            control_points=hit_objects.control_points,
-
-            # Colors
-            custom_combo_colors=colors.custom_combo_colors,
-            custom_colors=colors.custom_colors,
-
-            # HitObjects
-            hit_objects=hit_objects.hit_objects,
-        )
+    def encode_to_string(self, *, lazer_compatible: bool = False) -> str:
+        writer = io.StringIO()
+        encode_beatmap(self, writer, lazer_compatible=lazer_compatible)
+        return writer.getvalue()
