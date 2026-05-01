@@ -475,14 +475,29 @@ _UNKNOWN_FOR_MODE: dict[GameMode, type] = {
 
 
 class GameMod:
+    """A game-mode-specific mod instance wrapping a concrete mod dataclass."""
     __slots__ = ("_variant", "_inner")
 
     def __init__(self, inner) -> None:
+        """Wrap a concrete mod inner object.
+
+        Args:
+            inner: A mod dataclass instance (e.g. HiddenOsu()).
+        """
         self._inner = inner
         self._variant = type(inner).__name__
 
     @classmethod
     def new(cls, acronym: str | Acronym, mode: GameMode) -> GameMod:
+        """Construct a GameMod for the given acronym and game mode.
+
+        Args:
+            acronym: The 2-4 character mod acronym.
+            mode: The target game mode.
+
+        Returns:
+            A GameMod wrapping the matching mod class, or an UnknownMod variant.
+        """
         s = str(acronym).upper()
         inner_cls = _ACR_MODE_MAP.get((s, mode))
         if inner_cls is not None:
@@ -492,42 +507,54 @@ class GameMod:
 
     @property
     def inner(self):
+        """The underlying mod dataclass instance."""
         return self._inner
 
     @property
     def variant(self) -> str:
+        """The class name of the underlying mod (e.g. "HiddenOsu")."""
         return self._variant
 
     def acronym(self) -> Acronym:
+        """Return the mod acronym."""
         return self._inner.acronym()
 
     def description(self) -> str:
+        """Return the human-readable description of this mod."""
         return type(self._inner).description()
 
     def kind(self) -> GameModKind:
+        """Return the GameModKind category of this mod."""
         return type(self._inner).kind()
 
     def bits(self) -> int | None:
+        """Return the legacy bitfield value, or ``None`` if not applicable."""
         return type(self._inner).bits()
 
     def incompatible_mods(self) -> list:
+        """Return a list of mods that are incompatible with this one."""
         return type(self._inner).incompatible_mods()
 
     def mode(self) -> GameMode | None:
+        """Return the GameMode this mod belongs to, or ``None`` for mode-agnostic mods."""
         return _VARIANT_MAP.get(self._variant, (None, None))[1]
 
     def intermode(self):
+        """Return the GameModIntermode equivalent of this mod."""
         from .game_mod_intermode import GameModIntermode
 
         return GameModIntermode.from_acronym(str(self.acronym()))
 
     def into_simple(self):
+        """Convert to a lightweight GameModSimple representation."""
         return self._inner.to_simple()
 
     def is_unknown(self) -> bool:
+        """Return ``True`` if this mod is an unknown/unrecognised mod."""
         return isinstance(self._inner, UnknownMod)
 
     def to_dict(self) -> dict:
+        """Serialise this mod to a dict with ``acronym`` and optional ``settings`` keys."""
         from dataclasses import fields as dc_fields
 
         settings = {}
@@ -550,6 +577,16 @@ class GameMod:
         mode: GameMode | None = None,
         deny_unknown_fields: bool = False,
     ) -> GameMod:
+        """Deserialise a GameMod from a dict.
+
+        Args:
+            data: Dict with at least an ``"acronym"`` key and optional ``"settings"``.
+            mode: Optional game mode to resolve the acronym against.
+            deny_unknown_fields: If ``True``, raise on unrecognised setting keys.
+
+        Returns:
+            A fully constructed GameMod instance.
+        """
         from dataclasses import fields as dc_fields
 
         acronym = data.get("acronym", "")
@@ -585,6 +622,7 @@ class GameMod:
         return _apply(cls.new(acronym, GameMode.Osu))
 
     def to_json(self) -> str:
+        """Serialise this mod to a JSON string."""
         import json
 
         return json.dumps(self.to_dict())
@@ -596,6 +634,16 @@ class GameMod:
         mode: GameMode | None = None,
         deny_unknown_fields: bool = False,
     ) -> GameMod:
+        """Deserialise a GameMod from a JSON string.
+
+        Args:
+            s: A JSON string representing a single mod dict.
+            mode: Optional game mode to resolve the acronym against.
+            deny_unknown_fields: If ``True``, raise on unrecognised setting keys.
+
+        Returns:
+            A GameMod instance.
+        """
         import json
 
         return cls.from_dict(
@@ -603,20 +651,25 @@ class GameMod:
         )
 
     def __eq__(self, other: object) -> bool:
+        """Two GameMod instances are equal when variant and inner are equal."""
         if isinstance(other, GameMod):
             return self._variant == other._variant and self._inner == other._inner
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Return a hash based on variant and acronym."""
         return hash((self._variant, str(self.acronym())))
 
     def __repr__(self) -> str:
+        """Return an unambiguous representation."""
         return f"GameMod({self._inner!r})"
 
     def __str__(self) -> str:
+        """Return the acronym string."""
         return str(self.acronym())
 
     def __lt__(self, other: GameMod) -> bool:
+        """Support ordering by mode then acronym."""
         m_self = self.mode()
         m_other = other.mode()
         mv = lambda m: m.value if m is not None else -1
