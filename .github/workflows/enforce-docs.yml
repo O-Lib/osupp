@@ -3,8 +3,6 @@ name: Enforce Docs Updates
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'osupp/**/*.py'
 
 jobs:
   check-docs:
@@ -19,7 +17,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/github-script@v7
+      - name: Check changed files
+        id: changed
+        uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
@@ -46,6 +46,24 @@ jobs:
               f.endsWith('.md')
             );
 
+            core.setOutput('has_python', hasPublicApiChanges ? 'true' : 'false');
+            core.setOutput('has_docs', hasDocChanges ? 'true' : 'false');
+
+      - name: Skip — no Python files changed
+        if: steps.changed.outputs.has_python == 'false'
+        run: echo "No public API changes detected, skipping docs enforcement."
+
+      - name: Check docs updated
+        if: steps.changed.outputs.has_python == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const number = context.payload.pull_request.number;
+            const hasDocChanges = '${{ steps.changed.outputs.has_docs }}' === 'true';
+            const body = context.payload.pull_request.body || '';
+
             const comments = await github.rest.issues.listComments({
               owner, repo, issue_number: number,
             });
@@ -60,7 +78,7 @@ jobs:
               }
             }
 
-            if (hasPublicApiChanges && !hasDocChanges) {
+            if (!hasDocChanges && !body.includes('[skip-docs]')) {
               await github.rest.issues.createComment({
                 owner,
                 repo,
@@ -74,9 +92,5 @@ jobs:
                   'If no docs update is needed, add `[skip-docs]` to your PR description.',
                 ].join('\n'),
               });
-
-              const body = context.payload.pull_request.body || '';
-              if (!body.includes('[skip-docs]')) {
-                core.warning('Public API changed without documentation update. Add [skip-docs] to skip this check.');
-              }
+              core.warning('Public API changed without documentation update. Add [skip-docs] to skip this check.');
             }
