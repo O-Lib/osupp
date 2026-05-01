@@ -40,4 +40,10 @@ Past maintainers who are no longer active:
 
 **Contact:** For maintainer-related matters, reach out via GitHub or email at `maintainers@olib.dev`
 
-*– The O!Lib Team*
+<p align="center">
+	<img src="https://raw.githubusercontent.com/catppuccin/catppuccin/main/assets/footers/gray0_ctp_on_line.svg?sanitize=true" />
+</p>
+
+<p align="center">
+        <code>&copy 2026-Present <a href="https://github.com/O-Lib">O!Lib Team</a></code>
+</p>
