@@ -1,0 +1,28 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 85%
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: true
+  require_base: true
+
+ignore:
+  - "osupp/Mods/generated_mods.py"
+  - "tests/**"
