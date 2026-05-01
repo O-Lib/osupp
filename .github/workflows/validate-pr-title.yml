@@ -1,0 +1,114 @@
+name: Validate PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate:
+    name: Check Conventional Commit format
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      statuses: write
+
+    steps:
+      - name: Validate title
+        id: check
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          PATTERN='^(feat|fix|docs|style|refactor|perf|test|chore)(\((beatmap|mods|pp|ci|packaging)\))?: .{1,72}$'
+
+          if echo "$PR_TITLE" | grep -Eq "$PATTERN"; then
+            echo "valid=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post failure comment
+        if: steps.check.outputs.valid == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const body = [
+              '## ❌ PR Title does not follow Conventional Commits',
+              '',
+              `**Current title:** \`${title}\``,
+              '',
+              '**Expected format:**',
+              '```',
+              '<type>(<scope>): <subject>',
+              '```',
+              '',
+              '| Field | Allowed values |',
+              '|---|---|',
+              '| `type` | `feat` `fix` `docs` `style` `refactor` `perf` `test` `chore` |',
+              '| `scope` | `beatmap` `mods` `pp` `ci` `packaging` *(optional)* |',
+              '| `subject` | short description, max 72 chars |',
+              '',
+              '**Valid examples:**',
+              '```',
+              'feat(beatmap): support format version 15',
+              'fix(mods): correct legacy bitfield for NF+DT combination',
+              'docs(readme): add quick start examples',
+              'perf(beatmap): reduce allocations in hit object parser',
+              'chore(ci): pin ruff to 0.9.10',
+              'fix: handle empty beatmap file gracefully',
+              '```',
+              '',
+              'Please edit the PR title and this check will re-run automatically.',
+            ].join('\n');
+
+            // Delete previous bot comments to avoid spam
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            for (const comment of comments.data) {
+              if (comment.user.type === 'Bot' && comment.body.includes('PR Title does not follow Conventional Commits')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Delete failure comment on success
+        if: steps.check.outputs.valid == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            for (const comment of comments.data) {
+              if (comment.user.type === 'Bot' && comment.body.includes('PR Title does not follow Conventional Commits')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+      - name: Fail if invalid
+        if: steps.check.outputs.valid == 'false'
+        run: |
+          echo "PR title does not match Conventional Commits format."
+          echo "Title: ${{ github.event.pull_request.title }}"
+          exit 1
