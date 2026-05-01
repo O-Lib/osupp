@@ -33,25 +33,46 @@ from .game_mode import GameMode
 
 
 class GameMods:
+    """An ordered, deduplicated collection of game-mode-specific GameMod instances."""
     def __init__(self, mods: Iterable[GameMod] = ()) -> None:
+        """Initialise the collection, optionally from an iterable of GameMod objects.
+
+        Args:
+            mods: Initial mods to insert.
+        """
         self._inner: dict[tuple, GameMod] = {}
         for m in mods:
             self.insert(m)
 
     def _key(self, m: GameMod) -> tuple:
+        """Compute the sort key for a GameMod (mode value, kind rank, acronym)."""
         mode = m.mode()
         mode_val = mode.value if mode is not None else -1
         kind_val = m.kind().rank() if m.kind() is not None else 999
         return (mode_val, kind_val, str(m.acronym()))
 
     def _sorted(self) -> list[GameMod]:
+        """Return all mods sorted by their sort key."""
         return sorted(self._inner.values(), key=self._key)
 
     def insert(self, gamemod: GameMod) -> None:
+        """Insert a mod, replacing any existing mod with the same key.
+
+        Args:
+            gamemod: The GameMod to insert.
+        """
         key = self._key(gamemod)
         self._inner[key] = gamemod
 
     def remove(self, gamemod: GameMod) -> bool:
+        """Remove a mod by value.
+
+        Args:
+            gamemod: The GameMod to remove.
+
+        Returns:
+            ``True`` if the mod was present and removed.
+        """
         key = self._key(gamemod)
         if key in self._inner:
             del self._inner[key]
@@ -59,6 +80,14 @@ class GameMods:
         return False
 
     def remove_acronym(self, acronym: str | Acronym) -> bool:
+        """Remove all mods matching the given acronym.
+
+        Args:
+            acronym: The acronym to match (case-insensitive).
+
+        Returns:
+            ``True`` if any mods were removed.
+        """
         s = str(acronym).upper()
         keys = [k for k in self._inner if k[2] == s]
         for k in keys:
@@ -66,31 +95,59 @@ class GameMods:
         return bool(keys)
 
     def extend(self, mods: Iterable[GameMod]) -> None:
+        """Insert all mods from an iterable.
+
+        Args:
+            mods: Mods to add.
+        """
         for m in mods:
             self.insert(m)
 
     def clear(self) -> None:
+        """Remove all mods from the collection."""
         self._inner.clear()
 
     def is_empty(self) -> bool:
+        """Return ``True`` if the collection contains no mods."""
         return len(self._inner) == 0
 
     def len(self) -> int:
+        """Return the number of mods in the collection."""
         return len(self._inner)
 
     def __len__(self) -> int:
+        """Return the number of mods in the collection."""
         return len(self._inner)
 
     def contains(self, gamemod: GameMod) -> bool:
+        """Return ``True`` if the exact mod is present.
+
+        Args:
+            gamemod: The GameMod to look up.
+        """
         return self._key(gamemod) in self._inner
 
     def contains_acronym(self, acronym: str | Acronym) -> bool:
+        """Return ``True`` if any mod with the given acronym is present.
+
+        Args:
+            acronym: The acronym to search for.
+        """
         s = str(acronym).upper()
         return any(k[2] == s for k in self._inner)
 
     def get(
         self, acronym: str | Acronym, mode: GameMode | None = None
     ) -> GameMod | None:
+        """Return the first mod matching the acronym (and optionally the mode).
+
+        Args:
+            acronym: The acronym to look up.
+            mode: Optional game mode filter.
+
+        Returns:
+            The matching GameMod, or ``None``.
+        """
         s = str(acronym).upper()
         for k, m in self._inner.items():
             if k[2] == s:
@@ -99,6 +156,7 @@ class GameMods:
         return None
 
     def bits(self) -> int:
+        """Return the bitwise OR of all legacy bit values in this collection."""
         result = 0
         for m in self._inner.values():
             b = m.bits()
@@ -107,6 +165,7 @@ class GameMods:
         return result
 
     def checked_bits(self) -> int | None:
+        """Return the combined bits, or ``None`` if any mod lacks a bit value."""
         result = 0
         for m in self._inner.values():
             b = m.bits()
@@ -116,6 +175,7 @@ class GameMods:
         return result
 
     def to_intermode(self):
+        """Convert to a GameModsIntermode collection."""
         from .game_mods_intermode import GameModsIntermode
 
         result = GameModsIntermode()
@@ -125,40 +185,56 @@ class GameMods:
         return result
 
     def __iter__(self) -> Iterator[GameMod]:
+        """Iterate over mods in sorted order."""
         return iter(self._sorted())
 
     def __contains__(self, item: object) -> bool:
+        """Support the ``in`` operator for GameMod instances."""
         if isinstance(item, GameMod):
             return self.contains(item)
         return False
 
     def __ior__(self, other: GameMods) -> GameMods:
+        """In-place union: insert all mods from another collection."""
         self.extend(other)
         return self
 
     def __or__(self, other: GameMods) -> GameMods:
+        """Return a new collection containing mods from both collections."""
         result = GameMods(self._sorted())
         result.extend(other)
         return result
 
     def __str__(self) -> str:
+        """Return the concatenated acronym string, or "NM" for an empty set."""
         if not self._inner:
             return "NM"
         return "".join(str(m.acronym()) for m in self._sorted())
 
     def __repr__(self) -> str:
+        """Return an unambiguous representation."""
         return f"GameMods([{', '.join(repr(m) for m in self._sorted())}])"
 
     def __eq__(self, other: object) -> bool:
+        """Two GameMods collections are equal when their inner dicts are equal."""
         if isinstance(other, GameMods):
             return self._inner == other._inner
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Return a hash based on the sorted key tuples."""
         return hash(tuple(self._key(m) for m in self._sorted()))
 
     @classmethod
     def from_iter(cls, mods: Iterable[GameMod]) -> GameMods:
+        """Construct a GameMods collection from an iterable.
+
+        Args:
+            mods: The mods to include.
+
+        Returns:
+            A new GameMods instance.
+        """
         return cls(mods)
 
 

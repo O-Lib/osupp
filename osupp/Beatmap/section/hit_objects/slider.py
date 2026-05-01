@@ -1,3 +1,27 @@
+"""
+MIT License
+
+Copyright (c) 2026-Present O!Lib Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 from __future__ import annotations
 
 import math
@@ -15,11 +39,20 @@ CIRCULAR_ARC_TOLERANCE = 0.1
 
 @dataclass(slots=True, eq=True)
 class PathType:
+    """Slider curve type parsed from the path string."""
     kind: SplineType
     degree: int | None = None
 
     @classmethod
     def new_from_str(cls, s: str) -> PathType:
+        """Parse a PathType from the single-character (plus optional degree) prefix.
+
+        Args:
+            s: The path type token, e.g. "B", "B3", "L", "P", "C".
+
+        Returns:
+            The corresponding PathType. Defaults to Catmull for unrecognised strings.
+        """
         if not s:
             return cls(SplineType.Catmull)
 
@@ -44,14 +77,23 @@ class PathType:
 
 @dataclass(slots=True, eq=True)
 class PathControlPoint:
+    """A single control point along a slider path."""
     pos: Pos
     path_type: PathType | None = None
 
 
 class Curve:
+    """Computed curve geometry for a slider path."""
     def __init__(
         self, mode: GameMode, points: list[PathControlPoint], expected_len: float | None
     ):
+        """Compute the curve from control points.
+
+        Args:
+            mode: The beatmap game mode (affects Catmull optimisation).
+            points: The slider control points.
+            expected_len: Expected arc length in osu! pixels, or ``None`` to use computed length.
+        """
         self.path: list[Pos] = []
         self.lengths: list[float] = []
 
@@ -60,14 +102,24 @@ class Curve:
         self._calculate_length(expected_len, optimized_len[0])
 
     def dist(self) -> float:
+        """Return the total arc length of the curve in osu! pixels."""
         return self.lengths[-1] if self.lengths else 0.0
 
     def progress_to_dist(self, progress: float) -> float:
+        """Convert a normalised progress value (0.0-1.0) to an arc length.
+
+        Args:
+            progress: Progress along the curve, clamped to [0, 1].
+
+        Returns:
+            The corresponding arc length in osu! pixels.
+        """
         return max(0.0, min(1.0, progress)) * self.dist()
 
     def _calculate_path(
         self, mode: GameMode, points: list[PathControlPoint], optimized_len: list[float]
     ):
+        """Build the path point list from control points by dispatching to subpath methods."""
         vertices = [p.pos for p in points]
         start = 0
 
@@ -93,6 +145,7 @@ class Curve:
             start = i
 
     def _calculate_length(self, expected_len: float | None, optimized_len: float):
+        """Compute cumulative arc lengths and trim to expected_len if provided."""
         calculated_len = optimized_len
         self.lengths.append(0.0)
 
@@ -145,6 +198,14 @@ class Curve:
         path_type: SplineType,
         optimized_len: list[float],
     ):
+        """Compute and append path points for one curve segment.
+
+        Args:
+            mode: The beatmap game mode.
+            sub_points: The control points for this segment.
+            path_type: The spline type for this segment.
+            optimized_len: Single-element list used to accumulate Catmull optimisation offset.
+        """
         if path_type == SplineType.Linear:
             self.path.extend(sub_points)
 
@@ -190,6 +251,11 @@ class Curve:
                     len_removed_since_start = 0.0
 
     def _approximate_bezier(self, points: list[Pos]):
+        """Recursively subdivide and flatten a Bezier curve.
+
+        Args:
+            points: Control points of the Bezier curve.
+        """
         to_flatten = [list(points)]
 
         while to_flatten:
@@ -218,6 +284,14 @@ class Curve:
         self.path.append(points[-1])
 
     def _bezier_subdivide(self, points: list[Pos]) -> tuple[list[Pos], list[Pos]]:
+        """Subdivide a Bezier curve at its midpoint using de Casteljau algorithm.
+
+        Args:
+            points: Control points of the curve.
+
+        Returns:
+            A tuple of (left, right) control point lists for the two halves.
+        """
         count = len(points)
         midpoints = list(points)
         left = [Pos()] * count
@@ -234,6 +308,11 @@ class Curve:
         return left, right
 
     def _approximate_catmull(self, points: list[Pos]):
+        """Approximate a Catmull-Rom spline by linear interpolation.
+
+        Args:
+            points: The Catmull-Rom control points.
+        """
         if len(points) == 1:
             return
         for i in range(len(points) - 1):
@@ -266,6 +345,17 @@ class Curve:
                 self.path.append(pos)
 
     def _approximate_circular_arc(self, a: Pos, b: Pos, c: Pos) -> bool:
+        """Approximate a perfect circular arc through three points.
+
+        Args:
+            a: First point.
+            b: Second (mid) point.
+            c: Third point.
+
+        Returns:
+            ``True`` if the arc was successfully approximated. ``False`` if the points
+            are collinear or the arc requires too many sub-points.
+        """
         if abs((b.y - a.y) * (c.x - a.x) - (b.x - a.x) * (c.y - a.y)) <= 1e-7:
             return False
 
@@ -312,18 +402,25 @@ class Curve:
 
 @dataclass(slots=True, eq=True)
 class SliderPath:
+    """A slider's path definition including lazy-computed curve geometry."""
     mode: GameMode
     control_points: list[PathControlPoint]
     expected_dist: float | None
     _curve: Curve | None = field(default=None, init=False)
 
     def curve(self) -> Curve:
+        """Return the computed Curve, building it on first access.
+
+        Returns:
+            The lazily initialised Curve for this slider path.
+        """
         if self._curve is None:
             self._curve = Curve(self.mode, self.control_points, self.expected_dist)
         return self._curve
 
 
 class SliderEventType(Enum):
+    """Types of events generated along a slider's timeline."""
     Head = 0
     Tick = 1
     Repeat = 2
@@ -333,6 +430,7 @@ class SliderEventType(Enum):
 
 @dataclass(slots=True, eq=True)
 class SliderEvent:
+    """A single event along a slider's timeline."""
     kind: SliderEventType
     span_idx: int
     span_start_time: float
@@ -348,6 +446,21 @@ def generate_slider_events(
     total_dist: float,
     span_count: int,
 ) -> Generator[SliderEvent, None, None]:
+    """Generate all slider events (head, ticks, repeats, last tick, tail).
+
+    Yields events in chronological order.
+
+    Args:
+        start_time: Slider start time in milliseconds.
+        span_duration: Duration of a single pass in milliseconds.
+        velocity: Slider velocity in osu! pixels per millisecond.
+        tick_dist: Distance between ticks in osu! pixels.
+        total_dist: Total slider length in osu! pixels.
+        span_count: Total number of passes (repeat_count + 1).
+
+    Yields:
+        SliderEvent objects in time order.
+    """
     MAX_LEN = 100000.0
     TAIL_LENIENCY = -36.0
 

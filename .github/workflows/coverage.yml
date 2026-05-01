@@ -30,14 +30,29 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e ".[dev]" || pip install requests pytest pytest-cov
+          pip install requests pytest pytest-cov
+
+      - name: Check if tests exist
+        id: tests
+        run: |
+          if [ -d "tests" ] && [ "$(find tests -name 'test_*.py' | wc -l)" -gt 0 ]; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip — no tests yet
+        if: steps.tests.outputs.has_tests == 'false'
+        run: echo "No tests found, skipping coverage."
 
       - name: Run tests
+        if: steps.tests.outputs.has_tests == 'true'
         run: |
           pytest --cov=osupp --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        if: steps.tests.outputs.has_tests == 'true'
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

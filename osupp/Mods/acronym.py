@@ -26,11 +26,20 @@ import re
 
 
 class Acronym:
+    """A validated 2-4 character uppercase mod acronym (e.g. "HD", "DT", "SV2")."""
     _VALID = re.compile(r"^[A-Z0-9]{2,4}$")
 
     __slots__ = ("_s",)
 
     def __init__(self, s: str) -> None:
+        """Initialise and validate the acronym string.
+
+        Args:
+            s: The raw string. Must match ``[A-Z0-9]{2,4}``.
+
+        Raises:
+            ValueError: If the string does not match the required format.
+        """
         if not self._VALID.match(s):
             raise ValueError(
                 f"Invalid acronym {s!r}: must be 1-4 uppercase letters/digits"
@@ -39,18 +48,30 @@ class Acronym:
 
     @classmethod
     def from_str(cls, s: str) -> "Acronym":
+        """Construct an Acronym by uppercasing the input string.
+
+        Args:
+            s: The raw string to convert.
+
+        Returns:
+            A validated Acronym instance.
+        """
         return cls(s.upper())
 
     def as_str(self) -> str:
+        """Return the underlying string value."""
         return self._s
 
     def __str__(self) -> str:
+        """Return the acronym string."""
         return self._s
 
     def __repr__(self) -> str:
+        """Return an unambiguous representation."""
         return f"Acronym({self._s!r})"
 
     def __eq__(self, other: object) -> bool:
+        """Compare with another Acronym or a plain string (case-insensitive)."""
         if isinstance(other, Acronym):
             return self._s == other._s
         if isinstance(other, str):
@@ -58,7 +79,9 @@ class Acronym:
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Return a hash based on the acronym string."""
         return hash(self._s)
 
     def __lt__(self, other: "Acronym") -> bool:
+        """Support lexicographic ordering."""
         return self._s < other._s

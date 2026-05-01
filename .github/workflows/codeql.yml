@@ -5,14 +5,10 @@ on:
     branches: [main]
     paths:
       - 'osupp/**/*.py'
-      - 'tests/**/*.py'
   pull_request:
     branches: [main]
-    paths:
-      - 'osupp/**/*.py'
-      - 'tests/**/*.py'
   schedule:
-    - cron: '0 6 * * 1'  # every Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -25,20 +21,45 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check if Python files changed
+        id: changed
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const hasPython = files.some(f =>
+              (f.filename.startsWith('osupp/') || f.filename.startsWith('tests/')) &&
+              f.filename.endsWith('.py')
+            );
+            core.setOutput('has_python', hasPython ? 'true' : 'false');
+
+      - name: Skip — no Python files changed
+        if: github.event_name == 'pull_request' && steps.changed.outputs.has_python == 'false'
+        run: echo "No Python files changed, skipping CodeQL analysis."
 
       - name: Set up Python
+        if: github.event_name != 'pull_request' || steps.changed.outputs.has_python == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
       - name: Install dependencies
+        if: github.event_name != 'pull_request' || steps.changed.outputs.has_python == 'true'
         run: |
           pip install --upgrade pip
-          pip install -e ".[dev]" || pip install requests
+          pip install requests
 
       - name: Initialize CodeQL
+        if: github.event_name != 'pull_request' || steps.changed.outputs.has_python == 'true'
         uses: github/codeql-action/init@v4
         with:
           languages: python
@@ -46,7 +67,6 @@ jobs:
           config: |
             paths:
               - osupp
-              - tests
             paths-ignore:
               - osupp/Mods/generated_mods.py
             query-filters:
@@ -54,8 +74,8 @@ jobs:
                   tags contain: experimental
 
       - name: Perform CodeQL Analysis
+        if: github.event_name != 'pull_request' || steps.changed.outputs.has_python == 'true'
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:python"
-          output: codeql-results
           upload: always

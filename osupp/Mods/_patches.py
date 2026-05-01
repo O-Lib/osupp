@@ -33,6 +33,15 @@ if TYPE_CHECKING:
 
 
 def _with_mode_impl(intermode: GameModsIntermode, mode: GameMode) -> GameMods:
+    """Convert a GameModsIntermode to a GameMods for the given mode.
+
+    Args:
+        intermode: The intermode mod collection.
+        mode: The target game mode.
+
+    Returns:
+        A GameMods instance with mode-specific mods.
+    """
     from .game_mod import GameMod
     from .game_mods import GameMods
 
@@ -45,6 +54,15 @@ def _with_mode_impl(intermode: GameModsIntermode, mode: GameMode) -> GameMods:
 def _try_with_mode_impl(
     intermode: GameModsIntermode, mode: GameMode
 ) -> GameMods | None:
+    """Convert a GameModsIntermode to a GameMods, returning None if any mod is unknown.
+
+    Args:
+        intermode: The intermode mod collection.
+        mode: The target game mode.
+
+    Returns:
+        A GameMods instance, or ``None`` if any acronym is not recognised for the mode.
+    """
     from .game_mod import GameMod
     from .game_mods import GameMods
 
@@ -58,6 +76,7 @@ def _try_with_mode_impl(
 
 
 def _patch_gamemods_intermode():
+    """Attach with_mode, try_with_mode, to_json, and from_json to GameModsIntermode."""
     from .game_mods_intermode import GameModsIntermode
 
     def with_mode(self, mode):
@@ -97,6 +116,7 @@ def _patch_gamemods_intermode():
 
 
 def _patch_gamemods():
+    """Attach to_json and from_json to GameMods."""
     from .game_mod import GameMod
     from .game_mods import GameMods
 
@@ -188,6 +208,7 @@ def _guess_mode_for_acronym(acronym: str):
 
 
 def _allow_multiple_modes(intermode):
+    """Convert a GameModsIntermode to GameMods by guessing the mode for each mod."""
     from .game_mods import GameMods
 
     result = GameMods()
@@ -201,6 +222,9 @@ _patch_gamemods()
 
 
 def _patch_gamemods_intermode_extra():
+    """Attach intersects, legacy_clock_rate, as_legacy, try_as_legacy, remove_all,
+    and contains_any to GameModsIntermode.
+    """
     from .game_mod_intermode import GameModIntermode
     from .game_mods_intermode import GameModsIntermode
     from .game_mods_legacy import GameModsLegacy
@@ -239,6 +263,9 @@ def _patch_gamemods_intermode_extra():
 
 
 def _patch_legacy_extra():
+    """Attach to_intermode, remove, intersection, union, difference,
+    symmetric_difference, and try_from_bits_strict to GameModsLegacy.
+    """
     from .game_mods_legacy import GameModsLegacy
 
     def to_intermode(self):
@@ -281,6 +308,7 @@ _patch_legacy_extra()
 
 
 def _patch_intermode_acronym_methods():
+    """Attach from_acronyms_str, from_acronyms_iter, and try_from_acronyms to GameModsIntermode."""
     from .game_mod_intermode import GameModIntermode
     from .game_mods_intermode import GameModsIntermode
 

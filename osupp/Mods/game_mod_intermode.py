@@ -32,76 +32,104 @@ from .game_mod_kind import GameModKind
 
 
 class UnknownGameMod:
+    """Represents a mod acronym that is not recognised by the current mod tables."""
     __slots__ = ("_acronym",)
 
     def __init__(self, acronym: str) -> None:
+        """Initialise with a raw acronym string.
+
+        Args:
+            acronym: The unrecognised acronym (will be uppercased).
+        """
         self._acronym = acronym.upper()
 
     def acronym(self) -> Acronym:
+        """Return the raw acronym as an Acronym-like object."""
         return _RawAcronym(self._acronym)
 
     def bits(self) -> int | None:
+        """Always returns ``None`` — unknown mods have no legacy bit representation."""
         return None
 
     def kind(self) -> GameModKind:
+        """Return GameModKind.System for all unknown mods."""
         from .game_mod_kind import GameModKind
 
         return GameModKind.System
 
     def _order_key(self) -> tuple:
+        """Return the sort key tuple used for ordering."""
         return (self.kind().rank(), self._acronym)
 
     def __lt__(self, other: object) -> bool:
+        """Support ordering against other intermode mods."""
         if isinstance(other, (GameModIntermode, UnknownGameMod)):
             return self._order_key() < _order_key_of(other)
         return NotImplemented
 
     def __le__(self, other: object) -> bool:
+        """Support ordering against other intermode mods."""
         if isinstance(other, (GameModIntermode, UnknownGameMod)):
             return self._order_key() <= _order_key_of(other)
         return NotImplemented
 
     def __gt__(self, other: object) -> bool:
+        """Support ordering against other intermode mods."""
         if isinstance(other, (GameModIntermode, UnknownGameMod)):
             return self._order_key() > _order_key_of(other)
         return NotImplemented
 
     def __ge__(self, other: object) -> bool:
+        """Support ordering against other intermode mods."""
         if isinstance(other, (GameModIntermode, UnknownGameMod)):
             return self._order_key() >= _order_key_of(other)
         return NotImplemented
 
     def __eq__(self, other: object) -> bool:
+        """Two UnknownGameMod instances are equal when their acronyms match."""
         if isinstance(other, UnknownGameMod):
             return self._acronym == other._acronym
         return False
 
     def __hash__(self) -> int:
+        """Return a hash based on the acronym."""
         return hash(("__unknown__", self._acronym))
 
     def __str__(self) -> str:
+        """Return the uppercase acronym string."""
         return self._acronym
 
     def __repr__(self) -> str:
+        """Return an unambiguous representation."""
         return f"UnknownGameMod({self._acronym!r})"
 
 
 class _RawAcronym:
+    """Internal acronym wrapper used by UnknownGameMod."""
     __slots__ = ("_s",)
 
     def __init__(self, s: str) -> None:
+        """Initialise with a raw string.
+
+        Args:
+            s: The raw acronym string.
+        """
         self._s = s
 
     def as_str(self) -> str:
+        """Return the underlying string."""
         return self._s
 
     def __str__(self) -> str:
+        """Return the acronym string."""
         return self._s
 
     def __repr__(self) -> str:
+        """Return an unambiguous representation."""
         return f"Acronym({self._s!r})"
 
     def __eq__(self, other: object) -> bool:
+        """Compare with another _RawAcronym, Acronym, or plain string."""
         if isinstance(other, (_RawAcronym, Acronym)):
             return self._s == str(other)
         if isinstance(other, str):
@@ -109,6 +137,7 @@ class _RawAcronym:
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Return a hash based on the string value."""
         return hash(self._s)
 
 
@@ -122,6 +151,7 @@ AnyIntermode = Union["GameModIntermode", UnknownGameMod]
 
 
 class GameModIntermode(Enum):
+    """A game-mode-agnostic mod identifier shared across all four osu! modes."""
     AccuracyChallenge = "AccuracyChallenge"
     AdaptiveSpeed = "AdaptiveSpeed"
     Alternate = "Alternate"
@@ -194,16 +224,27 @@ class GameModIntermode(Enum):
     Unknown = "Unknown"
 
     def acronym(self) -> Acronym:
+        """Return the 2-4 character acronym for this mod."""
         return Acronym(_ACRONYM_MAP[self])
 
     def bits(self) -> int | None:
+        """Return the legacy bitfield value for this mod, or ``None`` if not applicable."""
         return _BITS_MAP.get(self)
 
     def kind(self) -> GameModKind:
+        """Return the GameModKind category for this mod."""
         return _KIND_MAP[self]
 
     @classmethod
     def from_acronym(cls, acronym) -> AnyIntermode:
+        """Look up a GameModIntermode by acronym string.
+
+        Args:
+            acronym: The 2-4 character acronym (case-insensitive).
+
+        Returns:
+            The matching GameModIntermode, or an UnknownGameMod if not found.
+        """
         s = str(acronym).upper()
         if s in _FROM_ACRONYM:
             return _FROM_ACRONYM[s]
@@ -215,24 +256,31 @@ class GameModIntermode(Enum):
         return _FROM_BITS.get(bits)
 
     def _order_key(self) -> tuple:
+        """Return the sort key tuple used for ordering."""
         return (self.kind().rank(), _ACRONYM_MAP[self])
 
     def __lt__(self, other: AnyIntermode) -> bool:
+        """Support ordering against other intermode mods."""
         return self._order_key() < _order_key_of(other)
 
     def __le__(self, other: AnyIntermode) -> bool:
+        """Support ordering against other intermode mods."""
         return self._order_key() <= _order_key_of(other)
 
     def __gt__(self, other: AnyIntermode) -> bool:
+        """Support ordering against other intermode mods."""
         return self._order_key() > _order_key_of(other)
 
     def __ge__(self, other: AnyIntermode) -> bool:
+        """Support ordering against other intermode mods."""
         return self._order_key() >= _order_key_of(other)
 
     def __str__(self) -> str:
+        """Return the 2-4 character acronym string."""
         return _ACRONYM_MAP[self]
 
     def __repr__(self) -> str:
+        """Return an unambiguous representation."""
         return f"GameModIntermode.{self.value}"
 
 

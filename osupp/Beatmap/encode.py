@@ -1,3 +1,27 @@
+"""
+MIT License
+
+Copyright (c) 2026-Present O!Lib Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 from __future__ import annotations
 
 import bisect
@@ -30,6 +54,17 @@ _bisect_right = bisect.bisect_right
 
 
 def encode_beatmap(beatmap, writer: io.TextIOBase, *, lazer_compatible: bool = False) -> None:
+    """Serialise a Beatmap to the osu! file format.
+
+    Writes all sections in canonical order: General, Editor, Metadata,
+    Difficulty, Events, TimingPoints, Colours, HitObjects.
+
+    Args:
+        beatmap: The beatmap to encode.
+        writer: An open text stream to write to.
+        lazer_compatible: If ``True``, sample points are collected from hit
+            objects and merged into timing points output.
+    """
     writer.write(f"osu file format v{beatmap.format_version}\n\n")
 
     _encode_general(beatmap, writer)
@@ -57,6 +92,7 @@ def encode_beatmap(beatmap, writer: io.TextIOBase, *, lazer_compatible: bool = F
 
 
 def _encode_general(beatmap, writer) -> None:
+    """Write the [General] section to the writer."""
     writer.write("[General]\n")
     writer.write(f"AudioFilename: {beatmap.general.audio_filename}\n")
     writer.write(f"AudioLeadIn: {beatmap.general.audio_lead_in}\n")
@@ -97,6 +133,7 @@ def _encode_general(beatmap, writer) -> None:
 
 
 def _encode_editor(beatmap, writer) -> None:
+    """Write the [Editor] section to the writer."""
     writer.write("[Editor]\n")
     if beatmap.editor.bookmarks:
         bookmarks_str = ",".join(str(b) for b in beatmap.editor.bookmarks)
@@ -109,6 +146,7 @@ def _encode_editor(beatmap, writer) -> None:
 
 
 def _encode_metadata(beatmap, writer) -> None:
+    """Write the [Metadata] section to the writer."""
     writer.write("[Metadata]\n")
     writer.write(f"Title:{beatmap.metadata.title}\n")
     if beatmap.metadata.title_unicode:
@@ -131,6 +169,7 @@ def _encode_metadata(beatmap, writer) -> None:
 
 
 def _encode_difficulty(beatmap, writer) -> None:
+    """Write the [Difficulty] section to the writer."""
     writer.write("[Difficulty]\n")
     writer.write(f"HPDrainRate:{beatmap.difficulty.hp_drain_rate}\n")
     writer.write(f"CircleSize:{beatmap.difficulty.circle_size}\n")
@@ -141,6 +180,7 @@ def _encode_difficulty(beatmap, writer) -> None:
 
 
 def _encode_events(beatmap, writer) -> None:
+    """Write the [Events] section (background and breaks) to the writer."""
     writer.write("[Events]\n")
     if beatmap.events.background_file:
         writer.write(f'0,0,"{beatmap.events.background_file}",0,0\n')
@@ -150,6 +190,7 @@ def _encode_events(beatmap, writer) -> None:
 
 
 def _encode_colors(beatmap, writer) -> None:
+    """Write the [Colours] section to the writer."""
     writer.write("[Colours]\n")
     for i, color in enumerate(beatmap.colors.custom_combo_colors, start=1):
         writer.write(f"Combo{i} : {color.red},{color.green},{color.blue}\n")
@@ -163,6 +204,7 @@ def _encode_colors(beatmap, writer) -> None:
 def _precision_adjusted_beat_len(
     slider_velocity: float, beat_len: float, mode: GameMode
 ) -> float:
+    """Compute the precision-adjusted beat length for a slider velocity at a given BPM."""
     sv_as_beat_len = -100.0 / slider_velocity
     if sv_as_beat_len < 0.0:
         if mode in (GameMode.Osu, GameMode.Catch):
@@ -175,6 +217,7 @@ def _precision_adjusted_beat_len(
 
 
 def _saturating_difficulty_at(cp: ControlPoints, time: float) -> DifficultyPoint | None:
+    """Return the active DifficultyPoint at or before ``time``, or ``None``."""
     if not cp.difficulty_points:
         return None
     lo, hi = 0, len(cp.difficulty_points)
@@ -190,6 +233,7 @@ def _saturating_difficulty_at(cp: ControlPoints, time: float) -> DifficultyPoint
 
 
 def _saturating_timing_at(cp: ControlPoints, time: float) -> TimingPoint | None:
+    """Return the active TimingPoint at or before ``time``, or the first one."""
     if not cp.timing_points:
         return None
     lo, hi = 0, len(cp.timing_points)
@@ -209,6 +253,7 @@ def _slider_velocity_for(
     slider_multiplier: float,
     mode: GameMode,
 ) -> float:
+    """Compute the effective slider velocity for a slider at the given time."""
     tp = _saturating_timing_at(cp, start_time)
     beat_len = tp.beat_len if tp is not None else 60_000.0 / 60.0
 
@@ -224,6 +269,7 @@ def _slider_velocity_for(
 def _collect_sample_from_hit_samples(
     samples: list, time: float, *, lazer_compatible: bool = False
 ) -> SamplePoint | None:
+    """Derive a SamplePoint from a list of HitSampleInfo objects at a given time."""
     if not samples:
         return None
     volume = max(s.volume for s in samples)
@@ -249,6 +295,7 @@ def _collect_sample_from_hit_samples(
 
 
 def _collect_samples(beatmap, cp: ControlPoints, *, lazer_compatible: bool = False) -> None:
+    """Collect sample points from all hit objects and add them to the control points."""
     mode = beatmap.general.mode
     slider_multiplier = beatmap.difficulty.slider_multiplier
 
@@ -403,6 +450,7 @@ def _collect_samples(beatmap, cp: ControlPoints, *, lazer_compatible: bool = Fal
 
 
 def _clone_control_points(cp: ControlPoints) -> ControlPoints:
+    """Return a shallow copy of a ControlPoints instance."""
     new = ControlPoints()
     new.timing_points = list(cp.timing_points)
     new.difficulty_points = list(cp.difficulty_points)
@@ -412,6 +460,7 @@ def _clone_control_points(cp: ControlPoints) -> ControlPoints:
 
 
 def _encode_timing_points(beatmap, writer, *, lazer_compatible: bool = False) -> None:
+    """Write the [TimingPoints] section to the writer."""
     if lazer_compatible:
         cp = _clone_control_points(beatmap.timing_points.control_points)
         _collect_samples(beatmap, cp, lazer_compatible=True)
@@ -483,6 +532,7 @@ def _encode_timing_points(beatmap, writer, *, lazer_compatible: bool = False) ->
 
 
 def _encode_hit_objects(beatmap, writer) -> None:
+    """Write the [HitObjects] section to the writer."""
     writer.write("[HitObjects]\n")
 
     for obj in beatmap.hit_objects.hit_objects:
@@ -551,6 +601,7 @@ def _encode_hit_objects(beatmap, writer) -> None:
 
 
 def _write_slider_path(writer, slider) -> None:
+    """Write the slider path string for a slider hit object."""
     points = slider.path.control_points
     if not points:
         writer.write("L|0:0,1,0,0|0,0:0|0:0,")
@@ -600,6 +651,7 @@ def _write_slider_path(writer, slider) -> None:
 
 
 def _write_sample_bank(writer, samples, banks_only: bool, mode: GameMode) -> None:
+    """Write the sample bank fields for a hit object."""
     normal_bank = 0
     add_bank = 0
     volume = 0

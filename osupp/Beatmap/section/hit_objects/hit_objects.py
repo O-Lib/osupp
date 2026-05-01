@@ -1,3 +1,27 @@
+"""
+MIT License
+
+Copyright (c) 2026-Present O!Lib Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,7 +33,13 @@ from utils import ParseNumberError, Pos, parse_float, parse_int, trim_comment
 
 
 class ParseHitObjectsError(Exception):
+    """Raised when a hit object line cannot be parsed."""
     def __init__(self, message: str) -> None:
+        """Initialise with an error message.
+
+        Args:
+            message: Description of the parse failure.
+        """
         super().__init__(message)
 
 
@@ -17,6 +47,7 @@ MAX_COORDINATE_VALUE = 131072
 
 
 class HitObjectType:
+    """Bit flag constants for the type field of a hit object line."""
     CIRCLE = 1 << 0
     SLIDER = 1 << 1
     NEW_COMBO = 1 << 2
@@ -26,10 +57,20 @@ class HitObjectType:
 
     @staticmethod
     def has_flag(value: int, flag: int) -> bool:
+        """Check whether ``flag`` is set in ``value``.
+
+        Args:
+            value: The raw type integer from the hit object line.
+            flag: The flag constant to test.
+
+        Returns:
+            ``True`` if the flag bits are set.
+        """
         return (value & flag) != 0
 
 
 class HitSampleDefaultName(Enum):
+    """Default hit sound sample filenames."""
     Normal = "hitnormal"
     Whistle = "hitwhistle"
     Finish = "hitfinish"
@@ -38,6 +79,7 @@ class HitSampleDefaultName(Enum):
 
 @dataclass(slots=True, eq=True)
 class HitSampleInfo:
+    """Describes a single hit sound sample associated with a hit object."""
     name_default: HitSampleDefaultName | None
     name_file: str | None
     bank: SampleBank
@@ -50,6 +92,7 @@ class HitSampleInfo:
 
 @dataclass(slots=True, eq=True)
 class SampleBankInfo:
+    """Accumulates hit sound bank information while parsing a hit object line."""
     filename: str | None = None
     bank_for_normal: SampleBank | None = None
     bank_for_addition: SampleBank | None = None
@@ -57,6 +100,12 @@ class SampleBankInfo:
     custom_sample_bank: int = 0
 
     def read_custom_sample_bank(self, parts: list[str], banks_only: bool) -> None:
+        """Parse the hit sound bank fields from a colon-separated list.
+
+        Args:
+            parts: The colon-split fields from the hit sound section of a line.
+            banks_only: If ``True``, only bank fields are read; volume and filename are ignored.
+        """
         if not parts or not parts[0]:
             return
 
@@ -90,6 +139,14 @@ class SampleBankInfo:
             self.filename = parts[4]
 
     def convert_sound_type(self, sound_type: HitSoundType) -> list[HitSampleInfo]:
+        """Convert a HitSoundType bitmask to a list of HitSampleInfo objects.
+
+        Args:
+            sound_type: The hit sound flags active on the hit object.
+
+        Returns:
+            A list of HitSampleInfo objects representing all active hit sounds.
+        """
         samples = []
         if self.filename:
             samples.append(
@@ -166,6 +223,7 @@ class SampleBankInfo:
 
 @dataclass(slots=True, eq=True)
 class HitObjectCircle:
+    """A circle hit object."""
     pos: Pos
     new_combo: bool
     combo_offset: int
@@ -173,6 +231,7 @@ class HitObjectCircle:
 
 @dataclass(slots=True, eq=True)
 class HitObjectSpinner:
+    """A spinner hit object."""
     pos: Pos
     duration: float
     new_combo: bool
@@ -180,12 +239,14 @@ class HitObjectSpinner:
 
 @dataclass(slots=True, eq=True)
 class HitObjectHold:
+    """An osu!mania hold note."""
     pos_x: float
     duration: float
 
 
 @dataclass(slots=True, eq=True)
 class HitObjectSlider:
+    """A slider hit object."""
     pos: Pos
     new_combo: bool
     combo_offset: int
@@ -197,12 +258,25 @@ class HitObjectSlider:
 
 @dataclass(slots=True, eq=True)
 class HitObject:
+    """A single parsed hit object."""
     start_time: float
     kind: HitObjectCircle | HitObjectSpinner | HitObjectHold | HitObjectSlider
     samples: list[HitSampleInfo]
 
 
 def is_linear(p0: Pos, p1: Pos, p2: Pos) -> bool:
+    """Test whether three points are collinear.
+
+    Uses the cross-product area test with a small epsilon tolerance.
+
+    Args:
+        p0: First point.
+        p1: Second point.
+        p2: Third point.
+
+    Returns:
+        ``True`` if the points lie on a single line within floating-point tolerance.
+    """
     return abs((p1.y - p0.y) * (p2.x - p0.x) - (p1.x - p0.x) * (p2.y - p0.y)) < 1e-7
 
 
@@ -213,6 +287,15 @@ def convert_points(
     first: bool,
     offset: Pos,
 ) -> None:
+    """Parse a segment of slider path tokens into PathControlPoint objects.
+
+    Args:
+        curve_points: Output list to append parsed control points to.
+        points: Pipe-split tokens for this path segment (first token is the type char).
+        end_points: An optional extra endpoint token for this segment.
+        first: Whether this is the first segment in the path string.
+        offset: The slider start position used to make coordinates relative.
+    """
     path_type = PathType.new_from_str(points[0])
 
     def read_point(val: str) -> Pos:
@@ -270,6 +353,15 @@ def convert_points(
 
 
 def convert_path_str(point_str: str, offset: Pos) -> list[PathControlPoint]:
+    """Parse the full slider path string into a list of control points.
+
+    Args:
+        point_str: The raw path string from the hit object line (pipe-separated).
+        offset: The slider start position used to make coordinates relative.
+
+    Returns:
+        A list of PathControlPoint objects.
+    """
     point_split = point_str.split("|")
     curve_points: list[PathControlPoint] = []
 
@@ -303,16 +395,28 @@ def convert_path_str(point_str: str, offset: Pos) -> list[PathControlPoint]:
 
 
 class HitObjectsState:
+    """Accumulates parsed hit objects during beatmap decoding."""
     def __init__(self) -> None:
+        """Initialise with an empty hit object list and no last object type."""
         self.last_object_type: int | None = None
         self.hit_objects: list[HitObject] = []
 
     def last_object_was_spinner(self) -> bool:
+        """Return ``True`` if the most recently parsed object was a spinner."""
         return self.last_object_type is not None and HitObjectType.has_flag(
             self.last_object_type, HitObjectType.SPINNER
         )
 
     def parse_hit_object(self, line: str) -> None:
+        """Parse a single hit object line and append it to hit_objects.
+
+        Args:
+            line: A raw comma-separated hit object line.
+
+        Raises:
+            ParseHitObjectsError: If the line has fewer than 5 fields, the type
+                is unknown, or a numeric value cannot be parsed.
+        """
         clean_line = trim_comment(line)
         split = clean_line.split(",")
         if len(split) < 5:
