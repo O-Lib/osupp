@@ -1,0 +1,74 @@
+name: PR Template Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-template:
+    name: Verify PR template is filled out
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const number = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const issues = [];
+
+            if (
+              body.trim().length === 0 ||
+              body.includes('Please provide a clear and concise description')
+            ) {
+              issues.push('❌ **Description** is missing or not filled out');
+            }
+
+            const typePattern = /- \[x\] .*(Bug fix|New feature|Breaking change|Performance|Documentation|Tests|Chore)/i;
+            if (!typePattern.test(body)) {
+              issues.push('❌ **Type of Change** — at least one option must be checked');
+            }
+
+            const unchecked = (body.match(/- \[ \]/g) || []).length;
+            const checked = (body.match(/- \[x\]/gi) || []).length;
+            if (checked === 0 && unchecked > 0) {
+              issues.push('❌ **Checklist** — no items have been checked');
+            }
+
+            const comments = await github.rest.issues.listComments({
+              owner, repo, issue_number: number,
+            });
+            for (const comment of comments.data) {
+              if (
+                comment.user.type === 'Bot' &&
+                comment.body.includes('PR Template Check')
+              ) {
+                await github.rest.issues.deleteComment({
+                  owner, repo, comment_id: comment.id,
+                });
+              }
+            }
+
+            if (issues.length > 0) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: number,
+                body: [
+                  '## ❌ PR Template Check',
+                  '',
+                  'Please fill out the PR template properly:',
+                  '',
+                  ...issues,
+                  '',
+                  'Edit the PR description and this check will re-run automatically.',
+                ].join('\n'),
+              });
+
+              core.setFailed('PR template is not properly filled out.');
+            }
