@@ -1,28 +1,24 @@
-# Contributing to osupp
+# Contributing to OSUPP
 
-First off, thank you for considering contributing to `osupp`. It's people like you that make this library better for the entire osu! Python community.
-
-Following these guidelines helps communicate that you respect the time of the maintainers and other contributors. In return, we'll respect your time and address your contributions in a timely manner.
+Thank you for taking the time to contribute. These guidelines help us keep the codebase consistent and review cycles short.
 
 ---
 
 ### Table of Contents
 
-* [Code of Conduct](#code-of-conduct)
-* [What We Accept](#what-we-accept)
-* [What We Do Not Accept](#what-we-do-not-accept)
-* [Getting Started](#getting-started)
-
-  * [Reporting Bugs](#reporting-bugs)
-  * [Suggesting Features](#suggesting-features)
-  * [Submitting Pull Requests](#submitting-pull-requests)
-* [Development Setup](#development-setup)
-* [Coding Standards](#coding-standards)
-* [Commit Guidelines](#commit-guidelines)
-* [Testing](#testing)
-* [Documentation](#documentation)
-* [Review Process](#review-process)
-* [Recognition](#recognition)
+- [Code of Conduct](#code-of-conduct)
+- [What We Accept](#what-we-accept)
+- [What We Do Not Accept](#what-we-do-not-accept)
+- [Getting Started](#getting-started)
+  - [Reporting Bugs](#reporting-bugs)
+  - [Suggesting Features](#suggesting-features)
+  - [Submitting Pull Requests](#submitting-pull-requests)
+- [Development Setup](#development-setup)
+- [Coding Standards](#coding-standards)
+- [Commit Guidelines](#commit-guidelines)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Review Process](#review-process)
 
 ---
 
@@ -30,31 +26,29 @@ Following these guidelines helps communicate that you respect the time of the ma
 
 This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
-Please report unacceptable behavior to **[security@olib.dev](mailto:security@olib.dev)**.
+Please report unacceptable behavior to **[conduct@olib.dev](mailto:conduct@olib.dev)**.
 
 ---
 
 ### What We Accept
 
-We welcome contributions in the following areas:
-
-| Type                           | Description                                                                                 |
-| ------------------------------ | ------------------------------------------------------------------------------------------- |
-| 🐛 **Bug fixes**               | Issues that cause incorrect behavior, crashes, or unexpected results                        |
-| 📄 **Documentation**           | Typos, clarifications, examples, or missing docstrings                                      |
-| ⚡ **Performance improvements** | Faster parsing, lower memory usage, better algorithms                                       |
-| ✨ **New features**             | Additional mods, game mode support, or API extensions (must align with osu! official specs) |
-| 🧪 **Tests**                   | Additional test cases, edge cases, or improved coverage                                     |
-| 🔧 **Tooling**                 | Better developer experience, CI/CD improvements, build scripts                              |
+| Type | Description |
+| --- | --- |
+| Bug fixes | Incorrect behavior, crashes, or unexpected results |
+| Documentation | Typos, clarifications, examples, missing docstrings |
+| Performance improvements | Faster parsing, lower memory usage, better algorithms |
+| New features | Additional functionality aligned with the osu! spec |
+| Tests | Additional test cases, edge cases, improved coverage |
+| Tooling | Better developer experience, CI/CD improvements |
 
 ---
 
 ### What We Do Not Accept
 
-* Breaking changes without prior discussion
-* Changes that only benefit a specific niche use case
-* Code that degrades performance without clear justification
-* Changes that introduce unnecessary dependencies
+- Breaking changes without prior discussion (open an issue first)
+- Changes that only benefit a narrow niche use case
+- Code that degrades performance without clear justification
+- Changes that introduce unnecessary dependencies
 
 ---
 
@@ -62,73 +56,42 @@ We welcome contributions in the following areas:
 
 ### Reporting Bugs
 
-Before submitting a bug report:
+Before submitting:
 
-1. **Check the latest version** – Your issue may already be fixed
-2. **Search existing issues** – Someone might have reported it already
-3. **Reproduce without modifications** – Test with a clean environment
+1. **Check the latest version** - your issue may already be fixed
+2. **Search existing issues** - someone may have reported it already
+3. **Reproduce in a clean environment**
 
 A good bug report includes:
 
-**Describe the bug**
-A clear description of what the bug is.
-
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Load beatmap `example.osu`
-2. Apply mods `['HR', 'DT']`
-3. Call `calculate_pp()`
-
-**Expected behavior**
-What you expected to happen.
-
-**Actual behavior**
-What actually happened, including error messages or wrong output.
-
-**Environment:**
-- osupp version: 0.5.0
-- Python version: 3.11 / 3.12 / 3.13
-- OS: Windows / Linux / macOS
-
-**Additional context**
-Beatmap file (if public), screenshots, or relevant code snippets.
-
----
+- What you expected vs. what actually happened
+- A minimal code snippet that reproduces the issue
+- osupp version, Python version, and OS
+- Full error traceback if applicable
 
 ### Suggesting Features
 
-We love good feature suggestions. Before submitting:
+Before submitting:
 
-* Check if the feature already exists
-* Consider the scope
-* Explain the use case
+- Check if the feature already exists
+- Consider the scope and whether it fits the library's purpose
+- Describe the problem it solves, not just the solution
 
-A good feature request includes:
+Include:
 
-**Problem statement**
-What problem does this solve? What can't you do right now?
-
-**Proposed solution**
-How would this work? Include API examples if possible.
-
-**Alternatives considered**
-What other approaches did you think about?
-
-**Impact**
-Who benefits from this?
-
----
+- **Problem statement** - what can't you do right now?
+- **Proposed API** - a code example helps
+- **Alternatives considered**
 
 ### Submitting Pull Requests
 
-* Open an issue first (unless trivial)
-* Fork the repository and create a branch from `main`
-* Write your code following standards
-* Add tests
-* Update documentation
-* Run the test suite
-* Open a draft PR
-* Request review
+1. Open an issue first for non-trivial changes
+2. Fork and create a branch from `main`
+3. Write code following the standards below
+4. Add or update tests
+5. Update documentation if needed
+6. Ensure pre-commit passes: `pre-commit run --all-files`
+7. Open a PR - drafts are welcome for early feedback
 
 ---
 
@@ -136,25 +99,24 @@ Who benefits from this?
 
 ### Prerequisites
 
-* Python 3.9+ (3.11+ recommended)
-* `uv` or `pip` + `venv`
-* `pytest`
+- Python 3.10+ (3.12 recommended)
+- [`uv`](https://github.com/astral-sh/uv) or `pip` + `venv`
 
-### Clone and Install
+### Install
 
 ```bash
-git clone https://github.com/your-username/osupp.git
+git clone https://github.com/O-Lib/osupp.git
 cd osupp
 
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 pip install -e ".[dev]"
 # or
 uv pip install -e ".[dev]"
 ```
 
-### Verify Setup
+### Verify
 
 ```bash
 pytest
@@ -162,38 +124,39 @@ mypy osupp/
 ruff check osupp/
 ```
 
+### Pre-commit
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
 ---
 
 ### Coding Standards
 
-We follow **PEP 8** with additions:
+We follow **PEP 8** with these additions:
 
-### Formatting
-
-| Rule        | Standard                              |
-| ----------- | ------------------------------------- |
-| Line length | 88 characters                         |
-| Indentation | 4 spaces                              |
-| Quotes      | `"""` for docstrings, `'` for strings |
-| Imports     | Grouped                               |
-
-### Naming
-
-| Type      | Convention       |
-| --------- | ---------------- |
-| Variables | snake_case       |
-| Functions | snake_case       |
-| Classes   | PascalCase       |
-| Constants | UPPER_SNAKE_CASE |
+| Rule | Standard |
+| --- | --- |
+| Line length | 88 characters |
+| Indentation | 4 spaces |
+| Quotes | `"""` for docstrings, `'` for strings |
+| Imports | Grouped: stdlib → third-party → local |
+| Naming | `snake_case` for functions/variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants |
 
 ### Type Hints
 
+All public functions and methods must have full type annotations:
+
 ```python
-def calculate_pp(beatmap: Beatmap, mods: list[Mod], accuracy: float = 1.0) -> float:
+def parse_beatmap(file_path: Path) -> Beatmap:
     ...
 ```
 
 ### Docstrings
+
+All public APIs require docstrings:
 
 ```python
 def parse_beatmap(file_path: Path) -> Beatmap:
@@ -204,10 +167,11 @@ def parse_beatmap(file_path: Path) -> Beatmap:
         file_path: Path to the .osu file.
 
     Returns:
-        Beatmap object.
+        Parsed Beatmap instance.
 
     Raises:
-        FileNotFoundError
+        FileNotFoundError: If the file does not exist.
+        ParseBeatmapError: If the file format is invalid.
     """
 ```
 
@@ -215,50 +179,40 @@ def parse_beatmap(file_path: Path) -> Beatmap:
 
 ### Commit Guidelines
 
-We follow **Conventional Commits**:
-
-<type>(<scope>): <subject>
-
-### Types
-
-* feat
-* fix
-* docs
-* style
-* refactor
-* perf
-* test
-* chore
-
-### Examples
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-feat(parser): add support for version 14
-fix(pp): correct HD calculation
-docs(readme): update install
+<type>(<scope>): <subject>
+```
+
+**Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
+
+**Scopes:** `beatmap`, `mods`, `pp`, `ci`, `packaging`
+
+**Examples:**
+
+```
+feat(beatmap): support format version 15
+fix(mods): correct legacy bitfield for NF+DT combination
+docs(readme): add quick start examples
+perf(beatmap): reduce allocations in hit object parser
+chore(ci): pin ruff to 0.9.10
 ```
 
 ---
 
 ### Testing
 
-Tests are required.
+Tests are required for all non-trivial changes.
 
 ### Structure
 
 ```
 tests/
-├── test_parser/
+├── test_beatmap/
 ├── test_mods/
 ├── test_pp/
 └── fixtures/
-```
-
-### Example
-
-```python
-def test_calculate_pp():
-    assert True
 ```
 
 ### Run
@@ -266,63 +220,35 @@ def test_calculate_pp():
 ```bash
 pytest
 pytest --cov=osupp
-pytest -n auto
+pytest -n auto # parallel
 ```
 
-Minimum coverage: **85%**
+Minimum coverage target: **85%**
 
 ---
 
 ### Documentation
 
-Document:
-
-* Public APIs
-* Complex logic
-* Edge cases
-* Examples
+Document all public APIs. For complex internal logic, inline comments are preferred over docstrings. Update the README if you add top-level features.
 
 ---
 
 ### Review Process
 
-### Reviewers check:
+| Step | Timeline |
+| --- | --- |
+| First review | Within 5 business days |
+| Follow-up reviews | Within 2–3 business days |
+| Merge after approval | Within 24 hours |
 
-* Style
-* Types
-* Tests
-* Docs
-* Performance
-
-### Timeline
-
-| Step         | Time     |
-| ------------ | -------- |
-| First review | 5 days   |
-| Follow-ups   | 2–3 days |
-| Merge        | 24h      |
+Reviewers check: correctness, types, tests, docs, performance, and style.
 
 ---
 
-### Recognition
+<p align="center">
+	<img src="https://raw.githubusercontent.com/catppuccin/catppuccin/main/assets/footers/gray0_ctp_on_line.svg?sanitize=true" />
+</p>
 
-Contributors are listed in:
-
-* `README.md`
-* `CHANGELOG.md`
-* GitHub Contributors
-
-Major contributors → `AUTHORS.md`
-
----
-
-### Final Notes
-
-> "Code is read more often than it is written."
-
-If unsure, open an issue first.
-
----
-
-**Thank you for contributing to osupp! 🚀**
-- The O!Lib Team
+<p align="center">
+        <code>&copy 2026-Present <a href="https://github.com/O-Lib">O!Lib Team</a></code>
+</p>
