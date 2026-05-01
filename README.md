@@ -112,8 +112,6 @@ osupp/
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
 
----
-
 ### Security
 
 To report a security vulnerability, see [SECURITY.md](SECURITY.md).
