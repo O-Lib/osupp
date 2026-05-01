@@ -1,0 +1,96 @@
+name: Enforce Docs Updates
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-docs:
+    name: Verify docs updated with code changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed files
+        id: changed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const number = context.payload.pull_request.number;
+
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner, repo, pull_number: number,
+            });
+
+            const changedFiles = files.map(f => f.filename);
+
+            const hasPublicApiChanges = changedFiles.some(f =>
+              f.startsWith('osupp/') &&
+              f.endsWith('.py') &&
+              !f.includes('generated_mods') &&
+              !f.includes('__init__') &&
+              !f.includes('_patches')
+            );
+
+            const hasDocChanges = changedFiles.some(f =>
+              f.startsWith('docs/') ||
+              f === 'README.md' ||
+              f.endsWith('.md')
+            );
+
+            core.setOutput('has_python', hasPublicApiChanges ? 'true' : 'false');
+            core.setOutput('has_docs', hasDocChanges ? 'true' : 'false');
+
+      - name: Skip — no Python files changed
+        if: steps.changed.outputs.has_python == 'false'
+        run: echo "No public API changes detected, skipping docs enforcement."
+
+      - name: Check docs updated
+        if: steps.changed.outputs.has_python == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const number = context.payload.pull_request.number;
+            const hasDocChanges = '${{ steps.changed.outputs.has_docs }}' === 'true';
+            const body = context.payload.pull_request.body || '';
+
+            const comments = await github.rest.issues.listComments({
+              owner, repo, issue_number: number,
+            });
+            for (const comment of comments.data) {
+              if (
+                comment.user.type === 'Bot' &&
+                comment.body.includes('Docs Update Check')
+              ) {
+                await github.rest.issues.deleteComment({
+                  owner, repo, comment_id: comment.id,
+                });
+              }
+            }
+
+            if (!hasDocChanges && !body.includes('[skip-docs]')) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: number,
+                body: [
+                  '## ⚠️ Docs Update Check',
+                  '',
+                  'This PR modifies public API files but does not include any documentation updates.',
+                  '',
+                  'If your changes affect the public API or behavior, please update the relevant docs or `README.md`.',
+                  'If no docs update is needed, add `[skip-docs]` to your PR description.',
+                ].join('\n'),
+              });
+              core.warning('Public API changed without documentation update. Add [skip-docs] to skip this check.');
+            }

@@ -1,0 +1,68 @@
+name: Documentation Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  docstrings:
+    name: Check docstrings
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if Python files changed
+        id: changed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const hasPython = files.some(f =>
+              f.filename.startsWith('osupp/') &&
+              f.filename.endsWith('.py') &&
+              !f.filename.includes('generated_mods')
+            );
+            core.setOutput('has_python', hasPython ? 'true' : 'false');
+
+      - name: Skip — no Python files changed
+        if: steps.changed.outputs.has_python == 'false'
+        run: echo "No Python files changed, skipping docstring checks."
+
+      - name: Set up Python
+        if: steps.changed.outputs.has_python == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pydocstyle
+        if: steps.changed.outputs.has_python == 'true'
+        run: pip install pydocstyle interrogate
+
+      - name: Check docstring coverage
+        if: steps.changed.outputs.has_python == 'true'
+        run: |
+          interrogate osupp/ \
+            --ignore-init-method \
+            --ignore-magic \
+            --ignore-module \
+            --ignore-private \
+            --exclude osupp/Mods/generated_mods.py \
+            --fail-under 80 \
+            --verbose
+
+      - name: Check docstring style
+        if: steps.changed.outputs.has_python == 'true'
+        run: |
+          pydocstyle osupp/ \
+            --convention=google \
+            --add-ignore=D100,D104,D107 \
+            --match='(?!generated_mods).*\.py'
