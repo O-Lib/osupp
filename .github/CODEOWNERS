@@ -1,21 +1,23 @@
-# CODEOWNERS for osupp
-# This file automatically assigns reviewers based on changed files.
-# Syntax: pattern @owner
+# CODEOWNERS automatically assigns reviewers for changed files.
 # Last matching pattern takes precedence.
 
-# Default: Fallback for everything else
+# Default: all files
 * @Error44s @DevilPedrow
 
-# Core logic and calculations (PP, mods)
+# Core library
 /osupp/Mods/ @Error44s @DevilPedrow
 /osupp/Beatmap/ @DevilPedrow @Error44s
+/osupp/Performance/ @Error44s @DevilPedrow
 
-# GitHub workflows and configurations
+# GitHub configuration & CI
 /.github/ @Error44s @DevilPedrow
 
-# Documentation files
+# Documentation
 /docs/ @Error44s @DevilPedrow
 *.md @Error44s @DevilPedrow
 
 # Tests
 /tests/ @Error44s @DevilPedrow
+
+# Build & packaging
+pyproject.toml @Error44s @DevilPedrow
