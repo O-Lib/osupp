@@ -1,3 +1,27 @@
+"""
+MIT License
+
+Copyright (c) 2026-Present O!Lib Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,11 +31,18 @@ from utils import ParseNumberError, clean_filename, parse_float, trim_comment
 
 
 class ParseEventsError(Exception):
+    """Raised when a line in the [Events] section cannot be parsed."""
     def __init__(self, message: str):
+        """Initialise with an error message.
+
+        Args:
+            message: Description of the parse failure.
+        """
         super().__init__(message)
 
 
 class EventType(Enum):
+    """Supported event types in the [Events] section."""
     Background = 0
     Video = 1
     Break = 2
@@ -22,6 +53,17 @@ class EventType(Enum):
 
     @classmethod
     def from_str(cls, s: str) -> EventType:
+        """Parse an EventType from its string representation.
+
+        Args:
+            s: The event type field as it appears in the beatmap file.
+
+        Returns:
+            The corresponding EventType member.
+
+        Raises:
+            ParseEventsError: If the string is not a known event type.
+        """
         match s:
             case "0" | "Background":
                 return cls.Background
@@ -43,13 +85,19 @@ class EventType(Enum):
 
 @dataclass(slots=True, eq=True)
 class BreakPeriod:
+    """A break period during which HP drain is paused."""
     start_time: float
     end_time: float
 
     def duration(self) -> float:
+        """Return the duration of this break period in milliseconds."""
         return self.end_time - self.start_time
 
     def has_effect(self) -> bool:
+        """Return ``True`` if this break is long enough to have gameplay effect.
+
+        A break must be at least 650 ms to trigger the in-game break overlay.
+        """
         return self.duration() >= 650.0
 
 
@@ -58,14 +106,26 @@ VIDEO_EXTENSIONS = {"mp4", "mov", "avi", "flv", "mpg", "wmv", "m4v"}
 
 @dataclass(slots=True, eq=True)
 class Events:
+    """Holds all parsed data from the [Events] section."""
     background_file: str
     breaks: list[BreakPeriod]
 
     def __init__(self):
+        """Initialise with an empty background filename and no breaks."""
         self.background_file = ""
         self.breaks = []
 
     def parse_events(self, line: str) -> None:
+        """Parse a single event line from the [Events] section.
+
+        Handles Background, Video, and Break types. Others are ignored.
+
+        Args:
+            line: A single raw line from the [Events] section.
+
+        Raises:
+            ParseEventsError: If the line is malformed or a numeric value fails.
+        """
         clean_file = trim_comment(line)
 
         parts = clean_file.split(",")
