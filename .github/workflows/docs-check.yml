@@ -33,7 +33,7 @@ jobs:
             );
             core.setOutput('has_python', hasPython ? 'true' : 'false');
 
-      - name: Skip — no Python files changed
+      - name: Skip no Python files changed
         if: steps.changed.outputs.has_python == 'false'
         run: echo "No Python files changed, skipping docstring checks."
 
