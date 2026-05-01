@@ -1,0 +1,78 @@
+language: "en-US"
+
+tone_instructions: "Be concise and technical. Focus on correctness, type safety, and Python best practices. Avoid unnecessary praise."
+
+early_access: false
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+
+  path_instructions:
+    - path: "osupp/Beatmap/**/*.py"
+      instructions: |
+        Focus on:
+        - Correct parsing of osu! beatmap file format (.osu)
+        - Edge cases in section parsing (missing fields, malformed values)
+        - Type hints on all public methods and return types
+        - Google-style docstrings on all public classes and functions
+        - Dataclass usage and slot correctness
+
+    - path: "osupp/Mods/**/*.py"
+      instructions: |
+        Focus on:
+        - Correct mod bitfield logic and legacy conversion
+        - Type safety across GameMode, GameMod, GameMods
+        - Avoid reviewing generated_mods.py it is auto-generated
+        - Acronym handling edge cases
+
+    - path: "osupp/Performance/**/*.py"
+      instructions: |
+        Focus on:
+        - Mathematical correctness of PP calculations
+        - Floating point precision issues
+        - Performance avoid unnecessary allocations in hot paths
+        - Type hints and docstrings on all public APIs
+
+    - path: "tests/**/*.py"
+      instructions: |
+        Focus on:
+        - Test coverage of edge cases
+        - Use of pytest fixtures and parametrize
+        - Avoid redundant assertions
+        - Ensure tests are isolated and do not depend on each other
+
+    - path: ".github/workflows/*.yml"
+      instructions: |
+        Focus on:
+        - Security of workflow permissions (principle of least privilege)
+        - Correct use of secrets
+        - Pinned action versions
+
+  ignore_title_keywords:
+    - "WIP"
+    - "wip"
+    - "draft"
+    - "Draft"
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
