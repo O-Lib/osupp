@@ -1,78 +1,62 @@
 # Support
 
-Need help with `osupp`? You have several options depending on the type of issue you're facing.
-
 ### Getting Help
 
-### 🐛 Bug Reports & Feature Requests
+### Bug Reports & Feature Requests
 
-If you've found a bug or have an idea for a new feature, please open an issue on GitHub:
+Open an issue on GitHub: [github.com/O-Lib/osupp/issues](https://github.com/O-Lib/osupp/issues)
 
-→ [https://github.com/your-username/osupp/issues](https://github.com/your-username/osupp/issues)
+Search for existing issues before opening a new one.
 
-Before opening an issue, please check if a similar issue already exists.
+### Community (Discord)
 
----
+Join us for questions, discussions, and general help:
 
-### 💬 Community Support (Discord)
+→ [discord.gg/9p7whE7QxQ](https://discord.gg/9p7whE7QxQ)
 
-For general questions, usage help, or discussions about `osupp`, join our Discord server:
+### Email
 
-→ **[https://discord.gg/olib](https://discord.gg/9p7whE7QxQ)**
+| Address | Use for |
+| --- | --- |
+| [support@olib.dev](mailto:support@olib.dev) | General inquiries |
+| [security@olib.dev](mailto:security@olib.dev) | Security vulnerabilities only |
 
-Please be respectful and follow the server rules. Use the appropriate channels for your questions.
+### Response Times
 
----
-
-### 📧 Email Support
-
-For **security vulnerabilities**, **maintainer contact**, or **private matters**, you can reach us via email:
-
-→ **`support@olib.dev`** (general inquiries)
-
-→ **`security@olib.dev`** (security vulnerabilities only)
-
-Response times:
-
-| Channel | Expected Response Time |
-|---------|------------------------|
-| Discord | Usually within 24 hours |
-| GitHub Issues | Within 3-5 business days |
-| Email (support) | Within 3-5 business days |
+| Channel | Expected Response |
+| --- | --- |
+| Discord | Within 24 hours |
+| GitHub Issues | Within 3–5 business days |
+| Email (support) | Within 3–5 business days |
 | Email (security) | Within 48 hours |
 
 ---
 
-### Before Asking for Help
+### Before Asking
 
-1. **Read the documentation** – Check the `README.md` and any available docs
-2. **Search existing issues** – Your problem may already be solved
-3. **Try the latest version** – Update to the newest `osupp` release
-4. **Create a minimal example** – Isolate the problem as much as possible
+1. Read the `README.md` and any available documentation
+2. Search existing issues
+3. Update to the latest version
+4. Create a minimal reproducible example
 
----
+### What to Include
 
-### What to Include When Asking for Help
-
-To help us help you faster, please include:
-
-- `osupp` version you're using
+- osupp version (`pip show osupp`)
 - Python version (`python --version`)
-- Operating system (Windows, Linux, macOS)
-- Code snippet that reproduces the issue
-- Full error message (if applicable)
+- OS and architecture
+- Minimal code that reproduces the issue
+- Full error traceback
+
+### Out of Scope
+
+We do not provide support for custom forks or heavily modified versions of osupp.
 
 ---
 
-### Unsupported
+<p align="center">
+	<img src="https://raw.githubusercontent.com/catppuccin/catppuccin/main/assets/footers/gray0_ctp_on_line.svg?sanitize=true" />
+</p>
 
-We do **not** provide support for:
-
-- Custom forks or modified versions of `osupp`
-- Extremely old versions (below 0.5.0)
-
----
-
-**Thank you for using `osupp`!** 🚀
-
-*– The O!Lib Team*
+<p align="center">
+        <code>&copy 2026-Present <a href="https://github.com/O-Lib">O!Lib Team</a></code>
+</p>
