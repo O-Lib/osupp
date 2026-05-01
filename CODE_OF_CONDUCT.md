@@ -98,4 +98,10 @@ For answers to common questions about this code of conduct, see the FAQ at [http
 
 **Contact:** conduct@olib.dev
 
-*– The O!Lib Team*
+<p align="center">
+	<img src="https://raw.githubusercontent.com/catppuccin/catppuccin/main/assets/footers/gray0_ctp_on_line.svg?sanitize=true" />
+</p>
+
+<p align="center">
+        <code>&copy 2026-Present <a href="https://github.com/O-Lib">O!Lib Team</a></code>
+</p>
