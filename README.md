@@ -1,6 +1,6 @@
 <div align="center">
 
-# OSUPP
+![OsuPP](https://i.imgur.com/5a0YIEH.png)
 
 **All-in-one Python library for osu! beatmap parsing, mod handling, and pp calculation. The only osu! lib you'll ever need.**
 
