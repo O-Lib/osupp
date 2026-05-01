@@ -35,6 +35,7 @@ _KIND_RANK = {
 
 
 class GameModKind(Enum):
+    """Category of a mod indicating how it affects gameplay."""
     DifficultyReduction = "DifficultyReduction"
     DifficultyIncrease = "DifficultyIncrease"
     Conversion = "Conversion"
@@ -43,7 +44,9 @@ class GameModKind(Enum):
     System = "System"
 
     def __str__(self) -> str:
+        """Return the string value of this kind."""
         return self.value
 
     def rank(self) -> int:
+        """Return the sort rank for this category (lower = earlier in display order)."""
         return _KIND_RANK[self.value]
