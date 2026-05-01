@@ -1,0 +1,43 @@
+name: Documentation Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'osupp/**/*.py'
+
+jobs:
+  docstrings:
+    name: Check docstrings
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pydocstyle
+        run: pip install pydocstyle interrogate
+
+      - name: Check docstring coverage
+        run: |
+          interrogate osupp/ \
+            --ignore-init-method \
+            --ignore-magic \
+            --ignore-module \
+            --ignore-private \
+            --exclude osupp/Mods/generated_mods.py \
+            --fail-under 80 \
+            --verbose
+
+      - name: Check docstring style
+        run: |
+          pydocstyle osupp/ \
+            --convention=google \
+            --add-ignore=D100,D104,D107 \
+            --match='(?!generated_mods).*\.py'
