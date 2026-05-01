@@ -26,12 +26,14 @@ from enum import IntEnum
 
 
 class GameMode(IntEnum):
+    """osu! game mode identifiers used throughout the Mods module."""
     Osu = 0
     Taiko = 1
     Catch = 2
     Mania = 3
 
     def as_str(self) -> str:
+        """Return the lowercase API string for this game mode (e.g. "osu", "taiko")."""
         return {
             GameMode.Osu: "osu",
             GameMode.Taiko: "taiko",
@@ -40,10 +42,25 @@ class GameMode(IntEnum):
         }[self]
 
     def __str__(self) -> str:
+        """Return the lowercase API string for this game mode."""
         return self.as_str()
 
     @classmethod
     def from_str(cls, s: str) -> "GameMode":
+        """Parse a GameMode from a string representation.
+
+        Accepts numeric strings ("0"-"3"), lowercase names ("osu", "taiko", "catch",
+        "mania"), and common abbreviations ("tko", "ctb", "mna", "fruits", "osu!").
+
+        Args:
+            s: The raw string to parse.
+
+        Returns:
+            The corresponding GameMode member.
+
+        Raises:
+            ValueError: If the string is not recognised.
+        """
         mapping = {
             "0": cls.Osu,
             "osu": cls.Osu,
