@@ -1,0 +1,53 @@
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    labels:
+      - "Type: Chore"
+      - "Scope: Packaging"
+      - "PA: Pending All Reviewers"
+    commit-message:
+      prefix: "chore(packaging)"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      dev-dependencies:
+        patterns:
+          - "pytest*"
+          - "mypy*"
+          - "ruff*"
+          - "pre-commit*"
+          - "pytest-cov*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    labels:
+      - "Type: Chore"
+      - "Scope: CI"
+      - "PA: Pending All Reviewers"
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
