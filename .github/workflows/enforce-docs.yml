@@ -88,8 +88,8 @@ jobs:
                   '',
                   'This PR modifies public API files but does not include any documentation updates.',
                   '',
-                  'If your changes affect the public API or behavior, please update the relevant docs or `README.md`.',
-                  'If no docs update is needed, add `[skip-docs]` to your PR description.',
+                  'If your changes affect the public API or behavior, please update the relevant docs or README.md.',
+                  'If no docs update is needed, add [skip-docs] to your PR description.',
                 ].join('\n'),
               });
               core.warning('Public API changed without documentation update. Add [skip-docs] to skip this check.');
