@@ -39,7 +39,7 @@ jobs:
           pip install -e ".[dev]" || pip install requests
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: python
           queries: security-and-quality
@@ -54,7 +54,7 @@ jobs:
                   tags contain: experimental
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:python"
           output: codeql-results
