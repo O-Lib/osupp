@@ -6,9 +6,9 @@ This file lists the current maintainers of `osupp`. Maintainers are responsible 
 
 | Name | GitHub | Role | Areas |
 |------|--------|------|-------|
-| Error44 | [@Error44](https://github.com/Error44) | Lead Maintainer | Architecture, PP calculation, mod handling, beatmap parsing, testing, documentation |
+| Error44 | [@Error44](https://github.com/Error44s) | Lead Maintainer | Architecture, PP calculation, mod handling, beatmap parsing, testing, documentation |
 | DevilPedrow | [@DevilPedrow](https://github.com/DevilPedrow) | Lead Maintainer | Architecture, PP calculation, mod handling, beatmap parsing, testing, documentation |
-| O!Lib Team | [@DevilPedrow](https://github.com/DevilPedrow) [@Error44](https://github.com/Error44) | Team | General maintenance, code review, community support |
+| O!Lib Team | [@DevilPedrow](https://github.com/DevilPedrow) [@Error44](https://github.com/Error44s) | Team | General maintenance, code review, community support |
 
 ### Responsibilities
 
