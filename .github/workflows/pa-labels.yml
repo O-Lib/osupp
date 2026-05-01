@@ -1,0 +1,100 @@
+name: PA Label Automation
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, review_requested, review_request_removed]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+jobs:
+  pa-labels:
+    name: Sync PA labels
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const prNumber = context.payload.pull_request?.number
+                          ?? context.payload.review?.pull_request?.number;
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner, repo, pull_number: prNumber,
+            });
+
+            if (pr.draft) return;
+
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner, repo, pull_number: prNumber,
+            });
+
+            const requestedReviewers = pr.requested_reviewers?.length ?? 0;
+
+            const latestPerReviewer = {};
+            for (const review of reviews) {
+              if (review.state === 'COMMENTED') continue;
+              latestPerReviewer[review.user.login] = review.state;
+            }
+
+            const states     = Object.values(latestPerReviewer);
+            const approved   = states.filter(s => s === 'APPROVED').length;
+            const changesReq = states.filter(s => s === 'CHANGES_REQUESTED').length;
+            const totalReviewers = Object.keys(latestPerReviewer).length + requestedReviewers;
+
+            const PA_LABELS = [
+              'PA: Pending All Reviewers',
+              'PA: Pending One Reviewer',
+              'PA: Awaiting Author',
+              'PA: Awaiting CI',
+              'PA: Reviewer Assigned',
+              'PA: Under Review',
+              'PA: Second Opinion Needed',
+              'PR: Approved',
+              'PR: Changes Requested',
+            ];
+
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner, repo, issue_number: prNumber,
+            });
+            const current = new Set(currentLabels.map(l => l.name));
+
+            let add    = new Set();
+            let remove = new Set(PA_LABELS.filter(l => current.has(l)));
+
+            if (changesReq > 0) {
+              add.add('PA: Awaiting Author');
+              add.add('PR: Changes Requested');
+            } else if (totalReviewers === 0) {
+              add.add('PA: Second Opinion Needed');
+            } else if (requestedReviewers > 0 && states.length === 0) {
+              add.add('PA: Pending All Reviewers');
+              add.add('PA: Reviewer Assigned');
+            } else if (requestedReviewers > 0 && approved > 0) {
+              add.add('PA: Pending One Reviewer');
+              add.add('PA: Under Review');
+            } else if (requestedReviewers === 0 && approved > 0 && changesReq === 0) {
+              add.add('PR: Approved');
+            } else if (states.length > 0) {
+              add.add('PA: Under Review');
+            }
+
+            const toRemove = [...remove].filter(l => !add.has(l));
+            const toAdd    = [...add].filter(l => !current.has(l));
+
+            for (const label of toRemove) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number: prNumber, name: label,
+                });
+              } catch (_) {}
+            }
+
+            if (toAdd.length > 0) {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: prNumber, labels: toAdd,
+              });
+            }
