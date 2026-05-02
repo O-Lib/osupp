@@ -1,5 +1,6 @@
 from functools import cmp_to_key
-from typing import TypeVar, Callable, MutableSequence, Sequence
+from typing import TypeVar
+from collections.abc import Callable, MutableSequence, Sequence
 
 T = TypeVar("T")
 

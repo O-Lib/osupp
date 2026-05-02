@@ -46,7 +46,7 @@ class DifficultyPoint:
                 math.isclose(self.slider_velocity, existing.slider_velocity, rel_tol=1e-9, abs_tol=0.0))
 
 
-def difficulty_point_at(points: List[DifficultyPoint], time: float) -> Optional[DifficultyPoint]:
+def difficulty_point_at(points: list[DifficultyPoint], time: float) -> DifficultyPoint | None:
     if not points:
         return None
 
@@ -88,7 +88,7 @@ class EffectPoint:
                 math.isclose(self.scroll_speed, existing.scroll_speed, rel_tol=1e-9, abs_tol=0.0))
 
 
-def effect_point_at(points: List[EffectPoint], time: float) -> Optional[EffectPoint]:
+def effect_point_at(points: list[EffectPoint], time: float) -> EffectPoint | None:
     if not points:
         return None
 
@@ -127,7 +127,7 @@ class TimingPoint:
         return 60000.0 / self.beat_len
 
 
-def timing_point_at(points: List[TimingPoint], time: float) -> Optional[TimingPoint]:
+def timing_point_at(points: list[TimingPoint], time: float) -> TimingPoint | None:
     if not points:
         return None
 

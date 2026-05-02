@@ -1,10 +1,12 @@
 import math
 from enum import Enum
-from typing import Callable, Optional, Any
+from typing import Any, Optional
+from collections.abc import Callable
 
 from osupp.Beatmap.section.enums import GameMode
 from osupp.Mods.game_mods import GameMods
-from ...utils.util import clamp, almost_eq
+
+from ...utils.util import almost_eq, clamp
 
 
 class AttributeType(Enum):
@@ -87,10 +89,10 @@ class BeatmapDifficulty:
 
     def __init__(
             self,
-            ar: Optional[BeatmapAttribute] = None,
-            cs: Optional[BeatmapAttribute] = None,
-            hp: Optional[BeatmapAttribute] = None,
-            od: Optional[BeatmapAttribute] = None,
+            ar: BeatmapAttribute | None = None,
+            cs: BeatmapAttribute | None = None,
+            hp: BeatmapAttribute | None = None,
+            od: BeatmapAttribute | None = None,
     ):
         self.ar = ar if ar is not None else BeatmapAttribute.default_none()
         self.cs = cs if cs is not None else BeatmapAttribute.default_none()
@@ -241,12 +243,12 @@ class HitWindows:
 
     def __init__(
             self,
-            ar: Optional[float] = None,
-            od_perfect: Optional[float] = None,
-            od_great: Optional[float] = None,
-            od_good: Optional[float] = None,
-            od_ok: Optional[float] = None,
-            od_meh: Optional[float] = None
+            ar: float | None = None,
+            od_perfect: float | None = None,
+            od_great: float | None = None,
+            od_good: float | None = None,
+            od_ok: float | None = None,
+            od_meh: float | None = None
     ):
         self.ar = ar
         self.od_perfect = od_perfect
@@ -512,7 +514,7 @@ class BeatmapAttributesBuilder:
         self._is_convert = False
         self._difficulty = BeatmapDifficulty.default()
         self._mods = GameMods()
-        self._clock_rate: Optional[float] = None
+        self._clock_rate: float | None = None
 
     def map(self, beatmap: "Beatmap") -> "BeatmapAttributesBuilder":
         self._mode = getattr(beatmap, "mode", GameMode.Osu)

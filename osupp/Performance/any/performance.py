@@ -1,17 +1,20 @@
 from __future__ import annotations
-from typing import Optional, Union, Any, TYPE_CHECKING
+
 from enum import Enum
+from typing import TYPE_CHECKING, Any, Optional, Union
+
 from osupp.Beatmap.section.enums import GameMode
-from ..model.model import IGameMode, ConvertError
+
 from ..model.beatmap.beatmap import Beatmap, TooSuspicious
-from .any import PerformanceAttributes, ScoreState, HitResultGenerator
+from ..model.model import ConvertError, IGameMode
+from .any import HitResultGenerator, PerformanceAttributes, ScoreState
 from .difficulty import Difficulty
 
 if TYPE_CHECKING:
-    from ..osu.osu import OsuPerformance
-    from ..taiko.taiko import TaikoPerformance
     from ..catch.catch import CatchPerformance
     from ..mania.mania import ManiaPerformance
+    from ..osu.osu import OsuPerformance
+    from ..taiko.taiko import TaikoPerformance
 
 
 class InspectablePerformance(IGameMode):
@@ -25,14 +28,14 @@ class HitResultPriority(Enum):
     WORST_CASE = 2
 
     @classmethod
-    def default(cls) -> "HitResultPriority":
+    def default(cls) -> HitResultPriority:
         return cls.BEST_CASE
 
 
 class Performance:
     __slots__ = ("_mode", "_perf")
     def __init__(self, map_or_attrs: Any):
-        self._mode: Optional[GameMode] = None
+        self._mode: GameMode | None = None
         self._perf = None
 
         if isinstance(map_or_attrs, Beatmap):
@@ -95,15 +98,15 @@ class Performance:
         else:
             raise TypeError(f"Unrecognized attribute type: {class_name}")
 
-    def calculate(self) -> "PerformanceAttributes":
+    def calculate(self) -> PerformanceAttributes:
         raw_res = self._perf.calculate()
         return PerformanceAttributes(raw_res, self._mode)
 
-    def checked_calculate(self) -> "PerformanceAttributes":
+    def checked_calculate(self) -> PerformanceAttributes:
         raw_res = self._perf.checked_calculate()
         return PerformanceAttributes(raw_res, self._mode)
 
-    def try_mode(self, mode: GameMode) -> "Performance":
+    def try_mode(self, mode: GameMode) -> Performance:
         if self._mode == GameMode.Osu:
             try:
                 self._perf.try_mode(mode)
@@ -115,147 +118,147 @@ class Performance:
             return self
         raise ValueError("Incompatible mode conversion.")
 
-    def mode_or_ignore(self, mode: GameMode) -> "Performance":
+    def mode_or_ignore(self, mode: GameMode) -> Performance:
         if self._mode == GameMode.Osu:
             self._perf.mode_or_ignore(mode)
             self._mode = mode
         return self
 
-    def mods(self, mods: Union[Any, int]) -> "Performance":
+    def mods(self, mods: Any | int) -> Performance:
         self._perf.mods(mods)
         return self
 
-    def difficulty(self, difficulty: Difficulty) -> "Performance":
+    def difficulty(self, difficulty: Difficulty) -> Performance:
         self._perf.difficulty(difficulty)
         return self
 
-    def passed_objects(self, count: int) -> "Performance":
+    def passed_objects(self, count: int) -> Performance:
         self._perf.passed_objects(count)
         return self
 
-    def clock_rate(self, rate: float) -> "Performance":
+    def clock_rate(self, rate: float) -> Performance:
         self._perf.clock_rate(rate)
         return self
 
-    def ar(self, val: float, fixed: bool) -> "Performance":
+    def ar(self, val: float, fixed: bool) -> Performance:
         if hasattr(self._perf, "ar"):
             self._perf.ar(val, fixed)
         return self
 
-    def cs(self, val: float, fixed: bool) -> "Performance":
+    def cs(self, val: float, fixed: bool) -> Performance:
         if hasattr(self._perf, "cs"):
             self._perf.cs(val, fixed)
         return self
 
-    def hp(self, val: float, fixed: bool) -> "Performance":
+    def hp(self, val: float, fixed: bool) -> Performance:
         self._perf.hp(val, fixed)
         return self
 
-    def od(self, val: float, fixed: bool) -> "Performance":
+    def od(self, val: float, fixed: bool) -> Performance:
         self._perf.od(val, fixed)
         return self
 
-    def hardrock_offsets(self, hardrock_offsets: bool) -> "Performance":
+    def hardrock_offsets(self, hardrock_offsets: bool) -> Performance:
         if hasattr(self._perf, "hardrock_offsets"):
             self._perf.hardrock_offsets(hardrock_offsets)
         return self
 
-    def state(self, state: ScoreState) -> "Performance":
+    def state(self, state: ScoreState) -> Performance:
         self._perf.state(state)
         return self
 
-    def accuracy(self, acc: float) -> "Performance":
+    def accuracy(self, acc: float) -> Performance:
         self._perf.accuracy(acc)
         return self
 
-    def misses(self, count: int) -> "Performance":
+    def misses(self, count: int) -> Performance:
         self._perf.misses(count)
         return self
 
-    def combo(self, combo: int) -> "Performance":
+    def combo(self, combo: int) -> Performance:
         if hasattr(self._perf, "combo"):
             self._perf.combo(combo)
         return self
 
-    def hitresult_priority(self, priority: HitResultPriority) -> "Performance":
+    def hitresult_priority(self, priority: HitResultPriority) -> Performance:
         if hasattr(self._perf, "hitresult_priority"):
             self._perf.hitresult_priority(priority)
         return self
 
-    def hitresult_generator(self, gen_class: type[HitResultGenerator]) -> "Performance":
+    def hitresult_generator(self, gen_class: type[HitResultGenerator]) -> Performance:
         self._perf.hitresult_generator(gen_class)
         return self
 
-    def lazer(self, lazer: bool) -> "Performance":
+    def lazer(self, lazer: bool) -> Performance:
         if hasattr(self._perf, "lazer"):
             self._perf.lazer(lazer)
         return self
 
-    def large_tick_hits(self, count: int) -> "Performance":
+    def large_tick_hits(self, count: int) -> Performance:
         if hasattr(self._perf, "large_tick_hits"):
             self._perf.large_tick_hits(count)
         return self
 
-    def small_tick_hits(self, count: int) -> "Performance":
+    def small_tick_hits(self, count: int) -> Performance:
         if hasattr(self._perf, "small_tick_hits"):
             self._perf.small_tick_hits(count)
         return self
 
-    def slider_end_hits(self, count: int) -> "Performance":
+    def slider_end_hits(self, count: int) -> Performance:
         if hasattr(self._perf, "slider_end_hits"):
             self._perf.slider_end_hits(count)
         return self
 
-    def n300(self, count: int) -> "Performance":
+    def n300(self, count: int) -> Performance:
         if self._mode == GameMode.Catch:
             self._perf.fruits(count)
         else:
             self._perf.n300(count)
         return self
 
-    def n100(self, count: int) -> "Performance":
+    def n100(self, count: int) -> Performance:
         if self._mode == GameMode.Catch:
             self._perf.droplets(count)
         else:
             self._perf.n100(count)
         return self
 
-    def n50(self, count: int) -> "Performance":
+    def n50(self, count: int) -> Performance:
         if self._mode == GameMode.Catch:
             self._perf.tiny_droplets(count)
         elif hasattr(self._perf, "n50"):
             self._perf.n50(count)
         return self
 
-    def n_katu(self, count: int) -> "Performance":
+    def n_katu(self, count: int) -> Performance:
         if self._mode == GameMode.Catch:
             self._perf.tiny_droplets_misses(count)
         elif self._mode == GameMode.Mania:
             self._perf.n200(count)
         return self
 
-    def n_geki(self, count: int) -> "Performance":
+    def n_geki(self, count: int) -> Performance:
         if self._mode == GameMode.Mania:
             self._perf.n320(count)
         return self
 
-    def legacy_total_score(self, score: int) -> "Performance":
+    def legacy_total_score(self, score: int) -> Performance:
         if hasattr(self._perf, "legacy_total_score"):
             self._perf.legacy_total_score(score)
         return self
 
-    def generate_state(self) -> "ScoreState":
+    def generate_state(self) -> ScoreState:
         raw_state = self._perf.generate_state()
         state = ScoreState()
 
         return _convert_specific_state_to_any(raw_state, self._mode, state)
 
-    def checked_generate_state(self) -> "ScoreState":
+    def checked_generate_state(self) -> ScoreState:
         raw_state = self._perf.checked_generate_state()
         state = ScoreState()
         return _convert_specific_state_to_any(raw_state, self._mode, state)
 
-def _convert_specified_state_to_any(raw: Any, mode: GameMode, state: ScoreState) -> "ScoreState":
+def _convert_specified_state_to_any(raw: Any, mode: GameMode, state: ScoreState) -> ScoreState:
     if mode == GameMode.Osu:
         state.max_combo = raw.max_combo
         state.osu_large_tick_hits = raw.hitresults.large_tick_hits
@@ -309,19 +312,19 @@ class GradualPerformance:
             self._gradual = Mania.gradual_performance(difficulty, map_obj)
 
     @classmethod
-    def checked_now(cls, diffifculty: Difficulty, map_obj: Beatmap) -> "GradualPerformance":
+    def checked_now(cls, diffifculty: Difficulty, map_obj: Beatmap) -> GradualPerformance:
         err = map_obj.check_suspicion()
         if err:
             raise TooSuspicious(err)
         return cls(diffifculty, map_obj)
 
-    def next(self, state: ScoreState) -> Optional[PerformanceAttributes]:
+    def next(self, state: ScoreState) -> PerformanceAttributes | None:
         return self.nth(state, 0)
 
-    def last(self, state: ScoreState) -> Optional[PerformanceAttributes]:
+    def last(self, state: ScoreState) -> PerformanceAttributes | None:
         return self.nth(state, 2147483647)
 
-    def nth(self, state: ScoreState, n: int) -> Optional[PerformanceAttributes]:
+    def nth(self, state: ScoreState, n: int) -> PerformanceAttributes | None:
         raw_res = self._gradual.nth(state, n)
         if raw_res is None:
             return None

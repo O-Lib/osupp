@@ -1,11 +1,19 @@
 from __future__ import annotations
+
 import math
-from typing import Optional, Union, List, Iterator, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List, Optional, Union
+from collections.abc import Iterator
+
 from osupp.Beatmap.section.enums import GameMode
-from ..model.model import GameMods, IGameMode, ConvertError
+
+from ..model.beatmap.attributes import (
+    AttributeType,
+    BeatmapAttribute,
+    BeatmapDifficulty,
+)
 from ..model.beatmap.beatmap import Beatmap, TooSuspicious
-from ..model.beatmap.attributes import BeatmapDifficulty, BeatmapAttribute, AttributeType
-from .any import DifficultyAttributes, Strains, CalculateError
+from ..model.model import ConvertError, GameMods, IGameMode
+from .any import CalculateError, DifficultyAttributes, Strains
 
 if TYPE_CHECKING:
     from .performance import GradualPerformance
@@ -17,14 +25,14 @@ class InspectDifficulty:
     def __init__(
             self,
             mods: GameMods,
-            passed_objects: Optional[int],
-            clock_rate: Optional[float],
+            passed_objects: int | None,
+            clock_rate: float | None,
             ar: BeatmapAttribute,
             cs: BeatmapAttribute,
             hp: BeatmapAttribute,
             od: BeatmapAttribute,
-            hardrock_offsets: Optional[bool],
-            lazer: Optional[bool]
+            hardrock_offsets: bool | None,
+            lazer: bool | None
     ):
         self.mods = mods
         self.passed_objects = passed_objects
@@ -36,7 +44,7 @@ class InspectDifficulty:
         self.hardrock_offsets = hardrock_offsets
         self.lazer = lazer
 
-    def into_difficulty(self) -> "Difficulty":
+    def into_difficulty(self) -> Difficulty:
         diff = Difficulty().mods(self.mods)
 
         if self.passed_objects is not None:
@@ -66,11 +74,11 @@ class InspectDifficulty:
 class Difficulty:
     def __init__(self):
         self._mods: GameMods = GameMods.default()
-        self._passed_objects: Optional[int] = None
-        self._clock_rate: Optional[float] = None
+        self._passed_objects: int | None = None
+        self._clock_rate: float | None = None
         self._map_difficulty: BeatmapDifficulty = BeatmapDifficulty.default()
-        self._hardrock_offsets: Optional[bool] = None
-        self._lazer: Optional[bool] = None
+        self._hardrock_offsets: bool | None = None
+        self._lazer: bool | None = None
 
     def inspect(self) -> InspectDifficulty:
         return InspectDifficulty(
@@ -85,43 +93,43 @@ class Difficulty:
             lazer=self._lazer
         )
 
-    def mods(self, mods: Union[Any, int]) -> "Difficulty":
+    def mods(self, mods: Any | int) -> Difficulty:
         self._mods = GameMods(mods)
         return self
 
-    def passed_objects(self, count: int) -> "Difficulty":
+    def passed_objects(self, count: int) -> Difficulty:
         self._passed_objects = count
         return self
 
-    def clock_rate(self, rate: float) -> "Difficulty":
+    def clock_rate(self, rate: float) -> Difficulty:
         self._clock_rate = max(0.01, min(rate, 100.0))
         return self
 
-    def ar(self, val: float, fixed: bool) -> "Difficulty":
+    def ar(self, val: float, fixed: bool) -> Difficulty:
         val = max(-20.0, min(val, 20.0))
         self._map_difficulty.ar = BeatmapAttribute.fixed_type(val) if fixed else BeatmapAttribute.given_type(val)
         return self
 
-    def cs(self, val: float, fixed: bool) -> "Difficulty":
+    def cs(self, val: float, fixed: bool) -> Difficulty:
         val = max(-20.0, min(val, 20.0))
         self._map_difficulty.cs = BeatmapAttribute.fixed_type(val) if fixed else BeatmapAttribute.given_type(val)
         return self
 
-    def hp(self, val: float, fixed: bool) -> "Difficulty":
+    def hp(self, val: float, fixed: bool) -> Difficulty:
         val = max(-20.0, min(val, 20.0))
         self._map_difficulty.hp = BeatmapAttribute.fixed_type(val) if fixed else BeatmapAttribute.given_type(val)
         return self
 
-    def od(self, val: float, fixed: bool) -> "Difficulty":
+    def od(self, val: float, fixed: bool) -> Difficulty:
         val = max(-20.0, min(val, 20.0))
         self._map_difficulty.od = BeatmapAttribute.fixed_type(val) if fixed else BeatmapAttribute.given_type(val)
         return self
 
-    def hardrock_offsets(self, hardrock_offsets: bool) -> "Difficulty":
+    def hardrock_offsets(self, hardrock_offsets: bool) -> Difficulty:
         self._hardrock_offsets = hardrock_offsets
         return self
 
-    def lazer(self, lazer: bool) -> "Difficulty":
+    def lazer(self, lazer: bool) -> Difficulty:
         self._lazer = lazer
         return self
 
@@ -140,7 +148,7 @@ class Difficulty:
             return DifficultyAttributes(Mania.difficulty(self, map_obj), GameMode.Mania)
         raise ConvertError(f"Unsupported game mode: {map_obj.mode}")
 
-    def checked_calculate(self, map_obj: Beatmap) -> "DifficultyAttributes":
+    def checked_calculate(self, map_obj: Beatmap) -> DifficultyAttributes:
         err = map_obj.check_suspicion()
         if err:
             raise TooSuspicious(err)
@@ -179,10 +187,10 @@ class Difficulty:
     def strains_for_mode(self, map_obj: Beatmap, mode_class: IGameMode) -> Any:
         return mode_class.strains(self, map_obj)
 
-    def gradual_difficulty(self, map_obj: Beatmap) -> "GradualDifficulty":
+    def gradual_difficulty(self, map_obj: Beatmap) -> GradualDifficulty:
         return GradualDifficulty(self, map_obj)
 
-    def checked_gradual_difficulty(self, map_obj: Beatmap) -> "GradualDifficulty":
+    def checked_gradual_difficulty(self, map_obj: Beatmap) -> GradualDifficulty:
         err = map_obj.check_suspicion()
         if err:
             raise TooSuspicious(err)
@@ -191,11 +199,11 @@ class Difficulty:
     def gradual_difficulty_for_mode(self, map_obj: Beatmap, mode_class: IGameMode) -> Any:
         return mode_class.gradual_difficulty(self, map_obj)
 
-    def gradual_performance(self, map_obj: Beatmap) -> "GradualPerformance":
+    def gradual_performance(self, map_obj: Beatmap) -> GradualPerformance:
         from .performance import GradualPerformance
         return GradualPerformance(self, map_obj)
 
-    def checked_gradual_performance(self, map_obj: Beatmap) -> "GradualPerformance":
+    def checked_gradual_performance(self, map_obj: Beatmap) -> GradualPerformance:
         err = map_obj.check_suspicion()
         if err:
             raise TooSuspicious(err)
@@ -204,7 +212,7 @@ class Difficulty:
     def gradual_performance_for_mode(self, map_obj: Beatmap, mode_class: IGameMode) -> Any:
         return mode_class.gradual_performance(self, map_obj)
 
-    def get_mods(self) -> "GameMods":
+    def get_mods(self) -> GameMods:
         return self._mods
 
     def get_clock_rate(self) -> float:
@@ -217,7 +225,7 @@ class Difficulty:
             return self._passed_objects
         return 2147483647
 
-    def get_map_difficulty(self) -> "BeatmapDifficulty":
+    def get_map_difficulty(self) -> BeatmapDifficulty:
         return self._map_difficulty
 
     def get_hardrock_offsets(self) -> bool:
@@ -250,16 +258,16 @@ class GradualDifficulty:
             self._gradual = Mania.gradual_difficulty(difficulty, map_obj)
 
     @classmethod
-    def checked_new(cls, difficulty: Difficulty, map_obj: Beatmap) -> "GradualDifficulty":
+    def checked_new(cls, difficulty: Difficulty, map_obj: Beatmap) -> GradualDifficulty:
         err = map_obj.check_suspicion()
         if err:
             raise TooSuspicious(err)
         return cls(difficulty, map_obj)
 
-    def __iter__(self) -> Iterator["DifficultyAttributes"]:
+    def __iter__(self) -> Iterator[DifficultyAttributes]:
         return self
 
-    def __next__(self) -> "DifficultyAttributes":
+    def __next__(self) -> DifficultyAttributes:
         nxt = next(self._gradual, None)
         if nxt is None:
             raise StopIteration
@@ -270,20 +278,20 @@ class IDifficultyObject:
     def idx(self) -> int:
         raise NotImplementedError
 
-    def previous(self, backwards_idx: int, diff_objects: List[Any]) -> Optional[Any]:
+    def previous(self, backwards_idx: int, diff_objects: list[Any]) -> Any | None:
         target_idx = self.idx() - (backwards_idx + 1)
         if target_idx >= 0 and target_idx < len(diff_objects):
             return diff_objects[target_idx]
         return None
 
-    def next(self, forwards_idx: int, diff_objects: List[Any]) -> Optional[Any]:
+    def next(self, forwards_idx: int, diff_objects: list[Any]) -> Any | None:
         target_idx = self.idx() + (forwards_idx + 1)
         if target_idx >= 0 and target_idx < len(diff_objects):
             return diff_objects[target_idx]
         return None
 
 
-def count_top_weighted_strains(object_strains: List[float], difficulty_value: float) -> float:
+def count_top_weighted_strains(object_strains: list[float], difficulty_value: float) -> float:
     if not object_strains:
         return 0.0
 
@@ -298,7 +306,7 @@ def count_top_weighted_strains(object_strains: List[float], difficulty_value: fl
 
     return sum_val
 
-def difficulty_value(current_strain_perks: List[float], decay_weight: float) -> float:
+def difficulty_value(current_strain_perks: list[float], decay_weight: float) -> float:
     difficulty = 0.0
     weight = 1.0
 

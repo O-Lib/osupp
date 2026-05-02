@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any, Union
+from typing import Any, Optional, Union
 
-from osupp.Beatmap.utils import Pos
 from osupp.Beatmap.section.enums import GameMode, HitSoundType
-from osupp.Beatmap.section.hit_objects.slider import PathControlPoint, Curve
-from osupp.Mods.game_mods_legacy import GameModsLegacy
+from osupp.Beatmap.section.hit_objects.slider import Curve, PathControlPoint
+from osupp.Beatmap.utils import Pos
 from osupp.Mods.game_mods import GameMods as LazerGameMods
-from .beatmap.beatmap import Beatmap
-from ..any.difficulty import Difficulty
+from osupp.Mods.game_mods_legacy import GameModsLegacy
 
+from ..any.difficulty import Difficulty
+from .beatmap.beatmap import Beatmap
 
 
 class HitObjectKind(ABC):
@@ -20,7 +20,7 @@ class Circle(HitObjectKind):
 class Slider(HitObjectKind):
     __slots__ = ("expected_dist", "repeats", "control_points", "node_sounds")
 
-    def __init__(self, expected_dist: Optional[float], repeats: int, control_points: list[PathControlPoint], node_sounds: list[HitSoundType]):
+    def __init__(self, expected_dist: float | None, repeats: int, control_points: list[PathControlPoint], node_sounds: list[HitSoundType]):
         self.expected_dist = expected_dist
         self.repeats = repeats
         self.control_points = control_points
@@ -92,7 +92,7 @@ class HitObject:
 
 
 class ConvertError(Exception):
-    def __init__(self, message: str, from_mode: Optional[GameMode] = None, to_mode: Optional[GameMode] = None):
+    def __init__(self, message: str, from_mode: GameMode | None = None, to_mode: GameMode | None = None):
         super().__init__(message)
         self.from_mode = from_mode
         self.to_mode = to_mode
@@ -133,7 +133,7 @@ class Reflection:
 
 
 class GameMods:
-    def __init__(self, mods: Union[LazerGameMods, GameModsLegacy, int]):
+    def __init__(self, mods: LazerGameMods | GameModsLegacy | int):
         if isinstance(mods, int):
             self.inner = GameModsLegacy.from_bits(mods)
         else:
@@ -161,7 +161,7 @@ class GameMods:
             return Reflection.VERTICAL
         return Reflection.NONE
 
-    def mania_keys(self) -> Optional[float]:
+    def mania_keys(self) -> float | None:
         if isinstance(self.inner, GameModsLegacy):
             if self.inner.contains(GameModsLegacy.Key1): return 1.0
             if self.inner.contains(GameModsLegacy.Key2): return 2.0
@@ -178,19 +178,19 @@ class GameMods:
                     return float(i)
         return None
 
-    def scroll_speed(self) -> Optional[float]:
+    def scroll_speed(self) -> float | None:
         return None
 
-    def random_seed(self) -> Optional[int]:
+    def random_seed(self) -> int | None:
         return None
 
-    def attraction_strength(self) -> Optional[float]:
+    def attraction_strength(self) -> float | None:
         return None
 
-    def deflate_start_scale(self) -> Optional[float]:
+    def deflate_start_scale(self) -> float | None:
         return None
 
-    def hd_only_fade_approach_circles(self) -> Optional[bool]:
+    def hd_only_fade_approach_circles(self) -> bool | None:
         return None
 
     def _check_mod(self, legacy_mod: GameModsLegacy, acronym: str) -> bool:

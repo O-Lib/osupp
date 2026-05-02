@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 from enum import Enum
-from typing import Optional, Any
+from typing import Any, Optional
 
 from osupp.Beatmap.section.enums import GameMode
 
 
 class CalculateError(Exception):
-    def __init__(self, message: str, original_error: Optional[Exception] = None):
+    def __init__(self, message: str, original_error: Exception | None = None):
         super().__init__(message)
         self.original_error = original_error
 
@@ -94,7 +95,7 @@ class ScoreState:
         self.n100: int = 0
         self.n50: int = 0
         self.misses: int = 0
-        self.legacy_total_score: Optional[int] = None
+        self.legacy_total_score: int | None = None
 
     def total_hits(self, mode: GameMode) -> int:
         amount = self.n300 + self.n100 + self.misses
@@ -138,7 +139,7 @@ class DifficultyAttributes:
             return self.raw_attributes.max_combo()
         return self.raw_attributes.max_combo
 
-    def performance(self) -> "Performance":
+    def performance(self) -> Performance:
         from .performance import Performance
         return Performance(self)
 
@@ -158,7 +159,7 @@ class PerformanceAttributes:
     def stars(self) -> float:
         return self.raw_attributes.stars()
 
-    def difficulty_attributes(self) -> "DifficultyAttributes":
+    def difficulty_attributes(self) -> DifficultyAttributes:
         return DifficultyAttributes(self.raw_attributes.difficulty, self.mode)
 
     @property
@@ -167,6 +168,6 @@ class PerformanceAttributes:
             return self.raw_attributes.difficulty.max_combo()
         return self.raw_attributes.difficulty.max_combo
 
-    def performance(self) -> "Performance":
+    def performance(self) -> Performance:
         from .performance import Performance
         return Performance(self)

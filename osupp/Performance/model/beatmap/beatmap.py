@@ -1,18 +1,19 @@
 import collections
-from typing import Optional, List
+from typing import List, Optional
 
 from osupp.Beatmap.section.enums import GameMode, HitSoundType
 from osupp.Beatmap.section.events import BreakPeriod
-from ...utils.sort import osu_legacy_sort
-from .attributes import BeatmapAttributesBuilder
 from osupp.Mods.game_mods import GameMods
-from ...any.performance import Performance, GradualPerformance
+
 from ...any.difficulty import Difficulty, GradualDifficulty
+from ...any.performance import GradualPerformance, Performance
 from ...catch.catch import Catch
 from ...mania.convert.convert import Mania
 from ...taiko.taiko import Taiko
+from ...utils.sort import osu_legacy_sort
+from ..control_points import DifficultyPoint, EffectPoint, TimingPoint
 from ..model import HitObject
-from ..control_points import TimingPoint, DifficultyPoint, EffectPoint
+from .attributes import BeatmapAttributesBuilder
 
 
 def _round_ties_even(num: float) -> float:
@@ -32,7 +33,7 @@ class BeatLenDuration:
             self.map_[b_len] += next_time - curr_time
 
 
-def get_bpm(last_hit_object: Optional[HitObject], timing_points: List[TimingPoint]) -> float:
+def get_bpm(last_hit_object: HitObject | None, timing_points: list[TimingPoint]) -> float:
     last_time = 0.0
     if last_hit_object is not None:
         if hasattr(last_hit_object, "end_time") and callable(getattr(last_hit_object, "end_time")):
@@ -89,7 +90,7 @@ class SliderState:
         self.repeats_beyond_threshold = 0
         self.pos_beyond_threshold = 0
 
-    def eval(self) -> Optional[TooSuspicious]:
+    def eval(self) -> TooSuspicious | None:
         CUTOFF = 128
         if self.pos_beyond_threshold > CUTOFF:
             return TooSuspicious(TooSuspicious.SLIDER_POSITIONS)
@@ -98,8 +99,8 @@ class SliderState:
         return None
 
 
-def check_suspicion(map_obj: "Beatmap") -> Optional[TooSuspicious]:
-    def too_long(hitobjects: List[HitObject]) -> bool:
+def check_suspicion(map_obj: "Beatmap") -> TooSuspicious | None:
+    def too_long(hitobjects: list[HitObject]) -> bool:
         DAY_MS = 60 * 60 * 24 * 1000
         if len(hitobjects) < 2:
             return False
@@ -129,7 +130,7 @@ def check_suspicion(map_obj: "Beatmap") -> Optional[TooSuspicious]:
     return None
 
 
-def _too_dense(hit_objects: List[HitObject], i: int, per_1s: int, per_10s: int) -> bool:
+def _too_dense(hit_objects: list[HitObject], i: int, per_1s: int, per_10s: int) -> bool:
     if len(hit_objects) > i + per_1s and hit_objects[i + per_1s].start_time - hit_objects[i].start_time < 1000.0:
         return True
     if len(hit_objects) > i + per_10s and hit_objects[i + per_10s].start_time - hit_objects[i].start_time < 10000.0:
@@ -157,7 +158,7 @@ def _suspicious_slider(h: HitObject, state: SliderState) -> bool:
     return False
 
 
-def _check_osu(map_obj: "Beatmap") -> Optional[TooSuspicious]:
+def _check_osu(map_obj: "Beatmap") -> TooSuspicious | None:
     state = SliderState()
     per_1s = THRESHOLD_1S
     per_10s = THRESHOLD_10S
@@ -171,7 +172,7 @@ def _check_osu(map_obj: "Beatmap") -> Optional[TooSuspicious]:
     return state.eval()
 
 
-def _check_taiko(map_obj: "Beatmap") -> Optional[TooSuspicious]:
+def _check_taiko(map_obj: "Beatmap") -> TooSuspicious | None:
     per_1s = THRESHOLD_1S * 2
     per_10s = THRESHOLD_10S * 2
 
@@ -181,14 +182,14 @@ def _check_taiko(map_obj: "Beatmap") -> Optional[TooSuspicious]:
     return None
 
 
-def _check_catch(map_obj: "Beatmap") -> Optional[TooSuspicious]:
+def _check_catch(map_obj: "Beatmap") -> TooSuspicious | None:
     state = SliderState()
     for h in map_obj.hit_objects:
         if _suspicious_slider(h, state):
             return TooSuspicious(TooSuspicious.RED_FLAG)
     return state.eval()
 
-def _check_mania(map_obj: "Beatmap") -> Optional[TooSuspicious]:
+def _check_mania(map_obj: "Beatmap") -> TooSuspicious | None:
     keys_per_hand = max(1, int(map_obj.cs) // 2)
     per_1s = THRESHOLD_1S * keys_per_hand
     per_10s = THRESHOLD_10S * keys_per_hand
@@ -221,12 +222,12 @@ class Beatmap:
         self.slider_multiplier = 1.4
         self.slider_tick_rate = 1.0
 
-        self.breaks: List[BreakPeriod] = []
-        self.timing_points: List[TimingPoint] = []
-        self.difficulty_points: List[DifficultyPoint] = []
-        self.effect_points: List[EffectPoint] = []
-        self.hit_objects: List[HitObject] = []
-        self.hit_sounds: List[HitSoundType] = []
+        self.breaks: list[BreakPeriod] = []
+        self.timing_points: list[TimingPoint] = []
+        self.difficulty_points: list[DifficultyPoint] = []
+        self.effect_points: list[EffectPoint] = []
+        self.hit_objects: list[HitObject] = []
+        self.hit_sounds: list[HitSoundType] = []
 
     def attributes(self) -> BeatmapAttributesBuilder:
         builder = BeatmapAttributesBuilder()
@@ -246,7 +247,7 @@ class Beatmap:
     def gradual_performance(self, difficulty: Difficulty) -> GradualPerformance:
         return GradualPerformance(difficulty, self)
 
-    def timing_point_at(self, time: float) -> Optional[TimingPoint]:
+    def timing_point_at(self, time: float) -> TimingPoint | None:
         if not self.timing_points:
             return None
         lo, hi = 0, len(self.timing_points)
@@ -258,7 +259,7 @@ class Beatmap:
                 hi = mid
         return self.timing_points[max(0, lo - 1)]
 
-    def difficulty_point_at(self, time: float) -> Optional[DifficultyPoint]:
+    def difficulty_point_at(self, time: float) -> DifficultyPoint | None:
         if not self.difficulty_points:
             return None
         lo, hi = 0, len(self.difficulty_points)
@@ -270,7 +271,7 @@ class Beatmap:
                 hi = mid
         return self.difficulty_points[max(0, lo - 1)]
 
-    def effect_point_at(self, time: float) -> Optional[EffectPoint]:
+    def effect_point_at(self, time: float) -> EffectPoint | None:
         if not self.effect_points:
             return None
         lo, hi = 0, len(self.effect_points)
