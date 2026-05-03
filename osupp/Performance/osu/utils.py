@@ -1,5 +1,10 @@
 from typing import List
-from osupp.Beatmap.section.hit_objects.hit_objects import HitObject, HitObjectSlider, HitObjectSpinner
+
+from osupp.Beatmap.section.hit_objects.hit_objects import (
+    HitObject,
+    HitObjectSlider,
+    HitObjectSpinner,
+)
 
 
 def _calculate_spinner_score(spinner: HitObjectSpinner) -> float:
@@ -63,7 +68,7 @@ class InnerNestedScorePerObject:
 
 class NestedScorePerObject:
     @staticmethod
-    def calculate(objects: List[HitObject], passed_objects: int) -> float:
+    def calculate(objects: list[HitObject], passed_objects: int) -> float:
         inner = InnerNestedScorePerObject()
 
         limit = min(len(objects), passed_objects)

@@ -1,10 +1,11 @@
-from dataclasses import dataclass
-from typing import Optional
-from enum import Enum
 import math
+from dataclasses import dataclass
+from enum import Enum
+from typing import Optional
 
-from osupp.Mods.game_mods import GameMods
 from osupp.Beatmap.section.enums import GameMode
+from osupp.Mods.game_mods import GameMods
+
 
 class BeatmapAttributesType(Enum):
     NONE = 0
@@ -140,8 +141,8 @@ class ManiaWindows:
 
 @dataclass(slots=True)
 class HitWindows:
-    ar: Optional[float] = None
-    od_perfect: Optional[float] = None
+    ar: float | None = None
+    od_perfect: float | None = None
     od_great = Optional[float] = None
     od_good = Optional[float] = None
     od_ok = Optional[float] = None

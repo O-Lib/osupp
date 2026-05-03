@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Any, Protocol
+from typing import Any, Optional, Protocol
 
 from osupp.Beatmap.section.enums import GameMode
+
 from ..model.beatmap.beatmap import TooSuspiciousError
 from ..model.model import ConvertError
 
@@ -80,7 +81,7 @@ class ScoreState:
     n100: int = 0
     n50: int = 0
     misses: int = 0
-    legacy_total_score: Optional[int] = None
+    legacy_total_score: int | None = None
 
     def total_hits(self, mode: GameMode) -> int:
         amount = self.n300 + self.n100 + self.misses

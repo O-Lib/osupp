@@ -1,8 +1,14 @@
 import math
 from typing import List, Optional
 
+from ...utils.util import (
+    bpm_to_milliseconds,
+    lerp,
+    milliseconds_to_bpm,
+    reverse_lerp,
+    smoothstep,
+)
 from .difficulty import OsuDifficultyObject
-from ...utils.util import lerp, reverse_lerp, smoothstep, milliseconds_to_bpm, bpm_to_milliseconds
 
 
 class AimEvaluator:
@@ -13,7 +19,7 @@ class AimEvaluator:
     WIGGLE_MULTIPLIER = 1.02
 
     @classmethod
-    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: List[OsuDifficultyObject], with_slider_travel_dist: bool) -> float:
+    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: list[OsuDifficultyObject], with_slider_travel_dist: bool) -> float:
         if curr.idx < 2:
             return 0.0
 
