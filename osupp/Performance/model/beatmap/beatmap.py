@@ -1,323 +1,146 @@
-import collections
-from typing import List, Optional
+from enum import Enum
+from typing import List, Dict
 
-from osupp.Beatmap.section.enums import GameMode, HitSoundType
-from osupp.Beatmap.section.events import BreakPeriod
-from osupp.Mods.game_mods import GameMods
-
-from ...any.difficulty import Difficulty, GradualDifficulty
-from ...any.performance import GradualPerformance, Performance
-from ...catch.catch import Catch
-from ...mania.convert.convert import Mania
-from ...taiko.taiko import Taiko
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Beatmap.section.hit_objects.hit_objects import HitObject
+from ..control_points import TimingPoint
 from ...utils.sort import osu_legacy_sort
-from ..control_points import DifficultyPoint, EffectPoint, TimingPoint
-from ..model import HitObject
-from .attributes import BeatmapAttributesBuilder
 
 
-def _round_ties_even(num: float) -> float:
-    return round(num)
-
-
-class BeatLenDuration:
-    __slots__ = ("last_time", "map_")
-
-    def __init__(self, last_time: float):
-        self.last_time = last_time
-        self.map_ = collections.defaultdict(float)
-
-    def add(self, beat_len: float, curr_time: float, next_time: float) -> None:
-        b_len = _round_ties_even(1000.0 * beat_len) / 1000.0
-        if curr_time <= self.last_time:
-            self.map_[b_len] += next_time - curr_time
-
-
-def get_bpm(last_hit_object: HitObject | None, timing_points: list[TimingPoint]) -> float:
+def calculate_bpm(hit_objects: List[HitObject], timing_points: List[TimingPoint]) -> float:
+    if not timing_points:
+        return 0.0
+    
     last_time = 0.0
-    if last_hit_object is not None:
-        if hasattr(last_hit_object, "end_time") and callable(getattr(last_hit_object, "end_time")):
-            last_time = last_hit_object.end_time()
-        elif hasattr(last_hit_object, "start_time"):
-            last_time = last_hit_object.start_time
+    if hit_objects:
+        last_time = hit_objects[-1].start_time
     elif timing_points:
         last_time = timing_points[-1].time
-
-    bpm_points = BeatLenDuration(last_time)
-
+        
+    bpm_durations: Dict[float, float] = {}
+    
+    def add_duration(beat_len: float, curr_time: float, next_time: float):
+        rounded_beat_len = round(beat_len * 1000.0) / 1000.0
+        if curr_time <= last_time:
+            bpm_durations[rounded_beat_len] = bpm_durations.get(rounded_beat_len, 0.0) + (next_time - curr_time)
+            
     if len(timing_points) == 1:
-        bpm_points.add(timing_points[0].beat_len, 0.0, last_time)
-    elif len(timing_points) >= 2:
-        bpm_points.add(timing_points[0].beat_len, 0.0, timing_points[1].time)
-
-    for i in range(1, len(timing_points)):
+        add_duration(timing_points[0].beat_len, 0.0, last_time)
+    elif len(timing_points) > 1:
+        add_duration(timing_points[0].beat_len, 0.0, timing_points[1].time)
+        
+    for i in range(1, len(timing_points) - 1):
         curr = timing_points[i]
-        next_time = timing_points[i + 1].time if i + 1 < len(timing_points) else last_time
-        bpm_points.add(curr.beat_len, curr.time, next_time)
-
-    if not bpm_points.map_:
-        return 0.0
-
-    most_common_beat_len = max(bpm_points.map_.items(), key=lambda x: x[1])[0]
-
+        next_tp = timing_points[i + 1]
+        add_duration(curr.beat_len, curr.time, next_tp.time)
+        
+    if len(timing_points) >= 2:
+        curr = timing_points[-1]
+        add_duration(curr.beat_len, curr.time, last_time)
+        
+    most_common_beat_len = 0.0
+    max_duration = -1.0
+    for b_len, duration in bpm_durations.items():
+        if duration > max_duration:
+            max_duration = duration
+            most_common_beat_len = b_len
+            
     if most_common_beat_len == 0.0:
         return 0.0
-
+    
     return 60000.0 / most_common_beat_len
 
 
-class TooSuspicious(Exception):
+class TooSuspiciousReason(Enum):
     DENSITY = "Density"
     LENGTH = "Length"
     OBJECT_COUNT = "ObjectCount"
     RED_FLAG = "RedFlag"
     SLIDER_POSITIONS = "SliderPositions"
     SLIDER_REPEATS = "SliderRepeats"
-
-    def __init__(self, reason: str):
+    
+class TooSuspiciousError(Exception):
+    def __init__(self, reason: TooSuspiciousReason):
+        super().__init__(f"The map seems too suspicious to be accurate (reason: {reason.value})")
         self.reason = reason
-        super().__init__(f"the map seems too suspicious for further calculation (reason={self.reason})")
 
 
-THRESHOLD_1S = 200
-THRESHOLD_10S = 500
+def check_suspicion(hit_objects: List[HitObject], mode: GameMode, cs: float) -> None:
+    if len(hit_objects) < 2:
+        return
+
+    DAY_MS = 60 * 60 * 24 * 1000
+    if (hit_objects[-1].start_time - hit_objects[0].start_time) > DAY_MS:
+        raise TooSuspiciousError(TooSuspiciousReason.LENGTH)
+
+    THRESHOLD_OBJECTS = 30000 if mode == GameMode.Taiko else 500000
+    if len(hit_objects) > THRESHOLD_OBJECTS:
+        raise TooSuspiciousError(TooSuspiciousReason.OBJECT_COUNT)
+
+    THRESHOLD_1S = 200
+    THRESHOLD_10S = 500
+
+    def too_dense(i: int, per_1s: int, per_10s: int) -> bool:
+        if i + per_1s < len(hit_objects) and (hit_objects[i + per_1s].start_time - hit_objects[i].start_time) < 1000.0:
+            return True
+        if i + per_10s < len(hit_objects) and (hit_objects[i + per_10s].start_time - hit_objects[i].start_time) < 10000.0:
+            return True
+        return False
+
+    repeats_beyond_threshold = 0
+    pos_beyond_threshold = 0
+    MAX_COORD = 10000.0
+    MAX_REPEATS = 1000
+
+    if mode == GameMode.Osu:
+        for i, h in enumerate(hit_objects):
+            if too_dense(i, THRESHOLD_1S, THRESHOLD_10S):
+                raise TooSuspiciousError(TooSuspiciousReason.DENSITY)
+
+            if hasattr(h.kind, "repeat_count"):
+                if h.kind.repeat_count > MAX_REPEATS:
+                    if abs(h.kind.pos.x) > MAX_COORD or abs(h.kind.pos.y) > MAX_COORD:
+                        raise TooSuspiciousError(TooSuspiciousReason.RED_FLAG)
+                    repeats_beyond_threshold += 1
+                elif abs(h.kind.pos.x) > MAX_COORD or abs(h.kind.pos.y) > MAX_COORD:
+                    pos_beyond_threshold += 1
+
+    elif mode == GameMode.Taiko:
+        for i in range(len(hit_objects)):
+            if too_dense(i, THRESHOLD_1S * 2, THRESHOLD_10S * 2):
+                raise TooSuspiciousError(TooSuspiciousReason.DENSITY)
+
+    elif mode == GameMode.Catch:
+        for h in hit_objects:
+            if hasattr(h.kind, "repeats_count"):
+                if h.kind.repeat_count > MAX_REPEATS:
+                    if abs(h.kind.pos.x) > MAX_COORD or abs(h.kind.pos.y) > MAX_COORD:
+                        raise TooSuspiciousError(TooSuspiciousReason.RED_FLAG)
+                    repeats_beyond_threshold += 1
+                elif abs(h.kind.pos.x) > MAX_COORD or abs(h.kind.pos.y) > MAX_COORD:
+                    pos_beyond_threshold += 1
+
+    elif mode == GameMode.Mania:
+        keys_per_hand = max(1, int(cs) // 2)
+        for i in range(len(hit_objects)):
+            if too_dense(i, THRESHOLD_1S * keys_per_hand, THRESHOLD_10S * keys_per_hand):
+                raise TooSuspiciousError(TooSuspiciousReason.DENSITY)
+
+    CUTOFF = 128
+    if pos_beyond_threshold > CUTOFF:
+        raise TooSuspiciousError(TooSuspiciousReason.SLIDER_POSITIONS)
+    if repeats_beyond_threshold > CUTOFF:
+        raise TooSuspiciousError(TooSuspiciousReason.SLIDER_REPEATS)
 
 
-class SliderState:
-    __slots__ = ("repeats_beyond_threshold", "pos_beyond_threshold")
+def mania_hit_objects_legacy_sort(hit_objects: List[HitObject]) -> None:
+    def compare_mania_objects(a: HitObject, b: HitObject) -> int:
+        time_a = int(round(a.start_time))
+        time_b = int(round(b.start_time))
+        if time_a < time_b:
+            return -1
+        elif time_a > time_b:
+            return 1
+        return 0
 
-    def __init__(self):
-        self.repeats_beyond_threshold = 0
-        self.pos_beyond_threshold = 0
-
-    def eval(self) -> TooSuspicious | None:
-        CUTOFF = 128
-        if self.pos_beyond_threshold > CUTOFF:
-            return TooSuspicious(TooSuspicious.SLIDER_POSITIONS)
-        elif self.repeats_beyond_threshold > CUTOFF:
-            return TooSuspicious(TooSuspicious.SLIDER_REPEATS)
-        return None
-
-
-def check_suspicion(map_obj: "Beatmap") -> TooSuspicious | None:
-    def too_long(hitobjects: list[HitObject]) -> bool:
-        DAY_MS = 60 * 60 * 24 * 1000
-        if len(hitobjects) < 2:
-            return False
-        return (hitobjects[-1].start_time - hitobjects[0].start_time) > float(DAY_MS)
-
-    def too_many_objects(map_ref: "Beatmap") -> bool:
-        THRESHOLD = 500000
-        THRESHOLD_TAIKO = 30000
-        if map_ref.mode == GameMode.Taiko:
-            return len(map_ref.hit_objects) > THRESHOLD_TAIKO
-        return len(map_ref.hit_objects) > THRESHOLD
-
-    if too_many_objects(map_obj):
-        return TooSuspicious(TooSuspicious.OBJECT_COUNT)
-    elif too_long(map_obj.hit_objects):
-        return TooSuspicious(TooSuspicious.LENGTH)
-
-    if map_obj.mode == GameMode.Osu:
-        return _check_osu(map_obj)
-    elif map_obj.mode == GameMode.Taiko:
-        return _check_taiko(map_obj)
-    elif map_obj.mode == GameMode.Catch:
-        return _check_catch(map_obj)
-    elif map_obj.mode == GameMode.Mania:
-        return _check_mania(map_obj)
-
-    return None
-
-
-def _too_dense(hit_objects: list[HitObject], i: int, per_1s: int, per_10s: int) -> bool:
-    if len(hit_objects) > i + per_1s and hit_objects[i + per_1s].start_time - hit_objects[i].start_time < 1000.0:
-        return True
-    if len(hit_objects) > i + per_10s and hit_objects[i + per_10s].start_time - hit_objects[i].start_time < 10000.0:
-        return True
-    return False
-
-
-def _suspicious_slider(h: HitObject, state: SliderState) -> bool:
-    def check_pos(pos) -> bool:
-        THRESHOLD = 10000.0
-        return abs(pos.x) > THRESHOLD or abs(pos.y) > THRESHOLD
-
-    def check_repeats(repeats: int) -> bool:
-        THRESHOLD = 1000
-        return repeats > THRESHOLD
-
-    if h.is_slider():
-        if check_repeats(h.kind.repeats):
-            if check_pos(h.pos):
-                return True
-            state.repeats_beyond_threshold += 1
-        elif check_pos(h.pos):
-            state.pos_beyond_threshold += 1
-
-    return False
-
-
-def _check_osu(map_obj: "Beatmap") -> TooSuspicious | None:
-    state = SliderState()
-    per_1s = THRESHOLD_1S
-    per_10s = THRESHOLD_10S
-
-    for i, h in enumerate(map_obj.hit_objects):
-        if _too_dense(map_obj.hit_objects, i, per_1s, per_10s):
-            return TooSuspicious(TooSuspicious.DENSITY)
-        elif _suspicious_slider(h, state):
-            return TooSuspicious(TooSuspicious.RED_FLAG)
-
-    return state.eval()
-
-
-def _check_taiko(map_obj: "Beatmap") -> TooSuspicious | None:
-    per_1s = THRESHOLD_1S * 2
-    per_10s = THRESHOLD_10S * 2
-
-    for i in range(len(map_obj.hit_objects)):
-        if _too_dense(map_obj.hit_objects, i, per_1s, per_10s):
-            return TooSuspicious(TooSuspicious.DENSITY)
-    return None
-
-
-def _check_catch(map_obj: "Beatmap") -> TooSuspicious | None:
-    state = SliderState()
-    for h in map_obj.hit_objects:
-        if _suspicious_slider(h, state):
-            return TooSuspicious(TooSuspicious.RED_FLAG)
-    return state.eval()
-
-def _check_mania(map_obj: "Beatmap") -> TooSuspicious | None:
-    keys_per_hand = max(1, int(map_obj.cs) // 2)
-    per_1s = THRESHOLD_1S * keys_per_hand
-    per_10s = THRESHOLD_10S * keys_per_hand
-
-    for i in range(len(map_obj.hit_objects)):
-        if _too_dense(map_obj.hit_objects, i, per_1s, per_10s):
-            return TooSuspicious(TooSuspicious.DENSITY)
-    return None
-
-
-class ParseBeatmapError(Exception):
-    pass
-
-
-class Beatmap:
-    __slots__ = (
-        "version", "is_convert", "stack_leniency", "mode", "ar", "cs", "hp", "od", "slider_multiplier", "slider_tick_rate", "breaks",
-        "timing_points", "difficulty_points", "effect_points", "hit_objects", "hit_sounds"
-    )
-
-    def __init__(self):
-        self.version = 14
-        self.is_convert = False
-        self.stack_leniency = 0.7
-        self.mode = GameMode.Osu
-        self.ar = 5.0
-        self.cs = 5.0
-        self.hp = 5.0
-        self.od = 5.0
-        self.slider_multiplier = 1.4
-        self.slider_tick_rate = 1.0
-
-        self.breaks: list[BreakPeriod] = []
-        self.timing_points: list[TimingPoint] = []
-        self.difficulty_points: list[DifficultyPoint] = []
-        self.effect_points: list[EffectPoint] = []
-        self.hit_objects: list[HitObject] = []
-        self.hit_sounds: list[HitSoundType] = []
-
-    def attributes(self) -> BeatmapAttributesBuilder:
-        builder = BeatmapAttributesBuilder()
-        builder.map(self)
-        return builder
-
-    def bpm(self) -> float:
-        last_obj = self.hit_objects[-1] if self.hit_objects else None
-        return get_bpm(last_obj, self.timing_points)
-
-    def performance(self) -> Performance:
-        return Performance(self)
-
-    def gradual_difficulty(self, difficulty: Difficulty) -> GradualDifficulty:
-        return GradualDifficulty(difficulty, self)
-
-    def gradual_performance(self, difficulty: Difficulty) -> GradualPerformance:
-        return GradualPerformance(difficulty, self)
-
-    def timing_point_at(self, time: float) -> TimingPoint | None:
-        if not self.timing_points:
-            return None
-        lo, hi = 0, len(self.timing_points)
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if self.timing_points[mid].time <= time:
-                lo = mid + 1
-            else:
-                hi = mid
-        return self.timing_points[max(0, lo - 1)]
-
-    def difficulty_point_at(self, time: float) -> DifficultyPoint | None:
-        if not self.difficulty_points:
-            return None
-        lo, hi = 0, len(self.difficulty_points)
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if self.difficulty_points[mid].time <= time:
-                lo = mid + 1
-            else:
-                hi = mid
-        return self.difficulty_points[max(0, lo - 1)]
-
-    def effect_point_at(self, time: float) -> EffectPoint | None:
-        if not self.effect_points:
-            return None
-        lo, hi = 0, len(self.effect_points)
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if self.effect_points[mid].time <= time:
-                lo = mid + 1
-            else:
-                hi = mid
-        return self.effect_points[max(0, lo - 1)]
-
-    def total_break_time(self) -> float:
-        return sum(b.duration() for b in self.breaks)
-
-    def convert(self, mode: GameMode, mods: GameMods) -> "Beatmap":
-        self.convert_mut(mode, mods)
-        return self
-
-    def convert_mut(self, mode: GameMode, mods: GameMods) -> None:
-        if self.mode == mode:
-            return
-        if self.is_convert:
-            raise ValueError("Already Converted")
-        if self.mode != GameMode.Osu:
-            raise ValueError(f"Cannot convert from {self.mode} to {mode}")
-
-        if mode == GameMode.Taiko:
-            Taiko.convert(self)
-        elif mode == GameMode.Catch:
-            Catch.convert(self)
-        elif mode == GameMode.Mania:
-            Mania.convert(self, mods)
-        elif mode == GameMode.Osu:
-            pass
-
-    def mania_hit_objects_legacy_sort(self) -> None:
-        def cmp_func(a: HitObject, b: HitObject) -> int:
-            a_time = int(_round_ties_even(a.start_time))
-            b_time = int(_round_ties_even(b.start_time))
-            if a_time < b_time: return -1
-            if a_time > b_time: return 1
-            return 0
-
-        osu_legacy_sort(self.hit_objects, cmp_func)
-
-    def check_suspicion(self) -> None:
-        err = check_suspicion(self)
-        if err is not None:
-            raise err
+    osu_legacy_sort(hit_objects, compare_mania_objects)

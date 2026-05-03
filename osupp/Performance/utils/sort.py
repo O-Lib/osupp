@@ -1,78 +1,45 @@
-from functools import cmp_to_key
-from typing import TypeVar
-from collections.abc import Callable, MutableSequence, Sequence
+import math
+from typing import Callable, TypeVar, List, Any
 
 T = TypeVar("T")
+Comparer = Callable[[T, T], int]
 
-def swap(keys: MutableSequence[T], i: int, j: int) -> None:
+def swap(keys: List[T], i: int, j: int) -> None:
     if i != j:
         keys[i], keys[j] = keys[j], keys[i]
 
-def swap_if_greater(keys: MutableSequence[T], cmp: Callable[[T, T], int], a: int, b: int) -> None:
-    if a != b and cmp(keys[a], keys[b]) > 0:
+def swap_if_greater(keys: List[T], comparer: Comparer, a: int, b: int) -> None:
+    if a != b and comparer(keys[a], keys[b]) > 0:
         keys[a], keys[b] = keys[b], keys[a]
 
-def down_heap(keys: MutableSequence[T], i: int, n: int, lo: int, cmp: Callable[[T, T], int]) -> None:
+def down_heap(keys: List[T], i: int, n: int, lo: int, comparer: Comparer) -> None:
     while i <= n // 2:
         child = 2 * i
-        if child < n and cmp(keys[lo + child - 1], keys[lo, + child]) < 0:
+        if child < n and comparer(keys[lo + child - 1], keys[lo + child]) < 0:
             child += 1
-
-        if cmp(keys[lo + i - 1], keys[lo + child - 1]) >= 0:
+        if comparer(keys[lo + i - 1], keys[lo + child - 1]) >= 0:
             break
 
         swap(keys, lo + i - 1, lo + child - 1)
         i = child
 
-def heap_sort(keys: MutableSequence[T], lo: int, hi: int, cmp: Callable[[T, T], int]) -> None:
-    n = hi - lo + 1
+def heap_sort(keys: List[T], lo: int, hi: int, comparer: Comparer) -> None:
+    n = hi - lo - 1
     for i in range(n // 2, 0, -1):
-        down_heap(keys, i, n, lo, cmp)
+        down_heap(keys, i, n, lo, comparer)
     for i in range(n, 1, -1):
         swap(keys, lo, lo + i - 1)
-        down_heap(keys, 1, i - 1, lo, cmp)
+        down_heap(keys, 1, i - 1, lo, comparer)
 
+def csharp_sort(keys: List[T], comparer: Comparer) -> None:
+    _introspective_sort(keys, 0, len(keys), comparer)
 
-def _insertion_sort(keys: MutableSequence[T], lo: int, hi: int, cmp: Callable[[T, T], int]) -> None:
-    for i in range(lo, hi):
-        t = keys[i + 1]
-        j = i
-        while j >= lo and cmp(t, keys[j]) < 0:
-            keys[j + 1] = keys[j]
-            j -= 1
-            keys[j + 1] = t
+def _introspective_sort(keys: List[T], left: int, length: int, comparer: Comparer) -> None:
+    if length >= 2:
+        depth_limit = 2 * int(math.log2(len(keys))) if len(keys) > 0 else 0
+        _intro_sort(keys, left, length + left - 1, depth_limit, comparer)
 
-def _pick_pivot_and_partition(keys: MutableSequence[T], lo: int, hi:int, cmp: Callable[[T, T], int]) -> int:
-    mid = lo + (hi - lo) // 2
-    swap_if_greater(keys, cmp, lo, mid)
-    swap_if_greater(keys, cmp, lo, hi)
-    swap_if_greater(keys, cmp, mid, hi)
-    swap(keys, mid, hi - 1)
-
-    left = lo
-    right = hi - 1
-    pivot_idx = right
-
-    while left < right:
-        while True:
-            left += 1
-            if cmp(keys[left], keys[pivot_idx]) >= 0:
-                break
-
-        while True:
-            right -= 1
-            if cmp(keys[pivot_idx], keys[right]) >= 0:
-                break
-
-        if left >= right:
-            break
-
-        swap(keys, left, right)
-
-    swap(keys, left, hi - 1)
-    return left
-
-def _intro_sort(keys: MutableSequence[T], lo: int, hi: int, depth_limit: int, cmp: Callable[[T, T], int]) -> None:
+def _intro_sort(keys: List[T], lo: int, hi: int, depth_limit: int, comparer: Comparer) -> None:
     INTRO_SORT_SIZE_THRESHOLD = 16
 
     while hi > lo:
@@ -82,49 +49,91 @@ def _intro_sort(keys: MutableSequence[T], lo: int, hi: int, depth_limit: int, cm
             if partition_size == 1:
                 pass
             elif partition_size == 2:
-                swap_if_greater(keys, cmp, lo, hi)
+                swap_if_greater(keys, comparer, lo, hi)
             elif partition_size == 3:
-                swap_if_greater(keys, cmp, lo, hi - 1)
-                swap_if_greater(keys, cmp, lo, hi)
-                swap_if_greater(keys, cmp, hi - 1, hi)
+                swap_if_greater(keys, comparer, lo, hi - 1)
+                swap_if_greater(keys, comparer, lo, hi)
+                swap_if_greater(keys, comparer, hi - 1, hi)
             else:
-                _insertion_sort(keys, lo, hi, cmp)
+                _insertion_sort(keys, lo, hi, comparer)
             break
 
         if depth_limit == 0:
-            heap_sort(keys, lo, hi, cmp)
+            heap_sort(keys, lo, hi, comparer)
             break
 
         depth_limit -= 1
-        p = _pick_pivot_and_partition(keys, lo, hi, cmp)
-        _intro_sort(keys, p + 1, hi, depth_limit, cmp)
+        p = _pick_pivot_and_partition(keys, lo, hi, comparer)
+        _intro_sort(keys, p + 1, hi, depth_limit, comparer)
         hi = p - 1
 
-def csharp_sort(keys: MutableSequence[T], cmp: Callable[[T, T], int]) -> None:
-    n = len(keys)
-    if n >= 2:
-        _intro_sort(keys, 0, n - 1, 2 * (n.bit_length() - 1), cmp)
+def _pick_pivot_and_partition(keys: List[T], lo: int, hi: int, comparer: Comparer) -> int:
+    mid = lo + (hi - lo) // 2
+    swap_if_greater(keys, comparer, lo, mid)
+    swap_if_greater(keys, comparer, lo, hi)
+    swap_if_greater(keys, comparer, mid, hi)
+    swap(keys, mid, hi - 1)
 
+    left = lo
+    right = hi - 1
+    pivot_idx = right
+
+    while left < right:
+        left += 1
+        while comparer(keys[left], keys[pivot_idx]) < 0:
+            left += 1
+
+        right -= 1
+        while comparer(keys[pivot_idx], keys[right]) < 0:
+            right -= 1
+
+        if left >= right:
+            break
+
+        swap(keys, left, right)
+
+    swap(keys, left, hi - 1)
+    return left
+
+def _insertion_sort(keys: List[T], lo: int, hi: int, comparer: Comparer) -> None:
+    for i in range(lo, hi):
+        t = keys[i + 1]
+        shift = 0
+
+        for j in range(i, lo - 1, -1):
+            if comparer(t, keys[j]) < 0:
+                shift += 1
+            else:
+                break
+
+        if shift > 0:
+            keys.insert(i + 1 - shift, keys.pop(i + 1))
 
 QUICK_SORT_DEPTH_THRESHOLD = 32
 
-def _depth_limited_quick_sort(keys: MutableSequence[T], left: int, right: int, cmp: Callable[[T, T], int], depth_limit: int) -> None:
+def osu_legacy_sort(keys: List[T], comparer: Comparer) -> None:
+    if len(keys) < 2:
+        return
+    _depth_limited_quick_sort(keys, 0, len(keys) - 1, comparer, QUICK_SORT_DEPTH_THRESHOLD)
+
+def _depth_limited_quick_sort(keys: List[T], left: int, right: int, comparer: Comparer, depth_limit: int) -> None:
     while True:
         if depth_limit == 0:
-            heap_sort(keys, left, right, cmp)
+            heap_sort(keys, left, right, comparer)
             return
+
         i = left
         j = right
         middle = i + ((j - i) >> 1)
 
-        swap_if_greater(keys, cmp, i, middle)
-        swap_if_greater(keys, cmp, i, j)
-        swap_if_greater(keys, cmp, middle, j)
+        swap_if_greater(keys, comparer, i, middle)
+        swap_if_greater(keys, comparer, i, j)
+        swap_if_greater(keys, comparer, middle, j)
 
         while True:
-            while cmp(keys[i], keys[middle] < 0):
+            while comparer(keys[i], keys[middle] < 0):
                 i += 1
-            while cmp(keys[middle], keys[j]) < 0:
+            while comparer(keys[middle], keys[j]) < 0:
                 j -= 1
 
             if i < j:
@@ -133,71 +142,59 @@ def _depth_limited_quick_sort(keys: MutableSequence[T], left: int, right: int, c
                 break
 
             i += 1
-            j = j - 1 if j > 0 else 0
+            j = max(0, j - 1)
 
             if i > j:
                 break
 
             depth_limit -= 1
-            if max(0, j - left) <= right - 1:
+
+            if max(0, j - left) <= right - i:
                 if left < j:
-                    _depth_limited_quick_sort(keys, left, j, cmp, depth_limit)
+                    _depth_limited_quick_sort(keys, left, j, comparer, depth_limit)
                 left = i
             else:
                 if i < right:
-                    _depth_limited_quick_sort(keys, i, right, cmp, depth_limit)
-                    right = j
+                    _depth_limited_quick_sort(keys, i, right, comparer, depth_limit)
+                right = j
 
             if left >= right:
                 break
 
-def osu_legacy_sort(keys: MutableSequence[T], cmp: Callable[[T, T], int]) -> None:
-    n = len(keys)
-    if n < 2:
-        return
-    _depth_limited_quick_sort(keys, 0, n - 1, cmp, QUICK_SORT_DEPTH_THRESHOLD)
-
-
 class TandemSorter:
-    _MARK_BIT = 1 << 62
+    __slots__ = ("indices", "should_reset")
 
-    def __init__(self, slice_: Sequence[T], cmp: Callable[[T, T], int]):
-        self.indices = list(range(len(slice_)))
-        self.indices.sort(key=cmp_to_key(lambda i, j: cmp(slice_[i], slice_[j])))
+    def __init__(self, keys: List[T], comparer: Comparer):
+        from functools import cmp_to_key
+        self.indices = list(range(len(keys)))
+        self.indices.sort(key=cmp_to_key(lambda i, j: comparer(keys[i], keys[j])))
         self.should_reset = False
 
-    def sort(self, slice_to_sort: MutableSequence[T]) -> None:
+    @staticmethod
+    def _toggle_mark_idx(idx: int) -> int:
+        return ~idx
+
+    def sort(self, slice_list: List[Any]) -> None:
         if self.should_reset:
-            self._toggle_marks()
+            for i in range(len(self.indices)):
+                self.indices[i] = self._toggle_mark_idx(self.indices[i])
             self.should_reset = False
 
         for i in range(len(self.indices)):
             i_idx = self.indices[i]
 
-            if self._idx_is_marked(i_idx):
+            if i_idx < 0:
                 continue
 
             j = i
-            j_idx = self.indices[i]
+            j_idx = i_idx
 
             while j_idx != i:
                 self.indices[j] = self._toggle_mark_idx(j_idx)
-                swap(slice_to_sort, j, j_idx)
+                swap(slice_list, j, j_idx)
                 j = j_idx
-                j_idx = self.indices
+                j_idx = self.indices[i]
 
             self.indices[j] = self._toggle_mark_idx(j_idx)
 
         self.should_reset = True
-
-    def _toggle_marks(self) -> None:
-        for i in range(len(self.indices)):
-            self.indices[i] = self._toggle_mark_idx(self.indices[i])
-
-    @classmethod
-    def _idx_is_marked(cls, idx: int) -> bool:
-        return (idx & cls._MARK_BIT) != 0
-
-    @classmethod
-    def _toggle_mark_idx(cls, idx: int) -> int:
-        return idx ^ cls._MARK_BIT

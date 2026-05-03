@@ -1,14 +1,20 @@
-from __future__ import annotations
-
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional, Any, Protocol
 
 from osupp.Beatmap.section.enums import GameMode
+from ..model.beatmap.beatmap import TooSuspiciousError
+from ..model.model import ConvertError
 
 
 class CalculateError(Exception):
-    def __init__(self, message: str, original_error: Exception | None = None):
-        super().__init__(message)
+    def __init__(self, original_error: Exception):
+        if isinstance(original_error, ConvertError):
+            super().__init__(f"Error calculating attributes (Convert): {original_error}")
+        elif isinstance(original_error, TooSuspiciousError):
+            super().__init__(f"Error calculating attributes (Suspicion): {original_error}")
+        else:
+            super().__init__(f"Error calculating attributes: {original_error}")
         self.original_error = original_error
 
 
@@ -36,66 +42,45 @@ class HitResult(Enum):
         if mode == GameMode.Osu:
             if self == HitResult.SMALL_TICK_HIT:
                 return 10
-            if self == HitResult.LARGE_TICK_HIT:
+            elif self == HitResult.LARGE_TICK_HIT:
                 return 30
-            if self == HitResult.SLIDER_TAIL_HIT:
+            elif self == HitResult.SLIDER_TAIL_HIT:
                 return 150
-            if self == HitResult.MEH:
+            elif self == HitResult.MEH:
                 return 50
-            if self == HitResult.OK:
+            elif self == HitResult.OK:
                 return 100
-            if self == HitResult.GOOD:
+            elif self == HitResult.GOOD:
                 return 200
-            if self in (HitResult.GREAT, HitResult.PERFECT):
+            elif self == (HitResult.GREAT, HitResult.PERFECT):
                 return 300
-            if self == HitResult.SMALL_BONUS:
+            elif self == HitResult.SMALL_BONUS:
                 return 10
-            if self == HitResult.LARGE_BONUS:
+            elif self == HitResult.LARGE_BONUS:
                 return 50
             return 0
         elif mode == GameMode.Taiko:
-            raise NotImplementedError("Base score for taiko not implemented")
+            raise NotImplementedError("Base score for Taiko has not yet been implemented.")
         elif mode == GameMode.Catch:
-            raise NotImplementedError("Base score for catch not implemented")
+            raise NotImplementedError("Base score for Catch has not yet been implemented.")
         elif mode == GameMode.Mania:
-            raise NotImplementedError("Base score for mania not implemented")
+            raise NotImplementedError("Base score for Mania has not yet been implemented.")
         return 0
 
 
-class HitResultGenerator:
-    pass
-
-class Fast(HitResultGenerator):
-    pass
-
-class Closest(HitResultGenerator):
-    pass
-
-class Statistical(HitResultGenerator):
-    pass
-
-class IgnoreAccuracy(HitResultGenerator):
-    pass
-
-
+@dataclass(slots=True)
 class ScoreState:
-    __slots__ = (
-        "max_combo", "osu_large_tick_hits", "osu_small_tick_hits", "slider_end_hits", "n_geki", "n_katu", "n300", "n100", "n50",
-        "misses", "legacy_total_score"
-    )
-
-    def __init__(self):
-        self.max_combo: int = 0
-        self.osu_large_tick_hits: int = 0
-        self.osu_small_tick_hits: int = 0
-        self.slider_end_hits: int = 0
-        self.n_geki: int = 0
-        self.n_katu: int = 0
-        self.n300: int = 0
-        self.n100: int = 0
-        self.n50: int = 0
-        self.misses: int = 0
-        self.legacy_total_score: int | None = None
+    max_combo: int = 0
+    osu_large_tick_hits: int = 0
+    osu_small_tick_hits: int = 0
+    slider_end_hits: int = 0
+    n_geki: int = 0
+    n_katu: int = 0
+    n300: int = 0
+    n100: int = 0
+    n50: int = 0
+    misses: int = 0
+    legacy_total_score: Optional[int] = None
 
     def total_hits(self, mode: GameMode) -> int:
         amount = self.n300 + self.n100 + self.misses
@@ -105,69 +90,58 @@ class ScoreState:
 
             if mode != GameMode.Osu:
                 amount += self.n_katu
+
                 if mode != GameMode.Catch:
                     amount += self.n_geki
 
         return amount
 
 
-class Strains:
-    __slots__ = ("raw_strains", "mode")
+class HitResultPriority(Enum):
+    BEST_CASE = 0
+    WORST_CASE = 1
 
-    def __init__(self, raw_strains: Any, mode: GameMode):
-        self.raw_strains = raw_strains
-        self.mode = mode
+class IHitResultGenerator(Protocol):
+    @classmethod
+    def generate_hitresults(cls, inspect_data: Any) -> Any:
+        ...
+
+class FastGenerator(IHitResultGenerator):
+    pass
+
+class ClosestGenerator(IHitResultGenerator):
+    pass
+
+class StatisticalGenerator(IHitResultGenerator):
+    pass
+
+class IgnoreAccuracyGenerator(IHitResultGenerator):
+    pass
+
+
+@dataclass
+class DifficultyAttributes:
+    stars: float = 0.0
+    max_combo: int = 0
+
+@dataclass
+class PerformanceAttributes:
+    pp: float = 0.0
+    difficulty_attributes: DifficultyAttributes = None
+
+    def stars(self) -> float:
+        if self.difficulty_attributes:
+            return self.difficulty_attributes.stars
+        return 0.0
+
+    def max_combo(self) -> int:
+        if self.difficulty_attributes:
+            return self.difficulty_attributes.max_combo
+        return 0
+
+
+class StrainsBase:
+    SECTION_LEN = 400.0
 
     def section_len(self) -> float:
-        return self.raw_strains.SECTION_LEN
-
-
-class DifficultyAttributes:
-    __slots__ = ("raw_attributes", "mode")
-
-    def __init__(self, raw_attributes: Any, mode: GameMode):
-        self.raw_attributes = raw_attributes
-        self.mode = mode
-
-    @property
-    def stars(self) -> float:
-        return self.raw_attributes.stars
-
-    @property
-    def max_combo(self) -> int:
-        if self.mode == GameMode.Catch:
-            return self.raw_attributes.max_combo()
-        return self.raw_attributes.max_combo
-
-    def performance(self) -> Performance:
-        from .performance import Performance
-        return Performance(self)
-
-
-class PerformanceAttributes:
-    __slots__ = ("raw_attributes", "mode")
-
-    def __init__(self, raw_attributes: Any, mode: GameMode):
-        self.raw_attributes = raw_attributes
-        self.mode = mode
-
-    @property
-    def pp(self) -> float:
-        return self.raw_attributes.pp
-
-    @property
-    def stars(self) -> float:
-        return self.raw_attributes.stars()
-
-    def difficulty_attributes(self) -> DifficultyAttributes:
-        return DifficultyAttributes(self.raw_attributes.difficulty, self.mode)
-
-    @property
-    def max_combo(self) -> int:
-        if self.mode == GameMode.Catch:
-            return self.raw_attributes.difficulty.max_combo()
-        return self.raw_attributes.difficulty.max_combo
-
-    def performance(self) -> Performance:
-        from .performance import Performance
-        return Performance(self)
+        return self.SECTION_LEN
