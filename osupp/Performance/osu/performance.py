@@ -1,6 +1,6 @@
 import math
-from typing import Optional
 from collections.abc import Callable
+from typing import Optional
 
 from osupp.Beatmap.beatmap import Beatmap
 from osupp.Beatmap.section.enums import GameMode
