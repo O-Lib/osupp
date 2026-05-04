@@ -1,11 +1,16 @@
-from typing import Optional, Protocol, Any
 from enum import Enum
+from typing import Any, Optional, Protocol
 
 from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.section.hit_objects.hit_objects import (
-    HitObject, HitObjectSpinner, HitObjectHold, HitObjectSlider, HitObjectCircle
+    HitObject,
+    HitObjectCircle,
+    HitObjectHold,
+    HitObjectSlider,
+    HitObjectSpinner,
 )
 from osupp.Mods.game_mods import GameMods
+
 
 class Reflection(Enum):
     NONE = 0
@@ -26,9 +31,9 @@ def get_reflection(mods: GameMods) -> "Reflection":
             elif val == "2":
                 return Reflection.BOTH
             return Reflection.NONE
-        
+
         return Reflection.HORIZONTAL
-    
+
     return Reflection.NONE
 
 def get_end_time(obj: HitObject) -> float:
@@ -59,7 +64,7 @@ class ConvertError(Exception):
         self.from_mode = from_mode
         self.to_mode = to_mode
         super().__init__(f"It is not possible to convert the map from {from_mode.name} to {to_mode.name}")
-        
+
 class AlreadyConvertedError(Exception):
     def __init__(self):
         super().__init__("The map has already been converted.")
@@ -83,19 +88,19 @@ class IGameMode(Protocol):
         ...
 
 
-def get_mania_keys(mods: GameMods) -> Optional[float]:
+def get_mania_keys(mods: GameMods) -> float | None:
     for keys in range(1, 11):
         if mods.contains_acronym(f"{keys}K"):
             return float(keys)
     return None
 
-def get_scroll_speed(mods: GameMods) -> Optional[float]:
+def get_scroll_speed(mods: GameMods) -> float | None:
     da_mod = mods.get("DA", GameMode.Taiko)
     if da_mod and hasattr(da_mod.inner, "scroll_speed") and da_mod.inner.scroll_speed is not None:
         return float(da_mod.inner.scroll_speed)
     return None
 
-def get_attraction_strength(mods: GameMods) -> Optional[float]:
+def get_attraction_strength(mods: GameMods) -> float | None:
     mg_mod = mods.get("MG")
     if mg_mod and hasattr(mg_mod.inner, "attraction_strength") and mg_mod.inner.attraction_strength is not None:
         return float(mg_mod.inner.attraction_strength)

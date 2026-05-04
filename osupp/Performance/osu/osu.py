@@ -1,12 +1,12 @@
 import math
-from typing import Optional, List, Tuple
-from enum import Enum
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import List, Optional, Tuple
 
-from osupp.Mods.game_mods import GameMods
 from osupp.Beatmap.beatmap import Beatmap
 from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.utils import Pos
+from osupp.Mods.game_mods import GameMods
 
 from ..any.any import CalculateError
 from ..any.difficulty import Difficulty
@@ -63,9 +63,9 @@ class OsuPerformanceAttributes:
     pp_flashlight: float = 0.0
     pp_speed: float = 0.0
     effective_miss_count: float = 0.0
-    speed_deviation: Optional[float] = None
+    speed_deviation: float | None = None
     combo_based_estimated_miss_count: float = 0.0
-    score_based_estimated_miss_count: Optional[float] = None
+    score_based_estimated_miss_count: float | None = None
     aim_estimated_slider_breaks: float = 0.0
     speed_estimated_slider_breaks: float = 0.0
 
@@ -99,7 +99,7 @@ class OsuScoreOrigin(Enum):
             max_large_ticks: int = 0,
             max_slider_ends: int = 0,
             max_small_ticks: int = 0
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         if self == OsuScoreOrigin.Stable:
             return (0, 0)
         elif self == OsuScoreOrigin.WithSliderAcc:
@@ -154,6 +154,6 @@ class OsuHitResults:
 class OsuScoreState:
     max_combo: int = 0
     hitresults: OsuHitResults = field(default_factory=OsuHitResults)
-    legacy_total_score: Optional[int] = None
+    legacy_total_score: int | None = None
 
 # TO BE CONTINUED

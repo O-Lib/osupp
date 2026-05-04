@@ -1,18 +1,18 @@
 from typing import Optional, Union
 
-from osupp.Mods.game_mods import GameMods
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.beatmap import Beatmap
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Mods.game_mods import GameMods
 
+from ..model.beatmap.beatmap import TooSuspiciousError
 from .any import (
+    CalculateError,
+    ConvertError,
+    DifficultyAttributes,
     HitResultPriority,
     PerformanceAttributes,
-    DifficultyAttributes,
     ScoreState,
-    CalculateError,
-    ConvertError
 )
-from ..model.beatmap.beatmap import TooSuspiciousError
 from .difficulty import Difficulty
 
 
@@ -21,37 +21,37 @@ class IntoPerformance:
 
 
 class Performance:
-    def __init__(self, map_or_attrs: Union[Beatmap, DifficultyAttributes, PerformanceAttributes]):
+    def __init__(self, map_or_attrs: Beatmap | DifficultyAttributes | PerformanceAttributes):
         self.map_or_attrs = map_or_attrs
         self._mods = GameMods()
-        self._difficulty: Optional[Difficulty] = None
-        self._passed_objects: Optional[int] = None
-        self._clock_rate: Optional[float] = None
-        self._hardrock_offsets: Optional[bool] = None
-        self._state: Optional[ScoreState] = None
-        self._accuracy: Optional[float] = None
-        self._misses: Optional[int] = None
-        self._combo: Optional[int] = None
+        self._difficulty: Difficulty | None = None
+        self._passed_objects: int | None = None
+        self._clock_rate: float | None = None
+        self._hardrock_offsets: bool | None = None
+        self._state: ScoreState | None = None
+        self._accuracy: float | None = None
+        self._misses: int | None = None
+        self._combo: int | None = None
         self._hitresult_priority = HitResultPriority.BEST_CASE
-        self._lazer: Optional[bool] = None
+        self._lazer: bool | None = None
 
-        self._large_tick_hits: Optional[int] = None
-        self._small_tick_hits: Optional[int] = None
-        self._slider_end_hits: Optional[int] = None
-        self._n300: Optional[int] = None
-        self._n100: Optional[int] = None
-        self._n50: Optional[int] = None
-        self._n_katu: Optional[int] = None
-        self._n_geki: Optional[int] = None
-        self._legacy_total_score: Optional[int] = None
+        self._large_tick_hits: int | None = None
+        self._small_tick_hits: int | None = None
+        self._slider_end_hits: int | None = None
+        self._n300: int | None = None
+        self._n100: int | None = None
+        self._n50: int | None = None
+        self._n_katu: int | None = None
+        self._n_geki: int | None = None
+        self._legacy_total_score: int | None = None
 
-        self._ar: Optional[float] = None
+        self._ar: float | None = None
         self._ar_fixed: bool = False
-        self._cs: Optional[float] = None
+        self._cs: float | None = None
         self._cs_fixed: bool = False
-        self._hp: Optional[float] = None
+        self._hp: float | None = None
         self._hp_fixed: bool = False
-        self._od: Optional[float] = None
+        self._od: float | None = None
         self._od_fixed: bool = False
 
     def mods(self, mods: GameMods) -> "Performance":
@@ -228,13 +228,13 @@ class GradualPerformance:
             map_data.checked_suspicion()
         return cls(difficulty, map_data)
 
-    def next(self, state: ScoreState) -> Optional[PerformanceAttributes]:
+    def next(self, state: ScoreState) -> PerformanceAttributes | None:
         return self.nth(state, 0)
 
-    def last(self, state: ScoreState) -> Optional[PerformanceAttributes]:
+    def last(self, state: ScoreState) -> PerformanceAttributes | None:
         return self.nth(state, int(1e9))
 
-    def nth(self, state: ScoreState, n: int) -> Optional[PerformanceAttributes]:
+    def nth(self, state: ScoreState, n: int) -> PerformanceAttributes | None:
         if self._mode == GameMode.Osu:
             raise NotImplementedError()
         elif self._mode == GameMode.Taiko:

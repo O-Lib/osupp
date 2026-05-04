@@ -2,10 +2,16 @@ import math
 from typing import List
 
 from osupp.Mods.game_mods import GameMods
-from .difficulty import OsuDifficultyObject
-from .evaluators import AimEvaluator, FlashlightEvaluator, RhythmEvaluator, SpeedEvaluator
+
 from ...any.difficulty import StrainSkill, strain_decay
-from ...utils.util import logistic, lerp
+from ...utils.util import lerp, logistic
+from .difficulty import OsuDifficultyObject
+from .evaluators import (
+    AimEvaluator,
+    FlashlightEvaluator,
+    RhythmEvaluator,
+    SpeedEvaluator,
+)
 
 
 class OsuStrainSkill:
@@ -18,7 +24,7 @@ class OsuStrainSkill:
 
     @staticmethod
     def difficulty_value(
-            current_strain_peaks: List[float],
+            current_strain_peaks: list[float],
             reduced_section_count: int,
             reduced_strain_baseline: float,
             decay_weight: float
@@ -43,7 +49,7 @@ class OsuStrainSkill:
         return difficulty
 
     @staticmethod
-    def count_top_weighted_sliders(slider_strains: List[float], difficulty_value: float) -> float:
+    def count_top_weighted_sliders(slider_strains: list[float], difficulty_value: float) -> float:
         if not slider_strains:
             return 0.0
 
@@ -66,14 +72,14 @@ class Aim(StrainSkill, OsuStrainSkill):
         self.current_strain = 0.0
         self._sliders_strains = []
 
-    def calculate_initial_strain(self, time: float, curr: OsuDifficultyObject, objects: List[OsuDifficultyObject]) -> float:
+    def calculate_initial_strain(self, time: float, curr: OsuDifficultyObject, objects: list[OsuDifficultyObject]) -> float:
         prev_start_time = 0.0
         if curr.idx > 0:
             prev_start_time = objects[curr.idx - 1].start_time
 
         return self.current_strain * strain_decay(time - prev_start_time, self.STRAIN_DECAY_BASE)
 
-    def strain_value_at(self, curr: OsuDifficultyObject, objects: List[OsuDifficultyObject]) -> float:
+    def strain_value_at(self, curr: OsuDifficultyObject, objects: list[OsuDifficultyObject]) -> float:
         self.current_strain *= strain_decay(curr.delta_time, self.STRAIN_DECAY_BASE)
         self.current_strain *= AimEvaluator.evaluate_diff_of(curr, objects, self.include_sliders) * self.SKILL_MULTIPLIER
 
@@ -95,11 +101,11 @@ class Aim(StrainSkill, OsuStrainSkill):
             for strain in self._sliders_strains
         )
 
-    def slider_strains(self) -> List[float]:
+    def slider_strains(self) -> list[float]:
         return self._sliders_strains
 
     @classmethod
-    def difficulty_value(cls, current_strain_peaks: List[float]) -> float:
+    def difficulty_value(cls, current_strain_peaks: list[float]) -> float:
         return OsuStrainSkill.difficulty_value(
             current_strain_peaks,
             cls.REDUCED_SECTION_COUNT,
@@ -124,20 +130,20 @@ class Flashlight(StrainSkill):
         self.has_hidden_mod = mods.contains_acronym("HD")
         self.evaluator = FlashlightEvaluator(scaling_factor, time_preempt, time_fade_in)
 
-    def calculate_initial_strain(self, time: float, curr: OsuDifficultyObject, objects: List[OsuDifficultyObject]) -> float:
+    def calculate_initial_strain(self, time: float, curr: OsuDifficultyObject, objects: list[OsuDifficultyObject]) -> float:
         prev_start_time = 0.0
         if curr.idx > 0:
             prev_start_time = objects[curr.idx - 1].start_time
 
         return self.current_strain * strain_decay(time - prev_start_time, self.STRAIN_DECAY_BASE)
 
-    def strain_value_at(self, curr: OsuDifficultyObject, objects: List[OsuDifficultyObject]) -> float:
+    def strain_value_at(self, curr: OsuDifficultyObject, objects: list[OsuDifficultyObject]) -> float:
         self.current_strain *= strain_decay(curr.delta_time, self.STRAIN_DECAY_BASE)
         self.current_strain += self.evaluator.evaluate_diff_of(curr, objects, self.has_hidden_mod) * self.SKILL_MULTIPLIER
         return self.current_strain
 
     @staticmethod
-    def difficulty_value(current_strain_peaks: List[float]) -> float:
+    def difficulty_value(current_strain_peaks: list[float]) -> float:
         return sum(current_strain_peaks)
 
     @staticmethod
@@ -158,14 +164,14 @@ class Speed(StrainSkill, OsuStrainSkill):
         self._slider_strains = []
         self.strain_skill_object_strains = []
 
-    def calculate_initial_strain(self, time: float, curr: OsuDifficultyObject, objects: List[OsuDifficultyObject]) -> float:
+    def calculate_initial_strain(self, time: float, curr: OsuDifficultyObject, objects: list[OsuDifficultyObject]) -> float:
         prev_start_time = 0.0
         if curr.idx > 0:
             prev_start_time = objects[curr.idx - 1].start_time
 
         return (self.current_strain * self.current_rhythm) * strain_decay(time - prev_start_time, self.STRAIN_DECAY_BASE)
 
-    def strain_value_at(self, curr: OsuDifficultyObject, objects: List[OsuDifficultyObject]) -> float:
+    def strain_value_at(self, curr: OsuDifficultyObject, objects: list[OsuDifficultyObject]) -> float:
         self.current_strain *= strain_decay(curr.adjusted_delta_time, self.STRAIN_DECAY_BASE)
         self.current_strain += SpeedEvaluator.evaluate_diff_of(
             curr, objects, self.hit_window, self.has_autopilot_mod
@@ -196,11 +202,11 @@ class Speed(StrainSkill, OsuStrainSkill):
             for strain in self.strain_skill_object_strains
         )
 
-    def slider_strains(self) -> List[float]:
+    def slider_strains(self) -> list[float]:
         return self._slider_strains
 
     @classmethod
-    def difficulty_value(cls, current_strain_peaks: List[float]) -> float:
+    def difficulty_value(cls, current_strain_peaks: list[float]) -> float:
         return OsuStrainSkill.difficulty_value(
             current_strain_peaks,
             cls.REDUCED_SECTION_COUNT,
@@ -232,5 +238,5 @@ class OsuSkills:
         self.speed = Speed(hit_window, mods.contains_acronym("AP"))
         self.flashlight = Flashlight(mods, scaling_factor.radius, time_preempt, time_fade_in)
 
-    def process(self, curr: OsuDifficultyObject, objects: List[OsuDifficultyObject]):
+    def process(self, curr: OsuDifficultyObject, objects: list[OsuDifficultyObject]):
         pass

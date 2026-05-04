@@ -1,16 +1,21 @@
-from typing import List, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import List, Optional
 
 from osupp.Beatmap.beatmap import Beatmap
-from osupp.Beatmap.section.events import BreakPeriod
 from osupp.Beatmap.section.enums import GameMode
-from osupp.Beatmap.section.hit_objects.hit_objects import HitObject, HitObjectCircle, HitObjectSlider, HitObjectSpinner
+from osupp.Beatmap.section.events import BreakPeriod
+from osupp.Beatmap.section.hit_objects.hit_objects import (
+    HitObject,
+    HitObjectCircle,
+    HitObjectSlider,
+    HitObjectSpinner,
+)
 
 from ..any.any import HitResult
 from ..model.beatmap.attributes import BeatmapAttributes
-
 from ..utils.util import clamp
+
 
 def calculate_difficulty_peppy_stars(map_attrs: BeatmapAttributes, object_count: int, drain_len: float) -> int:
     diff_val = map_attrs.hp() + map_attrs.od() + map_attrs.cs() + clamp(map_attrs.ar(), 0.0, 10.0)
@@ -57,7 +62,7 @@ class LegacyScoreSimulatorInner:
             increase_combo: IncreaseCombo,
             score_increase: int,
             bonus_result: HitResult
-    ) -> Optional[float]:
+    ) -> float | None:
         factor = None
 
         if add_score_combo_multiplier == AddScoreComboMultiplier.YES:
@@ -86,7 +91,7 @@ class LegacyScoreSimulatorInner:
 
 
 class OsuLegacyScoreSimulator:
-    def __init__(self, osu_objects: List[HitObject], map_data: Beatmap, passed_objects: int):
+    def __init__(self, osu_objects: list[HitObject], map_data: Beatmap, passed_objects: int):
         self.osu_objects = osu_objects
         self.passed_objects = passed_objects
         self.inner = LegacyScoreSimulatorInner()
@@ -275,15 +280,15 @@ class GradualLegacyScoreSimulator:
 
         self.attrs = LegacyScoreAttributes()
         self.inner = LegacyScoreSimulatorInner()
-        self.combo_score_factors: List[float] = []
+        self.combo_score_factors: list[float] = []
 
-        self.breaks: List[BreakPeriod] = list(map_data.events.breaks)
+        self.breaks: list[BreakPeriod] = list(map_data.events.breaks)
         self.break_idx = 0
 
-        self.elapsed_curr_break: Optional[int] = None
+        self.elapsed_curr_break: int | None = None
         self.break_len_prelim: int = 0
         self.object_count: int = 0
-        self.start_time: Optional[int] = None
+        self.start_time: int | None = None
 
     def break_len(self) -> int:
         elapsed = self.elapsed_curr_break if self.elapsed_curr_break is not None else 0

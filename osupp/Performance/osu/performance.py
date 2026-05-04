@@ -1,14 +1,15 @@
 import math
-from typing import Optional, Callable
+from typing import Optional
+from collections.abc import Callable
 
-from osupp.Mods.game_mods import GameMods
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.beatmap import Beatmap
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Mods.game_mods import GameMods
 
-from ..any.any import ScoreState, HitResultPriority
+from ..any.any import HitResultPriority, ScoreState
 from ..any.difficulty import Difficulty
+from ..utils.util import clamp, logistic, reverse_lerp, smoothstep
 from .difficulty.skills import Aim, Flashlight, Speed
-from ..utils.util import reverse_lerp, smoothstep, logistic, clamp
 from .hitresult_generator import OsuFastGenerator
 
 
@@ -262,7 +263,7 @@ class OsuPerformanceCalculator:
 
         return aim_value
 
-    def compute_speed_value(self, speed_deviation: Optional[float], effective_miss_count: float, speed_estimated_slider_breaks: list) -> float:
+    def compute_speed_value(self, speed_deviation: float | None, effective_miss_count: float, speed_estimated_slider_breaks: list) -> float:
         if speed_deviation is None or self.mods.contains_acronym("RX"):
             return 0.0
 
@@ -426,7 +427,7 @@ class OsuPerformanceCalculator:
 
         return estimated_slider_breaks * ok_adjustment * logistic(missed_combo_percent, 0.33, 15.0, 1.0)
 
-    def calculate_speed_deviation(self) -> Optional[float]:
+    def calculate_speed_deviation(self) -> float | None:
         if self.total_successful_hits() == 0:
             return None
 
@@ -440,7 +441,7 @@ class OsuPerformanceCalculator:
 
         return self.calculate_deviation(relevant_count_great, relevant_count_ok, relevant_count_meh)
 
-    def calculate_deviation(self, relevant_count_great: float, relevant_count_ok: float, relevant_count_meh: float) -> Optional[float]:
+    def calculate_deviation(self, relevant_count_great: float, relevant_count_ok: float, relevant_count_meh: float) -> float | None:
         if relevant_count_great + relevant_count_ok + relevant_count_meh <= 0.0:
             return None
 
@@ -537,16 +538,16 @@ class OsuPerformance:
     def __init__(self, map_or_attrs):
         self.map_or_attrs = map_or_attrs
         self.difficulty = Difficulty()
-        self.acc: Optional[float] = None
-        self.combo: Optional[int] = None
-        self.large_tick_hits: Optional[int] = None
-        self.small_tick_hits: Optional[int] = None
-        self.slider_end_hits: Optional[int] = None
-        self.n300: Optional[int] = None
-        self.n100: Optional[int] = None
-        self.n50: Optional[int] = None
-        self.misses: Optional[int] = None
-        self.legacy_total_score: Optional[int] = None
+        self.acc: float | None = None
+        self.combo: int | None = None
+        self.large_tick_hits: int | None = None
+        self.small_tick_hits: int | None = None
+        self.slider_end_hits: int | None = None
+        self.n300: int | None = None
+        self.n100: int | None = None
+        self.n50: int | None = None
+        self.misses: int | None = None
+        self.legacy_total_score: int | None = None
         self.hitresult_priority = HitResultPriority.BEST_CASE
         self.hitresult_generator = None
 
@@ -725,13 +726,13 @@ class OsuGradualPerformance:
             map_data.check_suspicion()
         return cls(difficulty, map_data)
 
-    def next(self, state: ScoreState) -> Optional[OsuPerformanceAttributes]:
+    def next(self, state: ScoreState) -> OsuPerformanceAttributes | None:
         return self.nth(state, 0)
 
-    def last(self, state: ScoreState) -> Optional[OsuPerformanceAttributes]:
+    def last(self, state: ScoreState) -> OsuPerformanceAttributes | None:
         return self.nth(state, int(1e9))
 
-    def nth(self, state: ScoreState, n: int) -> Optional[OsuPerformanceAttributes]:
+    def nth(self, state: ScoreState, n: int) -> OsuPerformanceAttributes | None:
         return None
 
     def len(self) -> int:

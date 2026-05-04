@@ -1,9 +1,14 @@
 import math
 from typing import List
 
-from .difficulty import OsuDifficultyObject
 from ...utils import logistic
-from ...utils.util import reverse_lerp, smoothstep, milliseconds_to_bpm, bpm_to_milliseconds
+from ...utils.util import (
+    bpm_to_milliseconds,
+    milliseconds_to_bpm,
+    reverse_lerp,
+    smoothstep,
+)
+from .difficulty import OsuDifficultyObject
 
 
 class AimEvaluator:
@@ -14,7 +19,7 @@ class AimEvaluator:
     WIGGLE_MULTIPLIER = 1.02
 
     @classmethod
-    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: List[OsuDifficultyObject], with_slider_travel_dist: bool) -> float:
+    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: list[OsuDifficultyObject], with_slider_travel_dist: bool) -> float:
         if curr.idx < 2:
             return 0.0
 
@@ -140,7 +145,7 @@ class FlashlightEvaluator:
         self.time_preempt = time_preempt
         self.time_fade_in = time_fade_in
 
-    def evaluate_diff_of(self, curr: OsuDifficultyObject, diff_objects: List[OsuDifficultyObject], hidden: bool) -> float:
+    def evaluate_diff_of(self, curr: OsuDifficultyObject, diff_objects: list[OsuDifficultyObject], hidden: bool) -> float:
         if getattr(curr.base.kind, "duration", False) and not hasattr(curr.base.kind, "path"):
             return 0.0
 
@@ -241,7 +246,7 @@ class RhythmEvaluator:
     RHYTHM_RATIO_MULTIPLIER = 15.0
 
     @classmethod
-    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: List[OsuDifficultyObject], hit_window: float) -> float:
+    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: list[OsuDifficultyObject], hit_window: float) -> float:
         if getattr(curr.base.kind, "duration", False) and not hasattr(curr.base.kind, "path"):
             return 0.0
 
@@ -359,7 +364,7 @@ class SpeedEvaluator:
     DIST_MULTIPLIER = 0.8
 
     @classmethod
-    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: List[OsuDifficultyObject], hit_window: float, autopilot: bool) -> float:
+    def evaluate_diff_of(cls, curr: OsuDifficultyObject, diff_objects: list[OsuDifficultyObject], hit_window: float, autopilot: bool) -> float:
         if getattr(curr.base.kind, "duration", False) and not hasattr(curr.base.kind, "path"):
             return 0.0
 

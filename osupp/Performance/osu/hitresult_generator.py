@@ -1,5 +1,5 @@
 import math
-from typing import Optional, Tuple, Any
+from typing import Any, Optional, Tuple
 
 from ..any.any import HitResultPriority, ScoreState
 
@@ -15,7 +15,7 @@ class OsuIgnoreAccuracyGenerator:
         misses = getattr(inspect, "misses", 0) or 0
         remain = total_hits - misses
 
-        def assign_specified(specified: Optional[int]) -> Optional[int]:
+        def assign_specified(specified: int | None) -> int | None:
             nonlocal remain
             if specified is None:
                 return None
@@ -196,7 +196,7 @@ class OsuClosestGenerator:
         insp_n100 = getattr(inspect, "n100", None)
         insp_n50 = getattr(inspect, "n50", None)
 
-        def compute_n100_n50(n300_val: int) -> Tuple[int, int, int]:
+        def compute_n100_n50(n300_val: int) -> tuple[int, int, int]:
             n300_clamped = min(n300_val, remain)
             raw100 = (target_total - float(50 * remain + 250 * n300_clamped + tick_score)) / 50.0
 
@@ -220,7 +220,7 @@ class OsuClosestGenerator:
 
             return n300_clamped, best_n100, best_n50
 
-        def compute_n300_n50(n100_val: int) -> Tuple[int, int, int]:
+        def compute_n300_n50(n100_val: int) -> tuple[int, int, int]:
             n100_clamped = min(n100_val, remain)
             raw300 = (target_total - float(50 * remain + 50 * n100_clamped + tick_score)) / 250.0
 
@@ -244,7 +244,7 @@ class OsuClosestGenerator:
 
             return best_n300, n100_clamped, best_n50
 
-        def compute_n300_n100(n50_val: int) -> Tuple[int, int, int]:
+        def compute_n300_n100(n50_val: int) -> tuple[int, int, int]:
             n50_clamped = min(n50_val, remain)
             raw300 = (target_total + float(50 * n50_clamped) - float(100 * remain + tick_score)) / 200.0
 
