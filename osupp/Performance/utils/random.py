@@ -115,7 +115,7 @@ class FastRandom:
             self.bit_buf = self.gen_unsigned()
             self.bit_idx = 1
         else:
-            self.bit_buf += 1
-            self.bit_idx >>= 1
+            self.bit_buf >>= 1
+            self.bit_idx += 1
 
         return (self.bit_buf & 1) == 1

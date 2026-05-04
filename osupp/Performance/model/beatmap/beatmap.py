@@ -1,54 +1,53 @@
 from enum import Enum
-from typing import Dict, List
+from typing import List, Dict
 
 from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.section.hit_objects.hit_objects import HitObject
-
-from ...utils.sort import osu_legacy_sort
 from ..control_points import TimingPoint
+from ...utils.sort import osu_legacy_sort
 
 
-def calculate_bpm(hit_objects: list[HitObject], timing_points: list[TimingPoint]) -> float:
+def calculate_bpm(hit_objects: List[HitObject], timing_points: List[TimingPoint]) -> float:
     if not timing_points:
         return 0.0
-
+    
     last_time = 0.0
     if hit_objects:
         last_time = hit_objects[-1].start_time
     elif timing_points:
         last_time = timing_points[-1].time
-
-    bpm_durations: dict[float, float] = {}
-
+        
+    bpm_durations: Dict[float, float] = {}
+    
     def add_duration(beat_len: float, curr_time: float, next_time: float):
         rounded_beat_len = round(beat_len * 1000.0) / 1000.0
         if curr_time <= last_time:
             bpm_durations[rounded_beat_len] = bpm_durations.get(rounded_beat_len, 0.0) + (next_time - curr_time)
-
+            
     if len(timing_points) == 1:
         add_duration(timing_points[0].beat_len, 0.0, last_time)
     elif len(timing_points) > 1:
         add_duration(timing_points[0].beat_len, 0.0, timing_points[1].time)
-
+        
     for i in range(1, len(timing_points) - 1):
         curr = timing_points[i]
         next_tp = timing_points[i + 1]
         add_duration(curr.beat_len, curr.time, next_tp.time)
-
+        
     if len(timing_points) >= 2:
         curr = timing_points[-1]
         add_duration(curr.beat_len, curr.time, last_time)
-
+        
     most_common_beat_len = 0.0
     max_duration = -1.0
     for b_len, duration in bpm_durations.items():
         if duration > max_duration:
             max_duration = duration
             most_common_beat_len = b_len
-
+            
     if most_common_beat_len == 0.0:
         return 0.0
-
+    
     return 60000.0 / most_common_beat_len
 
 
@@ -59,14 +58,14 @@ class TooSuspiciousReason(Enum):
     RED_FLAG = "RedFlag"
     SLIDER_POSITIONS = "SliderPositions"
     SLIDER_REPEATS = "SliderRepeats"
-
+    
 class TooSuspiciousError(Exception):
     def __init__(self, reason: TooSuspiciousReason):
         super().__init__(f"The map seems too suspicious to be accurate (reason: {reason.value})")
         self.reason = reason
 
 
-def check_suspicion(hit_objects: list[HitObject], mode: GameMode, cs: float) -> None:
+def check_suspicion(hit_objects: List[HitObject], mode: GameMode, cs: float) -> None:
     if len(hit_objects) < 2:
         return
 
@@ -113,7 +112,7 @@ def check_suspicion(hit_objects: list[HitObject], mode: GameMode, cs: float) -> 
 
     elif mode == GameMode.Catch:
         for h in hit_objects:
-            if hasattr(h.kind, "repeats_count"):
+            if hasattr(h.kind, "repeat_count"):
                 if h.kind.repeat_count > MAX_REPEATS:
                     if abs(h.kind.pos.x) > MAX_COORD or abs(h.kind.pos.y) > MAX_COORD:
                         raise TooSuspiciousError(TooSuspiciousReason.RED_FLAG)
@@ -134,7 +133,7 @@ def check_suspicion(hit_objects: list[HitObject], mode: GameMode, cs: float) -> 
         raise TooSuspiciousError(TooSuspiciousReason.SLIDER_REPEATS)
 
 
-def mania_hit_objects_legacy_sort(hit_objects: list[HitObject]) -> None:
+def mania_hit_objects_legacy_sort(hit_objects: List[HitObject]) -> None:
     def compare_mania_objects(a: HitObject, b: HitObject) -> int:
         time_a = int(round(a.start_time))
         time_b = int(round(b.start_time))

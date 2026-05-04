@@ -1,11 +1,10 @@
-import math
 from dataclasses import dataclass
-from enum import Enum
 from typing import Optional
+from enum import Enum
+import math
 
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Mods.game_mods import GameMods
-
+from osupp.Beatmap.section.enums import GameMode
 
 class BeatmapAttributesType(Enum):
     NONE = 0
@@ -88,9 +87,9 @@ class BeatmapAttributesExt:
     @staticmethod
     def difficulty_range(difficulty: float, min_val: float, mid_val: float, max_val: float) -> float:
         if difficulty > 5.0:
-            return mid_val + (max_val -  mid_val) * BeatmapAttributesExt.difficulty_range(difficulty)
+            return mid_val + (max_val -  mid_val) * BeatmapAttributesExt.difficulty_range_value(difficulty)
         elif difficulty < 5.0:
-            return mid_val + (mid_val - min_val) * BeatmapAttributesExt.difficulty_range(difficulty)
+            return mid_val + (mid_val - min_val) * BeatmapAttributesExt.difficulty_range_value(difficulty)
         return mid_val
 
     @staticmethod
@@ -141,12 +140,12 @@ class ManiaWindows:
 
 @dataclass(slots=True)
 class HitWindows:
-    ar: float | None = None
-    od_perfect: float | None = None
-    od_great = Optional[float] = None
-    od_good = Optional[float] = None
-    od_ok = Optional[float] = None
-    od_meh = Optional[float] = None
+    ar: Optional[float] = None
+    od_perfect: Optional[float] = None
+    od_great: Optional[float] = None
+    od_good: Optional[float] = None
+    od_ok: Optional[float] = None
+    od_meh: Optional[float] = None
 
 
 class BeatmapDifficulty:

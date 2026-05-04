@@ -1,8 +1,8 @@
-import math
 from dataclasses import dataclass
 from typing import List, Optional
+import math
 
-from ..utils.util import almost_eq, clamp
+from ..utils.util import clamp, almost_eq
 
 
 @dataclass
@@ -21,7 +21,7 @@ class TimingPoint:
         return 60000.0 / self.beat_len
 
 
-def timing_point_at(points: list[TimingPoint], time: float) -> TimingPoint | None:
+def timing_point_at(points: List[TimingPoint], time: float) -> Optional[TimingPoint]:
     if not points:
         return None
 
@@ -64,7 +64,7 @@ class DifficultyPoint:
                  almost_eq(self.slider_velocity, existing.slider_velocity))
 
 
-def difficulty_point_at(points: list[DifficultyPoint], time: float) -> DifficultyPoint | None:
+def difficulty_point_at(points: List[DifficultyPoint], time: float) -> Optional[DifficultyPoint]:
     if not points:
         return None
 
@@ -98,7 +98,7 @@ class EffectPoint:
         return self.kiai == existing.kiai and almost_eq(self.scroll_speed, existing.scroll_speed)
 
 
-def effect_point_at(points: list[EffectPoint], time: float) -> EffectPoint | None:
+def effect_point_at(points: List[EffectPoint], time: float) -> Optional[EffectPoint]:
     if not points:
         return None
 

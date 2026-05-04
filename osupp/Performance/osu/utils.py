@@ -1,13 +1,8 @@
 from typing import List
-
-from osupp.Beatmap.section.hit_objects.hit_objects import (
-    HitObject,
-    HitObjectSlider,
-    HitObjectSpinner,
-)
+from osupp.Beatmap.section.hit_objects.hit_objects import HitObject, HitObjectSlider, HitObjectSpinner
 
 
-def _calculate_spinner_score(spinner: HitObjectSpinner) -> float:
+def _calculate_spinner_score(spinner: HitObjectSpinner) -> int:
     SPIN_SCORE = 100
     BONUS_SPIN_SCORE = 1000
     MAXIMUM_ROTATIONS_PER_SECOND = 477.0 / 60.0
@@ -28,7 +23,7 @@ def _calculate_spinner_score(spinner: HitObjectSpinner) -> float:
 
     score += BONUS_SPIN_SCORE * bonus_spins
 
-    return float(score)
+    return score
 
 
 class InnerNestedScorePerObject:
@@ -46,8 +41,10 @@ class InnerNestedScorePerObject:
             self.n_sliders += 1
             self.n_repeats += h.kind.repeat_count
 
-            tick_count = getattr(h.kind, "tick_count", 0)
-            self.amount_of_small_ticks += tick_count
+            nested_objects = getattr(h.kind, "nested_objects", [])
+            ticks = sum(1 for nested in nested_objects if getattr(nested, "kind", None) == "Tick")
+
+            self.amount_of_small_ticks += ticks
 
         elif isinstance(h.kind, HitObjectSpinner):
             self.spinner_score += _calculate_spinner_score(h.kind)
@@ -63,12 +60,12 @@ class InnerNestedScorePerObject:
 
         slider_score = (float(amount_of_big_ticks) * BIG_TICK_SCORE) + (float(self.amount_of_small_ticks) * SMALL_TICK_SCORE)
 
-        return (slider_score + self.spinner_score) / float(self.object_count)
+        return float(slider_score + self.spinner_score) / float(self.object_count)
 
 
 class NestedScorePerObject:
     @staticmethod
-    def calculate(objects: list[HitObject], passed_objects: int) -> float:
+    def calculate(objects: List[HitObject], passed_objects: int) -> float:
         inner = InnerNestedScorePerObject()
 
         limit = min(len(objects), passed_objects)

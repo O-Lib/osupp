@@ -1,15 +1,15 @@
 import math
+from typing import List, Optional, Protocol
 from dataclasses import dataclass
-from typing import Any, List, Optional, Protocol
 
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Mods.game_mods import GameMods
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Beatmap.beatmap import Beatmap
 
 from ..model.beatmap.attributes import BeatmapAttribute, BeatmapDifficulty
 from .any import DifficultyAttributes
 
-
-def count_top_weighted_strains(object_strains: list[float], difficulty_value: float) -> float:
+def count_top_weighted_strains(object_strains: List[float], difficulty_value: float) -> float:
     if not object_strains:
         return 0.0
 
@@ -23,7 +23,7 @@ def count_top_weighted_strains(object_strains: list[float], difficulty_value: fl
         total += 1.1 / (1.0 + math.exp(-10.0 * (s / consistent_top_strain - 0.88)))
     return total
 
-def calculate_difficulty_value(current_strain_peaks: list[float], decay_weight: float) -> float:
+def calculate_difficulty_value(current_strain_peaks: List[float], decay_weight: float) -> float:
     difficulty = 0.0
     weight = 1.0
 
@@ -54,24 +54,24 @@ class StrainSkill:
 @dataclass
 class InspectDifficulty:
     mods: GameMods
-    passed_objects: int | None
-    clock_rate: float | None
+    passed_objects: Optional[int]
+    clock_rate: Optional[float]
     ar: BeatmapAttribute
     cs: BeatmapAttribute
     hp: BeatmapAttribute
     od: BeatmapAttribute
-    hardrock_offsets: bool | None
-    lazer: bool | None
+    hardrock_offsets: Optional[bool]
+    lazer: Optional[bool]
 
 
 class Difficulty:
     def __init__(self):
         self._mods = GameMods()
-        self._passed_objects = Optional[int] = None
-        self._clock_rate = Optional[float] = None
+        self._passed_objects: Optional[int] = None
+        self._clock_rate: Optional[float] = None
         self._map_difficulty = BeatmapDifficulty()
-        self._hardrock_offsets = Optional[bool] = None
-        self._lazer = Optional[bool] = None
+        self._hardrock_offsets: Optional[bool] = None
+        self._lazer: Optional[bool] = None
 
     def inspect(self) -> "InspectDifficulty":
         return InspectDifficulty(
@@ -149,7 +149,7 @@ class Difficulty:
     def get_lazer(self) -> bool:
         return self._lazer if self._lazer is not None else True
 
-    def calculate(self, mapa_data: Any) -> "DifficultyAttributes":
+    def calculate(self, mapa_data: Beatmap) -> "DifficultyAttributes":
         mode = mapa_data.mode
         if mode == GameMode.Osu:
             raise NotImplementedError("Osu calculator to be implemented.")
@@ -164,7 +164,7 @@ class Difficulty:
 
 
 class GradualDifficulty:
-    def __init__(self, difficulty: Difficulty, map_data: Any):
+    def __init__(self, difficulty: Difficulty, map_data: Beatmap):
         pass
 
     def __iter__(self):

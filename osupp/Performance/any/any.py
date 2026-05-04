@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, Protocol
+from typing import Optional, Any, Protocol
 
 from osupp.Beatmap.section.enums import GameMode
-
 from ..model.beatmap.beatmap import TooSuspiciousError
 from ..model.model import ConvertError
 
@@ -53,7 +52,7 @@ class HitResult(Enum):
                 return 100
             elif self == HitResult.GOOD:
                 return 200
-            elif self == (HitResult.GREAT, HitResult.PERFECT):
+            elif self in (HitResult.GREAT, HitResult.PERFECT):
                 return 300
             elif self == HitResult.SMALL_BONUS:
                 return 10
@@ -81,7 +80,7 @@ class ScoreState:
     n100: int = 0
     n50: int = 0
     misses: int = 0
-    legacy_total_score: int | None = None
+    legacy_total_score: Optional[int] = None
 
     def total_hits(self, mode: GameMode) -> int:
         amount = self.n300 + self.n100 + self.misses

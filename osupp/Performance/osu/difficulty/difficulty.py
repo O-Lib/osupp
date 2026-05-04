@@ -2,9 +2,7 @@ import math
 from typing import Optional
 
 from osupp.Mods.game_mods import GameMods
-
-from ...utils.util import clamp, lerp, reverse_lerp
-
+from ...utils.util import clamp, reverse_lerp, lerp
 
 class ScalingFactor:
     def __init__(self, cs: float):
@@ -322,11 +320,11 @@ class OsuRatingCalculator:
         elif self.mods.contains_acronym("AP"):
             flashlight_rating *= 0.4
 
-        magnetised_strength = self.get_mod_setting("MG", "attraction_strengh")
+        magnetised_strength = self.get_mod_setting("MG", "attraction_strength")
         if magnetised_strength is not None:
             flashlight_rating *= 1.0 - magnetised_strength
 
-        deflate_scale = self.get_mod_setting("DF", "start_stale")
+        deflate_scale = self.get_mod_setting("DF", "start_scale")
         if deflate_scale is not None:
             flashlight_rating += clamp(reverse_lerp(deflate_scale, 11.0, 1.0), 0.1, 1.0)
 
@@ -340,7 +338,7 @@ class OsuRatingCalculator:
 
         return flashlight_rating * math.sqrt(rating_multiplier)
 
-    def calculate_visibility_bonus(self, approach_rate: float, visibility_factor: float | None, slider_factor: float | None) -> float:
+    def calculate_visibility_bonus(self, approach_rate: float, visibility_factor: Optional[float], slider_factor: Optional[float]) -> float:
         is_always_partially_visible = self.get_mod_setting("HD", "only_fade_approach_circles") or self.mods.contains_acronym("TC")
 
         reading_bonus = 0.04 * (12.0 - max(approach_rate, 7.0))
@@ -374,7 +372,7 @@ class OsuRatingCalculator:
         ar_factor_starting_point = lerp(10.0, 10.33, mechanical_difficulty_factor)
         return reverse_lerp(approach_rate, AR_FACTOR_END_POINT, ar_factor_starting_point)
 
-    def get_mod_setting(self, acronym: str, setting_name: str) -> float | None:
+    def get_mod_setting(self, acronym: str, setting_name: str) -> Optional[float]:
         mod = self.mods.get(acronym)
         if mod and hasattr(mod.innerm, setting_name):
             val = getattr(mod.inner, setting_name)
