@@ -1,231 +1,258 @@
-from typing import Optional, Union
+from typing import Callable, TYPE_CHECKING
 
-from osupp.Beatmap.beatmap import Beatmap
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Mods.game_mods import GameMods
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Beatmap.beatmap import Beatmap
 
-from ..model.beatmap.beatmap import TooSuspiciousError
-from .any import (
-    CalculateError,
-    ConvertError,
-    DifficultyAttributes,
-    HitResultPriority,
-    PerformanceAttributes,
-    ScoreState,
-)
+from .any import ScoreState, HitResultPriority, PerformanceAttributes, CalculateError
 from .difficulty import Difficulty
+from ..model.beatmap.beatmap import TooSuspiciousError
 
 
-class IntoPerformance:
-    pass
+def _get_mode(obj) -> GameMode:
+    if hasattr(obj, "mode"):
+        return obj.mode
+
+    type_name = type(obj).__name__
+    match type_name:
+        case name if "Osu" in name:
+            return GameMode.Osu
+        case name if "Taiko" in name:
+            return GameMode.Taiko
+        case name if "Catch" in name:
+            return GameMode.Catch
+        case name if "Taiko" in name:
+            return GameMode.Mania
+        case _:
+            return GameMode.Osu
 
 
 class Performance:
-    def __init__(self, map_or_attrs: Beatmap | DifficultyAttributes | PerformanceAttributes):
-        self.map_or_attrs = map_or_attrs
-        self._mods = GameMods()
-        self._difficulty: Difficulty | None = None
-        self._passed_objects: int | None = None
-        self._clock_rate: float | None = None
-        self._hardrock_offsets: bool | None = None
-        self._state: ScoreState | None = None
-        self._accuracy: float | None = None
-        self._misses: int | None = None
-        self._combo: int | None = None
-        self._hitresult_priority = HitResultPriority.BEST_CASE
-        self._lazer: bool | None = None
+    __slots__ = ("_inner")
 
-        self._large_tick_hits: int | None = None
-        self._small_tick_hits: int | None = None
-        self._slider_end_hits: int | None = None
-        self._n300: int | None = None
-        self._n100: int | None = None
-        self._n50: int | None = None
-        self._n_katu: int | None = None
-        self._n_geki: int | None = None
-        self._legacy_total_score: int | None = None
+    def __init__(self, map_or_attrs):
+        mode = _get_mode(map_or_attrs)
 
-        self._ar: float | None = None
-        self._ar_fixed: bool = False
-        self._cs: float | None = None
-        self._cs_fixed: bool = False
-        self._hp: float | None = None
-        self._hp_fixed: bool = False
-        self._od: float | None = None
-        self._od_fixed: bool = False
+        match mode:
+            case GameMode.Osu:
+                from ..osu.performance.performance import OsuPerformance
+                self._inner = OsuPerformance(map_or_attrs)
+            case GameMode.Taiko:
+                self._inner = None
+            case GameMode.Catch:
+                self._inner = None
+            case GameMode.Mania:
+                self._inner = None
+            case _:
+                self._inner = None
+
+    def _apply_single(self, attr_name: str, value) -> "Performance":
+        if self._inner is not None:
+            if hasattr(self._inner, attr_name):
+                attr = getattr(self._inner, attr_name)
+                if callable(attr):
+                    res = attr(value)
+                    if res is not None:
+                        self._inner = res
+                else:
+                    setattr(self._inner, attr_name, value)
+        return self
+
+    def _apply_double(self, attr_name: str, val1, val2) -> "Performance":
+        if self._inner is not None:
+            if hasattr(self._inner, attr_name):
+                attr = getattr(self._inner, attr_name)
+                if callable(attr):
+                    res = attr(val1, val2)
+                    if res is not None:
+                        self._inner = res
+                else:
+                    setattr(self._inner, attr_name, val1)
+        return self
 
     def mods(self, mods: GameMods) -> "Performance":
-        self._mods = mods
+        if hasattr(self._inner, "mods"):
+            self._inner = self._inner.mods(mods)
         return self
 
     def difficulty(self, diff: Difficulty) -> "Performance":
-        self._difficulty = diff
+        if hasattr(self._inner, "difficulty"):
+            self._inner = self._inner.difficulty(diff)
         return self
 
-    def passed_objects(self, passed_objects: int) -> 'Performance':
-        self._passed_objects = passed_objects
+    def passed_objects(self, passed_objects: int) -> "Performance":
+        if hasattr(self._inner, "passed_objects"):
+            self._inner = self._inner.passed_objects(passed_objects)
         return self
 
-    def clock_rate(self, clock_rate: float) -> 'Performance':
-        self._clock_rate = clock_rate
+    def clock_rate(self, clock_rate: float) -> "Performance":
+        if hasattr(self._inner, "clock_rate"):
+            self._inner = self._inner.clock_rate(clock_rate)
         return self
 
-    def ar(self, ar: float, fixed: bool) -> 'Performance':
-        self._ar = ar
-        self._ar_fixed = fixed
+    def ar(self, ar: float, fixed: bool) -> "Performance":
+        if hasattr(self._inner, "ar"):
+            self._inner = self._inner.ar(ar, fixed)
         return self
 
-    def cs(self, cs: float, fixed: bool) -> 'Performance':
-        self._cs = cs
-        self._cs_fixed = fixed
+    def cs(self, cs: float, fixed: bool) -> "Performance":
+        if hasattr(self._inner, "cs"):
+            self._inner = self._inner.cs(cs, fixed)
         return self
 
-    def hp(self, hp: float, fixed: bool) -> 'Performance':
-        self._hp = hp
-        self._hp_fixed = fixed
+    def hp(self, hp: float, fixed: bool) -> "Performance":
+        if hasattr(self._inner, "hp"):
+            self._inner = self._inner.hp(hp, fixed)
         return self
 
-    def od(self, od: float, fixed: bool) -> 'Performance':
-        self._od = od
-        self._od_fixed = fixed
+    def od(self, od: float, fixed: bool) -> "Performance":
+        if hasattr(self._inner, "od"):
+            self._inner = self._inner.od(od, fixed)
         return self
 
-    def hardrock_offsets(self, hardrock_offsets: bool) -> 'Performance':
-        self._hardrock_offsets = hardrock_offsets
+    def hardrock_offsets(self, hardrock_offsets: bool) -> "Performance":
+        if hasattr(self._inner, "hardrock_offsets"):
+            self._inner = self._inner.hardrock_offsets(hardrock_offsets)
         return self
 
-    def state(self, state: ScoreState) -> 'Performance':
-        self._state = state
+    def state(self, state: ScoreState) -> "Performance":
+        if hasattr(self._inner, "state"):
+            self._inner = self._inner.state(state)
         return self
 
-    def accuracy(self, acc: float) -> 'Performance':
-        self._accuracy = acc
+    def accuracy(self, acc: float) -> "Performance":
+        if hasattr(self._inner, "accuracy"):
+            self._inner = self._inner.accuracy(acc)
         return self
 
-    def misses(self, n_misses: int) -> 'Performance':
-        self._misses = n_misses
+    def misses(self, n_misses: int) -> "Performance":
+        if hasattr(self._inner, "misses"):
+            self._inner = self._inner.misses(n_misses)
         return self
 
-    def combo(self, combo: int) -> 'Performance':
-        self._combo = combo
+    def combo(self, combo: int) -> "Performance":
+        if hasattr(self._inner, "combo"):
+            self._inner = self._inner.combo(combo)
         return self
 
-    def hitresult_priority(self, priority: HitResultPriority) -> 'Performance':
-        self._hitresult_priority = priority
+    def hitresult_priority(self, priority: HitResultPriority) -> "Performance":
+        if hasattr(self._inner, "hitresult_priority"):
+            self._inner = self._inner.hitresult_priority(priority)
         return self
 
-    def lazer(self, is_lazer: bool) -> 'Performance':
-        self._lazer = is_lazer
+    def hitresult_generator(self, generator: Callable) -> "Performance":
+        if hasattr(self._inner, "hitresult_generator"):
+            self._inner = self._inner.hitresult_generator(generator)
         return self
 
-    def large_tick_hits(self, large_tick_hits: int) -> 'Performance':
-        self._large_tick_hits = large_tick_hits
+    def lazer(self, is_lazer: bool) -> "Performance":
+        if hasattr(self._inner, "lazer"):
+            self._inner = self._inner.lazer(is_lazer)
         return self
 
-    def small_tick_hits(self, small_tick_hits: int) -> 'Performance':
-        self._small_tick_hits = small_tick_hits
+    def large_tick_hits(self, large_tick_hits: int) -> "Performance":
+        if hasattr(self._inner, "large_tick_hits"):
+            self._inner = self._inner.large_tick_hits(large_tick_hits)
         return self
 
-    def slider_end_hits(self, slider_end_hits: int) -> 'Performance':
-        self._slider_end_hits = slider_end_hits
+    def small_tick_hits(self, small_tick_hits: int) -> "Performance":
+        if hasattr(self._inner, "small_tick_hits"):
+            self._inner = self._inner.small_tick_hits(small_tick_hits)
         return self
 
-    def n300(self, n300: int) -> 'Performance':
-        self._n300 = n300
+    def slider_end_hits(self, slider_end_hits: int) -> "Performance":
+        if hasattr(self._inner, "slider_end_hits"):
+            self._inner = self._inner.slider_end_hits(slider_end_hits)
         return self
 
-    def n100(self, n100: int) -> 'Performance':
-        self._n100 = n100
+    def n300(self, n300: int) -> "Performance":
+        if hasattr(self._inner, "n300"):
+            self._inner = self._inner.n300(n300)
         return self
 
-    def n50(self, n50: int) -> 'Performance':
-        self._n50 = n50
+    def n100(self, n100: int) -> "Performance":
+        if hasattr(self._inner, "n100"):
+            self._inner = self._inner.n100(n100)
         return self
 
-    def n_katu(self, n_katu: int) -> 'Performance':
-        self._n_katu = n_katu
+    def n50(self, n50: int) -> "Performance":
+        if hasattr(self._inner, "n50"):
+            self._inner = self._inner.n50(n50)
         return self
 
-    def n_geki(self, n_geki: int) -> 'Performance':
-        self._n_geki = n_geki
+    def n_katu(self, n_katu: int) -> "Performance":
+        if hasattr(self._inner, "n_katu"):
+            self._inner = self._inner.n_katu(n_katu)
         return self
 
-    def legacy_total_score(self, legacy_total_score: int) -> 'Performance':
-        self._legacy_total_score = legacy_total_score
+    def n_geki(self, n_geki: int) -> "Performance":
+        if hasattr(self._inner, "n_geki"):
+            self._inner = self._inner.n_geki(n_geki)
         return self
 
-    def _get_mode(self) -> "GameMode":
-        if hasattr(self.map_or_attrs, "mode"):
-            return self.map_or_attrs.mode
+    def legacy_total_score(self, legacy_total_score: int) -> "Performance":
+        if hasattr(self._inner, "legacy_total_score"):
+            self._inner = self._inner.legacy_total_score(legacy_total_score)
+        return self
 
-        type_name = type(self.map_or_attrs).__name__
-        if "Osu" in type_name:
-            return GameMode.Osu
-        elif "Taiko" in type_name:
-            return GameMode.Taiko
-        elif "Catch" in type_name:
-            return GameMode.Catch
-        elif "Mania" in type_name:
-            return GameMode.Mania
-
-        return GameMode.Osu
-
-    def calculate(self) -> "PerformanceAttributes":
-        mode = self._get_mode()
-
-        if mode == GameMode.Osu:
-            raise NotImplementedError("Osu Performance Calculator to be implemented.")
-        elif mode == GameMode.Taiko:
-            raise NotImplementedError("Taiko Performance Calculator to be implemented.")
-        elif mode == GameMode.Catch:
-            raise NotImplementedError("Catch Performance Calculator to be implemented.")
-        elif mode == GameMode.Mania:
-            raise NotImplementedError("Mania Performance Calculator to be implemented.")
-
+    def calculate(self) -> PerformanceAttributes:
+        if self._inner is not None and hasattr(self._inner, "calculate"):
+            return self._inner.calculate()
         return PerformanceAttributes()
 
-    def checked_calculate(self) -> "PerformanceAttributes":
-        if hasattr(self.map_or_attrs, "check_suspicion"):
-            try:
-                self.map_or_attrs.check_suspicion()
-            except TooSuspiciousError as e:
-                raise CalculateError(e)
-        return self.calculate()
+    def checked_calculate(self) -> PerformanceAttributes:
+        if self._inner is not None and hasattr(self._inner, "map_or_attrs"):
+            map_or_attrs = self._inner.map_or_attrs
+            if hasattr(map_or_attrs, "check_suspicion"):
+                try:
+                    map_or_attrs.check_suspicion()
+                except TooSuspiciousError as e:
+                    raise CalculateError(e)
+
+        if self._inner is not None and hasattr(self._inner, "calculate"):
+            return self._inner.calculate()
+        return PerformanceAttributes()
 
     def generate_state(self) -> ScoreState:
-        mode = self._get_mode()
+        if self._inner is not None and hasattr(self._inner, "generate_state"):
+            return self._inner.generate_state()
+        return PerformanceAttributes()
 
-        if mode == GameMode.Osu:
-            raise NotImplementedError("Osu State Generator to be implemented.")
-        elif mode == GameMode.Taiko:
-            raise NotImplementedError("Taiko State Generator to be implemented.")
-        elif mode == GameMode.Catch:
-            raise NotImplementedError("Catch State Generator to be implemented.")
-        elif mode == GameMode.Mania:
-            raise NotImplementedError("Mania State Generator to be implemented.")
+    def checked_generate_state(self) -> ScoreState:
+        if self._inner is not None and hasattr(self._inner, "map_or_attrs"):
+            map_or_attrs = self._inner.map_or_attrs
+            if hasattr(map_or_attrs, "check_suspicion"):
+                try:
+                    map_or_attrs.check_suspicion()
+                except TooSuspiciousError as e:
+                    raise CalculateError(e)
 
-        return ScoreState()
+        if self._inner is not None and hasattr(self._inner, "generate_state"):
+            return self._inner.generate_state()
+        return PerformanceAttributes()
 
 
 class GradualPerformance:
-    def __init__(self, difficulty: Difficulty, map_data: Beatmap):
-        self._mode = map_data.mode
+    __slots__ = ("_inner")
 
-        if self._mode == GameMode.Osu:
-            pass
-        elif self._mode == GameMode.Taiko:
-            pass
-        elif self._mode == GameMode.Catch:
-            pass
-        elif self._mode == GameMode.Mania:
-            pass
-        else:
-            raise ConvertError(self._mode, GameMode.Osu)
+    def __init__(self, difficulty: Difficulty, map_data: Beatmap):
+        match map_data.mode:
+            case GameMode.Osu:
+                from ..osu.performance.performance import OsuGradualPerformance
+                self._inner = OsuGradualPerformance(difficulty, map_data)
+            case GameMode.Taiko:
+                self._inner = None
+            case GameMode.Catch:
+                self._inner = None
+            case GameMode.Mania:
+                self._inner = None
+            case _:
+                self._inner = None
 
     @classmethod
     def checked_new(cls, difficulty: Difficulty, map_data: Beatmap) -> "GradualPerformance":
-        if hasattr(map_data, "checked_suspicion"):
-            map_data.checked_suspicion()
+        if hasattr(map_data, "check_suspicion"):
+            map_data.check_suspicion()
         return cls(difficulty, map_data)
 
     def next(self, state: ScoreState) -> PerformanceAttributes | None:
@@ -235,17 +262,11 @@ class GradualPerformance:
         return self.nth(state, int(1e9))
 
     def nth(self, state: ScoreState, n: int) -> PerformanceAttributes | None:
-        if self._mode == GameMode.Osu:
-            raise NotImplementedError()
-        elif self._mode == GameMode.Taiko:
-            raise NotImplementedError()
-        elif self._mode == GameMode.Catch:
-            raise NotImplementedError()
-        elif self._mode == GameMode.Mania:
-            raise NotImplementedError()
+        if self._inner is not None and hasattr(self._inner, "nth"):
+            return self._inner.nth(state, n)
         return None
 
     def __len__(self) -> int:
-        if self._mode == GameMode.Osu:
-            return 0
+        if self._inner is not None and hasattr(self._inner, "len"):
+            return self._inner.len()
         return 0

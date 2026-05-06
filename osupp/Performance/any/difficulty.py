@@ -1,34 +1,37 @@
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Protocol
+from typing import Protocol, TYPE_CHECKING
 
-from osupp.Beatmap.beatmap import Beatmap
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Mods.game_mods import GameMods
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Beatmap.beatmap import Beatmap
 
 from ..model.beatmap.attributes import BeatmapAttribute, BeatmapDifficulty
 from .any import DifficultyAttributes
+
+if TYPE_CHECKING:
+    from ..osu.difficulty.difficulty import OsuGradualDifficulty
 
 
 def count_top_weighted_strains(object_strains: list[float], difficulty_value: float) -> float:
     if not object_strains:
         return 0.0
 
-    consistent_top_strain = difficulty_value / 10.0
+    consistent_top_strains = difficulty_value / 10.0
 
-    if abs(consistent_top_strain) < 1e-7:
+    if abs(consistent_top_strains) < 1e-7:
         return float(len(object_strains))
 
-    total = 0.0
-    for s in object_strains:
-        total += 1.1 / (1.0 + math.exp(-10.0 * (s / consistent_top_strain - 0.88)))
-    return total
+    return sum(
+        1.1 / 1.0 + math.exp(-10.0 * (s / consistent_top_strains - 0.88))
+        for s in object_strains
+    )
 
-def calculate_difficulty_value(current_strain_peaks: list[float], decay_weight: float) -> float:
-    difficulty = 0.0
+def calculate_difficulty_value(current_strains_peaks: list[float], decay_weight: float) -> float:
+    difficulty = 0
     weight = 1.0
 
-    peaks = [p for p in current_strain_peaks if p > 0.0]
+    peaks = [p for p in current_strains_peaks if p > 0.0]
     peaks.sort(reverse=True)
 
     for strain in peaks:
@@ -36,6 +39,7 @@ def calculate_difficulty_value(current_strain_peaks: list[float], decay_weight: 
         weight *= decay_weight
 
     return difficulty
+
 
 def strain_decay(ms: float, strain_decay_base: float) -> float:
     return math.pow(strain_decay_base, ms / 1000.0)
@@ -47,12 +51,13 @@ class IDifficultyObject(Protocol):
     def idx(self) -> int:
         ...
 
+
 class StrainSkill:
     DECAY_WEIGHT: float = 0.9
     SECTION_LENGTH: float = 400.0
 
 
-@dataclass
+@dataclass(slots=True)
 class InspectDifficulty:
     mods: GameMods
     passed_objects: int | None
@@ -66,6 +71,8 @@ class InspectDifficulty:
 
 
 class Difficulty:
+    __slots__ = ("_mods", "_passed_objects", "_clock_rate", "_map_difficulty", "_hardrock_offsets", "_lazer")
+
     def __init__(self):
         self._mods = GameMods()
         self._passed_objects: int | None = None
@@ -74,7 +81,7 @@ class Difficulty:
         self._hardrock_offsets: bool | None = None
         self._lazer: bool | None = None
 
-    def inspect(self) -> "InspectDifficulty":
+    def inspect(self) -> InspectDifficulty:
         return InspectDifficulty(
             mods=self._mods,
             passed_objects=self._passed_objects,
@@ -150,26 +157,47 @@ class Difficulty:
     def get_lazer(self) -> bool:
         return self._lazer if self._lazer is not None else True
 
-    def calculate(self, mapa_data: Beatmap) -> "DifficultyAttributes":
-        mode = mapa_data.mode
-        if mode == GameMode.Osu:
-            raise NotImplementedError("Osu calculator to be implemented.")
-        elif mode == GameMode.Taiko:
-            raise NotImplementedError("Taiko calculator to be implemented.")
-        elif mode == GameMode.Catch:
-            raise NotImplementedError("Catch calculator to be implemented.")
-        elif mode == GameMode.Mania:
-            raise NotImplementedError("Mania calculator to be implemented.")
-
-        return DifficultyAttributes()
+    def calculate(self, map_data: Beatmap) -> DifficultyAttributes:
+        match map_data.mode:
+            case GameMode.Osu:
+                from ..osu.difficulty.difficulty import difficulty as calc_osu_difficulty
+                return calc_osu_difficulty(self, map_data)
+            case GameMode.Taiko:
+                raise NotImplementedError("Taiko calculator to be implemented.")
+            case GameMode.Catch:
+                raise NotImplementedError("Catch calculator to be implemented.")
+            case GameMode.Mania:
+                raise NotImplementedError("Mania calculator to be implemented.")
+            case _:
+                return DifficultyAttributes()
 
 
 class GradualDifficulty:
+    __slots__ = ("_inner")
+
     def __init__(self, difficulty: Difficulty, map_data: Beatmap):
-        pass
+        match map_data.mode:
+            case GameMode.Osu:
+                from ..osu.difficulty.difficulty import OsuGradualDifficulty
+                self._inner = OsuGradualDifficulty(difficulty, map_data)
+            case GameMode.Taiko:
+                raise NotImplementedError("Taiko Gradual to be implemented.")
+            case GameMode.Catch:
+                raise NotImplementedError("Catch Gradual to be implemented.")
+            case GameMode.Mania:
+                raise NotImplementedError("Mania Gradual to be implemented.")
+            case _:
+                self._inner = None
 
     def __iter__(self):
         return self
 
-    def __next__(self) -> "DifficultyAttributes":
-        raise StopIteration
+    def __next__(self) -> DifficultyAttributes:
+        if self._inner is None:
+            raise StopIteration
+
+        res = next(self._inner, None)
+        if res is None:
+            raise StopIteration
+
+        return res

@@ -1,385 +1,288 @@
 import math
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, Iterator, List, Any
 
-from osupp.Mods.game_mods import GameMods
+from .skills import OsuSkills
+from ...utils.utils import reverse_lerp, clamp, almost_eq
+from ...model.model import GameMods
+from ...model.beatmap.beatmap import Beatmap
+from ...any.difficulty import Difficulty
+from ...any.any import DifficultyAttributes
+from ..osu import OsuDifficultyAttributes, OsuObject, convert_objects
 
-from ...utils.util import clamp, lerp, reverse_lerp
+
+STAR_RATING_MULTIPLIER = 0.0265
+DIFFICULTY_MULTIPLIER = 0.0675
+PERFORMANCE_BASE_MULTIPLIER = 1.12
+BROKEN_GAMEFIELD_ROUNDING_ALLOWANCE = 1.00041
 
 
+@dataclass(slots=True)
 class ScalingFactor:
-    def __init__(self, cs: float):
-        self.scale = (1.0 - 0.7 * ((cs - 5.0) / 5.0)) / 2.0 * 1.00041
-        self.radius = 64.0 * self.scale
-        self.factor = 50.0 / self.radius
+    factor: float
+    radius: float
+    scale: float
 
-    def stack_offset(self, stack_height: int):
-        offset = stack_height * self.scale * -6.4
-        from osupp.Beatmap.utils import Pos
-        return Pos(offset, offset)
+    @classmethod
+    def new(cls, cs: float) -> "ScalingFactor":
+        scale = (1.0 - 0.7 * ((cs - 5.0) / 5.0)) / 2.0 * BROKEN_GAMEFIELD_ROUNDING_ALLOWANCE
+        radius = 64.0 * scale
+        factor = 50.0 / radius
+        return cls(factor=factor, radius=radius, scale=scale)
 
 
+@dataclass(slots=True)
 class OsuDifficultyObject:
-    NORMALIZED_RADIUS = 50
-    NORMALIZED_DIAMETER = 100
-    MIN_DELTA_TIME = 25.0
-    MAX_SLIDER_RADIUS = 50 * 2.4
-    ASSUMED_SLIDER_RADIUS = 50 * 1.8
+    idx: int
+    base: OsuObject
+    start_time: float
+    delta_time: float
+    adjusted_delta_time: float
+    lazy_jump_dist: float
+    min_jump_dist: float
+    min_jump_time: float
+    travel_dist: float
+    travel_time: float
+    lazy_travel_dist: float
+    lazy_travel_time: float
+    angle: Optional[float] = None
+    small_circle_bonus: float = 0.0
 
-    def __init__(
-            self,
-            hit_object,
-            last_object,
-            last_diff_obj,
-            last_last_diff_obj,
-            clock_rate,
-            idx,
-            scaling_factor
-    ):
-        self.idx = idx
-        self.base = hit_object
-        self.start_time = hit_object.start_time / clock_rate
-        self.delta_time = (hit_object.start_time - last_object.start_time) / clock_rate
-        self.adjusted_delta_time = max(self.delta_time, self.MIN_DELTA_TIME)
+    NORMALIZED_RADIUS: int = 50
+    MIN_DELTA_TIME: float = 25.0
 
-        self.lazy_jump_dist = 0.0
-        self.lazy_jump_dist = 0.0
-        self.min_jump_dist = 0.0
-        self.min_jump_time = 0.0
-        self.travel_dist = 0.0
-        self.travel_time = 0.0
-        self.lazy_end_pos = None
-        self.lazy_travel_dist = 0.0
-        self.lazy_travel_time = 0.0
-        self.angle = None
+    @classmethod
+    def new(cls,
+            current: OsuObject,
+            last: OsuObject,
+            last_diff: Optional["OsuDifficultyObject"],
+            last_last_diff: Optional["OsuDifficultyObject"],
+            clock_rate: float,
+            idx: int,
+            scaling: ScalingFactor) -> "OsuDifficultyObject":
 
-        self.small_circle_bonus = max(1.0, 1.0 + (30.0 - scaling_factor.radius) / 40.0)
-        self.compute_slider_cursor_pos(scaling_factor.radius)
-        self.set_distances(last_object, last_diff_obj, last_last_diff_obj, clock_rate, scaling_factor)
+        delta_time = (current.start_time - last.start_time) / clock_rate
+        adjusted_delta_time = max(delta_time, cls.MIN_DELTA_TIME)
 
-    def opacity_at(self, time: float, hidden: bool, time_preempt: float, time_fade_in: float) -> float:
-        if time > self.base.start_time:
-            return 0.0
+        curr_pos = current.stacked_pos * scaling.factor
+        last_pos = last.stacked_pos * scaling.factor
+        last_end_pos = (last_diff.lazy_end_pos if last_diff and last_diff.lazy_end_pos
+                        else last.stacked_pos * scaling.factor)
 
-        fade_in_start_time = self.base.start_time - time_preempt
-        fade_in_duration = time_fade_in
+        lazy_jump_dist = (curr_pos - last_end_pos).length()
+        min_jump_time = adjusted_delta_time
+        min_jump_dist = lazy_jump_dist
 
-        if hidden:
-            fade_out_start_time = self.base.start_time - time_preempt + time_fade_in
-            fade_out_duration = time_preempt * 0.3
+        small_circle_bonus = 1.0
+        if scaling.radius < 30.0:
+            small_circle_bonus += (30.0 - scaling.radius) / 40.0
 
-            fade_in_progress = clamp((time - fade_in_start_time) / fade_in_duration, 0.0, 1.0)
-            fade_out_progress = 1.0 - clamp((time - fade_out_start_time) / fade_out_duration, 0.0, 1.0)
-            return min(fade_in_progress, fade_out_progress)
+        obj = cls(
+            idx=idx,
+            base=current,
+            start_time=current.start_time / clock_rate,
+            delta_time=delta_time,
+            adjusted_delta_time=adjusted_delta_time,
+            lazy_jump_dist=lazy_jump_dist,
+            min_jump_dist=min_jump_dist,
+            min_jump_time=min_jump_time,
+            travel_dist=0.0,
+            travel_time=0.0,
+            small_circle_bonus=small_circle_bonus
+        )
 
-        return clamp((time - fade_in_start_time) / fade_in_duration, 0.0, 1.0)
+        if getattr(current.kind, "is_slider", False):
+            obj._compute_slider_cursor_pos(current, scaling.factor)
 
-    def get_doubletapness(self, next_obj, hit_window: float) -> float:
-        if next_obj is None:
-            return 0.0
+        if last_diff:
+            last_last_pos = (_get_previous_pos(idx, 1, scaling.factor))
+            if last_last_pos:
+                v1 = last_last_pos - last_pos
+                v2 = curr_pos - last_end_pos
+                dot = v1.dot(v2)
+                det = v1.x * v2.y - v1.y * v2.x
+                obj.angle = abs(math.atan2(det, dot))
 
-        if hasattr(self.base.kind, "duration") and not hasattr(self.base.kind, "path"):
-            hit_window = 0.0
+        return obj
 
-        curr_delta_time = max(1.0, self.delta_time)
-        next_delta_time = max(1.0, next_obj.delta_time)
-        delta_diff = abs(next_delta_time - curr_delta_time)
-        speed_ratio = curr_delta_time / max(curr_delta_time, delta_diff)
-        window_ratio = math.pow(min(1.0, curr_delta_time / hit_window), 2.0)
+    def _compute_slider_cursor_pos(self, slider_obj: OsuObject, factor: float):
+        self.lazy_end_pos = self.base.stacked_pos * factor
 
-        return 1.0 - math.pow(speed_ratio, 1.0 - window_ratio)
+    def get_doubletapness(self, next_obj: Optional["OsuDifficultyObject"], hit_window: float) -> float:
+        if not next_obj: return 0.0
+        delta = next_obj.delta_time
+        return reverse_lerp(delta, hit_window * 0.5, hit_window)
 
-    def set_distances(self, last_object, last_diff_obj, last_last_diff_obj, clock_rate, scaling_factor):
-        if hasattr(self.base.kind, "path"):
-            self.travel_dist = self.lazy_travel_dist * math.pow(1.0 + self.base.kind.repeat_count / 2.5, 1.0 / 2.5)
-            self.travel_time = max(self.MIN_DELTA_TIME, self.lazy_travel_time / clock_rate)
-
-        if hasattr(self.base.kind, "duration") and not hasattr(self.base.kind, "path"):
-            return
-        if hasattr(last_object.kind, "duration") and not hasattr(last_object.kind, "path"):
-            return
-
-        sf = scaling_factor.factor
-
-        if last_diff_obj is not None:
-            last_cursor_pos = self.get_end_cursor_pos(last_diff_obj)
-        else:
-            last_cursor_pos = getattr(last_object, "stacked_pos", lambda: last_object.pos)()
-
-        current_stacked_pos = getattr(self.base, "stacked_pos", lambda: self.base.pos)()
-        self.lazy_jump_dist = (current_stacked_pos * sf - last_cursor_pos * sf).length()
-        self.min_jump_time = self.adjusted_delta_time
-        self.min_jump_dist = self.lazy_jump_dist
-
-        if last_diff_obj is None:
-            return
-
-        if hasattr(last_object.kind, "path"):
-            last_travel_time = max(self.MIN_DELTA_TIME, last_diff_obj.lazy_travel_time / clock_rate)
-            self.min_jump_time = max(self.MIN_DELTA_TIME, self.adjusted_delta_time - last_travel_time)
-
-            tail_pos = getattr(last_object, "tail", lambda: last_object)()
-            tail_pos = getattr(tail_pos, "pos", tail_pos)
-
-            stack_offset = getattr(last_object, "stack_offset", None)
-            from osupp.Beatmap.utils import Pos
-            if stack_offset is None:
-                stack_offset = Pos(0.0, 0.0)
-
-            stacked_tail_pos = tail_pos + stack_offset
-            tail_jump_dist = (stacked_tail_pos - current_stacked_pos).length() * sf
-
-            diff = self.MAX_SLIDER_RADIUS - self.ASSUMED_SLIDER_RADIUS
-            min_dist = tail_jump_dist - self.MAX_SLIDER_RADIUS
-            self.min_jump_dist = max(0.0, min(self.lazy_jump_dist - diff, min_dist))
-
-        if last_last_diff_obj is None:
-            return
-
-        if not (hasattr(last_last_diff_obj.base.kind, "duration") and not hasattr(last_last_diff_obj.base.kind, "path")):
-            last_last_cursor_pos = self.get_end_cursor_pos(last_last_diff_obj)
-            v1 = last_last_cursor_pos - getattr(last_object, "stacked_pos", lambda: last_object.pos)()
-            v2 = current_stacked_pos - last_cursor_pos
-
-            dot = v1.dot(v2)
-            det = v1.x * v2.y - v1.y * v2.x
-            self.angle = abs(math.atan2(det, dot))
-
-    def compute_slider_cursor_pos(self, radius: float):
-        if not hasattr(self.base.kind, "path"):
-            return
-
-        if self.lazy_end_pos is not None:
-            return
-
-        slider = self.base.kind
-        pos = self.base.pos
-
-        from osupp.Beatmap.utils import Pos
-        stack_offset = getattr(self.base, "stack_offset", Pos(0.0, 0.0))
-        start_time = self.base.start_time
-        duration = getattr(slider, "duration", 0.0)
-
-        nested_objects = getattr(slider, "nested_objects", [])
-        tracking_end_time = max(start_time +  duration + -36.0, start_time +  duration / 2.0)
-
-        last_real_tick = None
-        idx_last = -1
-        for i, nested in enumerate(reversed(nested_objects)):
-            if hasattr(nested, "is_tick") and nested.is_tick():
-                last_real_tick = nested
-                idx_last = len(nested_objects) - 1 - i
-                break
-
-        if last_real_tick is not None and last_real_tick.start_time > tracking_end_time:
-            tracking_end_time = last_real_tick.start_time
-            if idx_last != -1:
-                nested_objects = nested_objects[:idx_last] +  nested_objects[idx_last+1:] + [nested_objects[idx_last]]
-
-        self.lazy_travel_time = tracking_end_time - start_time
-        span_count = getattr(slider, "span_count", getattr(slider, "repeat_count", 0) + 1)
-
-        if span_count > 0:
-            span_duration = duration / span_count
-            end_time_min = self.lazy_travel_time / span_duration
-            if end_time_min % 2.0 >= 1.0:
-                end_time_min = 1.0 - (end_time_min % 1.0)
-            else:
-                end_time_min %= 1.0
-        else:
-            end_time_min = 0.0
-
-        lazy_end_pos = pos + stack_offset
-        if hasattr(slider.path, "position_at"):
-            lazy_end_pos += slider.path.position_at(end_time_min)
-
-        curr_cursor_pos = pos + stack_offset
-        scaling_factor = self.NORMALIZED_RADIUS / radius
-
-        for i, curr_movement_obj in enumerate(nested_objects, 1):
-            curr_pos = getattr(curr_movement_obj, "pos", Pos(0.0, 0.0))
-            curr_movement = curr_pos + stack_offset - curr_cursor_pos
-            curr_movement_len = scaling_factor * curr_movement.length()
-            required_movement = self.ASSUMED_SLIDER_RADIUS
-
-            if i == len(nested_objects):
-                lazy_movement = lazy_end_pos - curr_cursor_pos
-                if lazy_movement.length() < curr_movement.length():
-                    curr_movement = lazy_movement
-                curr_movement_len = scaling_factor * curr_movement.length()
-            elif hasattr(curr_movement_obj, "is_repeat") and curr_movement_obj.is_repeat():
-                required_movement = self.NORMALIZED_RADIUS
-
-            if curr_movement_len > required_movement:
-                ratio = (curr_movement_len - required_movement) / curr_movement_len
-                curr_cursor_pos += curr_movement * ratio
-                curr_movement_len *= ratio
-                self.lazy_travel_dist += curr_movement_len
-
-            if i == len(nested_objects):
-                lazy_end_pos = curr_cursor_pos
-
-    @staticmethod
-    def get_end_cursor_pos(hit_objects) -> Any:
-        if hit_objects.lazy_end_pos is not None:
-            return hit_objects.lazy_end_pos
-        return getattr(hit_objects.base, "stacked_pos", lambda: hit_objects.base.pos)()
+def _get_previous_pos(idx: int, steps: int, diff_objects: list[OsuDifficultyObject]) -> Optional[Any]:
+    pos_idx = idx - 1 - steps
+    if pos_idx >= 0:
+        return diff_objects[pos_idx].base.stacked_pos
+    return None
 
 
 class OsuRatingCalculator:
-    DIFFICULTY_MULTIPLIER = 0.0675
+    __slots__ = ("mods", "total_hits", "approach_rate", "overall_difficulty", "mech_diff_rating", "slider_factor")
 
-    def __init__(self, mods: GameMods, total_hits: int, approach_rate: float, overall_difficulty: float, mechanical_difficulty_rating: float, slider_factor: float):
+    def __init__(self, mods: GameMods, total_hits: int, ar: float, od: float, mech_diff: float, slider_factor: float):
         self.mods = mods
         self.total_hits = total_hits
-        self.approach_rate = approach_rate
-        self.overall_difficulty = overall_difficulty
-        self.mechanical_difficulty_rating = mechanical_difficulty_rating
+        self.approach_rate = ar
+        self.overall_difficulty = od
+        self.mech_diff_rating = mech_diff
         self.slider_factor = slider_factor
 
-    def compute_aim_rating(self, aim_difficulty_value: float) -> float:
-        if self.mods.contains_acronym("AP"):
+    def compute_aim_rating(self, aim_diff_value: float) -> float:
+        if self.mods.ap:
             return 0.0
 
-        aim_rating = self.calculate_difficulty_rating(aim_difficulty_value)
+        aim_rating = aim_diff_value ** 0.5 * DIFFICULTY_MULTIPLIER
 
-        if self.mods.contains_acronym("TD"):
-            aim_rating = math.pow(aim_rating, 0.8)
+        if self.mods.td:
+            aim_rating = aim_rating ** 0.8
 
-        if self.mods.contains_acronym("RX"):
-            aim_rating *= 0.9
+        reading_bonus = self._calculate_reading_bonus(self.approach_rate)
+        return aim_rating * (1.0 + reading_bonus)
 
-        magnetised_strength = self.get_mod_setting("MG", "attraction_strength")
-        if magnetised_strength is not None:
-            aim_rating += 1.0 - magnetised_strength
-
-        rating_multiplier = 1.0
-        ar_length_bonus = 0.95 + 0.4 * min(self.total_hits / 2000.0, 1.0)
-
-        if self.total_hits > 2000:
-            ar_length_bonus += math.log10(self.total_hits / 2000.0) * 0.5
-
-        ar_factor = 0.0
-        if self.mods.contains_acronym("RX"):
-            ar_factor = 0.0
-        elif self.approach_rate > 10.33:
-            ar_factor = 0.3 * (self.approach_rate - 10.33)
-        elif self.approach_rate < 8.0:
-            ar_factor = 0.05 * (8.0 - self.approach_rate)
-
-        rating_multiplier += ar_factor * ar_length_bonus
-
-        if self.mods.contains_acronym("HD"):
-            visibility_factor = self.calculate_aim_visibility_factor(self.mechanical_difficulty_rating, self.approach_rate)
-            rating_multiplier += self.calculate_visibility_bonus(self.approach_rate, visibility_factor, self.slider_factor)
-
-        rating_multiplier *= 0.98 + math.pow(max(0.0, self.overall_difficulty), 2.0) / 2500.0
-
-        return aim_rating * math.pow(rating_multiplier, 1.0/3.0)
-
-    def compute_speed_rating(self, speed_difficulty_value: float) -> float:
-        if self.mods.contains_acronym("RX"):
+    def compute_speed_rating(self, speed_diff_value: float) -> float:
+        if self.mods.rx:
             return 0.0
 
-        speed_rating = self.calculate_difficulty_rating(speed_difficulty_value)
+        speed_rating = speed_diff_value ** 0.5 * DIFFICULTY_MULTIPLIER
+        reading_bonus = self._calculate_reading_bonus(self.approach_rate)
+        return speed_rating * (1.0 + reading_bonus)
 
-        if self.mods.contains_acronym("AP"):
-            speed_rating += 0.5
-
-        magnetised_strength = self.get_mod_setting("MG", "attraction_strength")
-        if magnetised_strength is not None:
-            speed_rating += 1.0 - magnetised_strength * 0.3
-
-        rating_multiplier = 1.0
-        ar_length_bonus = 0.95 + 0.4 * min(self.total_hits / 2000.0, 1.0)
-        if self.total_hits > 2000:
-            ar_length_bonus += math.log10(self.total_hits / 2000.0) * 0.5
-
-        ar_factor = 0.0
-        if not self.mods.contains_acronym("AP") and self.approach_rate < 10.33:
-            ar_factor = 0.3 * (self.approach_rate - 10.33)
-
-        rating_multiplier += ar_factor * ar_length_bonus
-
-        if self.mods.contains_acronym("HD"):
-            visibility_factor = self.calculate_speed_visibility_factor(self.mechanical_difficulty_rating, self.approach_rate)
-            rating_multiplier += self.calculate_visibility_bonus(self.approach_rate, visibility_factor, None)
-
-        rating_multiplier += 0.95 + math.pow(max(0.0, self.overall_difficulty), 2.0) / 750.0
-
-        return speed_rating * math.pow(rating_multiplier, 1.0/3.0)
-
-    def compute_flashlight_rating(self, flashlight_difficulty_value: float) -> float:
-        if not self.mods.contains_acronym("FL"):
+    def compute_flashlight_rating(self, fl_diff_value: float) -> float:
+        if not self.mods.fl:
             return 0.0
+        return fl_diff_value ** 0.5 * DIFFICULTY_MULTIPLIER
 
-        flashlight_rating = self.calculate_difficulty_rating(flashlight_difficulty_value)
-
-        if self.mods.contains_acronym("TD"):
-            flashlight_rating = math.pow(flashlight_rating, 0.8)
-
-        if self.mods.contains_acronym("RX"):
-            flashlight_rating *= 0.7
-        elif self.mods.contains_acronym("AP"):
-            flashlight_rating *= 0.4
-
-        magnetised_strength = self.get_mod_setting("MG", "attraction_strength")
-        if magnetised_strength is not None:
-            flashlight_rating *= 1.0 - magnetised_strength
-
-        deflate_scale = self.get_mod_setting("DF", "start_scale")
-        if deflate_scale is not None:
-            flashlight_rating += clamp(reverse_lerp(deflate_scale, 11.0, 1.0), 0.1, 1.0)
-
-        rating_multiplier = 1.0
-        rating_multiplier += 0.7 + 0.1 * min(self.total_hits / 200.0, 1.0)
-
-        if self.total_hits > 200:
-            rating_multiplier += 2.0 * min(max(0, self.total_hits - 200) / 200.0, 1.0)
-
-        rating_multiplier += 0.98 + math.pow(max(0.0, self.overall_difficulty), 2.0) / 2500.0
-
-        return flashlight_rating * math.sqrt(rating_multiplier)
-
-    def calculate_visibility_bonus(self, approach_rate: float, visibility_factor: float | None, slider_factor: float | None) -> float:
-        is_always_partially_visible = self.get_mod_setting("HD", "only_fade_approach_circles") or self.mods.contains_acronym("TC")
-
-        reading_bonus = 0.04 * (12.0 - max(approach_rate, 7.0))
-        reading_bonus *= (visibility_factor if visibility_factor is not None else 1.0)
-
-        slider_visibility_factor = math.pow(slider_factor if slider_factor is not None else 1.0, 3.0)
-
-        if approach_rate < 7.0:
-            factor = 0.03 if is_always_partially_visible else 0.045
-            reading_bonus += factor * (1.0 - math.pow(1.5, approach_rate)) * slider_visibility_factor
-
-        if approach_rate < 0.0:
-            factor = 0.075 if is_always_partially_visible else 0.1
-            reading_bonus += factor * (1.0 - math.pow(1.5, approach_rate)) * slider_visibility_factor
-
+    def _calculate_reading_bonus(self, ar: float) -> float:
+        reading_bonus = 0.0
+        if ar > 10.33:
+            reading_bonus += 0.075 * (ar - 10.33)
+        elif ar < 8.0:
+            reading_bonus += 0.1225 + (8.0 - ar)
         return reading_bonus
 
-    @classmethod
-    def calculate_difficulty_rating(cls, difficulty_value: float) -> float:
-        return math.sqrt(difficulty_value) * cls.DIFFICULTY_MULTIPLIER
+    @staticmethod
+    def calculate_difficulty_rating(val: float) -> float:
+        return math.sqrt(val) * DIFFICULTY_MULTIPLIER
 
-    def calculate_aim_visibility_factor(self, mechanical_difficulty_rating: float, approach_rate: float) -> float:
-        AR_FACTOR_END_POINT = 11.5
-        mechanical_difficulty_factor = reverse_lerp(mechanical_difficulty_rating, 5.0, 10.0)
-        ar_factor_starting_point = lerp(9.0, 10.33, mechanical_difficulty_factor)
-        return reverse_lerp(approach_rate, AR_FACTOR_END_POINT, ar_factor_starting_point)
 
-    def calculate_speed_visibility_factor(self, mechanical_difficulty_rating: float, approach_rate: float) -> float:
-        AR_FACTOR_END_POINT = 11.5
-        mechanical_difficulty_factor = reverse_lerp(mechanical_difficulty_rating, 5.0, 10.0)
-        ar_factor_starting_point = lerp(10.0, 10.33, mechanical_difficulty_factor)
-        return reverse_lerp(approach_rate, AR_FACTOR_END_POINT, ar_factor_starting_point)
+def calculate_star_rating(base_performance: float) -> float:
+    if base_performance <= 0.00001:
+        return 0.0
+    return (PERFORMANCE_BASE_MULTIPLIER ** (1/3)) * STAR_RATING_MULTIPLIER * (((100000.0 / (2.0 ** (1.0/1.1)) * base_performance) ** (1/3)) + 4.0)
 
-    def get_mod_setting(self, acronym: str, setting_name: str) -> float | None:
-        mod = self.mods.get(acronym)
-        if mod and hasattr(mod.innerm, setting_name):
-            val = getattr(mod.inner, setting_name)
-            if val is not None:
-                if isinstance(val, bool):
-                    return val
-                return float(val)
-        return None
+
+def calculate_mechanical_difficulty_rating(aim_val: float, speed_val: float) -> float:
+    aim_perf = (OsuRatingCalculator.calculate_difficulty_rating(aim_val) * 1.12) ** 3.0
+    speed_perf = (OsuRatingCalculator.calculate_difficulty_rating(speed_val) * 1.12) ** 3.0
+    total_perf = (aim_perf ** 1.1 + speed_perf ** 1.1) ** (1.0 / 1.1)
+    return calculate_star_rating(total_perf)
+
+
+def calculate_difficulty(difficulty_config: Difficulty, map_data: Beatmap) -> OsuDifficultyAttributes:
+    from .skills import OsuSkills
+
+    mods = difficulty_config._mods
+    clock_rate = difficulty_config.get_clock_rate()
+
+    cs_value = map_data.circle_size
+    od_value = map_data.overall_difficulty
+
+    scaling = ScalingFactor.new(cs_value)
+    osu_objects = convert_objects(map_data, mods.reflection())
+
+    hit_windows = map_data.difficulty.get_hit_windows() if hasattr(map_data, "difficulty") else None
+    great_window = (80.0 - 6.0 * od_value) / clock_rate
+
+    skills = OsuSkills.new(mods, scaling, great_window, 1200.0 / clock_rate)
+    diff_objects = []
+
+    n_circles = 0
+    n_sliders = 0
+    n_spinners = 0
+
+    for i, current in enumerate(osu_objects):
+        if getattr(current.kind, "is_circle", False): n_circles += 1
+        elif getattr(current.kind, "is_slider", False): n_sliders += 1
+        elif getattr(current.kind, "is_spinner", False): n_spinners += 1
+
+        last = osu_objects[i-1] if i > 0 else None
+        last_diff = diff_objects[i-1] if i > 0 else None
+
+        diff_obj = OsuDifficultyObject.new(current, last, last_diff, clock_rate, i, scaling)
+
+        if last_diff and i >= 2:
+            last_last_pos = _get_previous_pos(i, 1, diff_objects)
+            if last_last_pos:
+                last_last_pos_scaled = last_last_pos * scaling.factor
+                last_pos_scaled = last.stacked_pos * scaling.factor
+                curr_pos_scaled = current.stacked_pos * scaling.factor
+                last_end_pos = last_diff.lazy_end_pos if last_diff.lazy_end_pos else last_pos_scaled
+
+                v1 = last_last_pos_scaled - last_pos_scaled
+                v2 = curr_pos_scaled - last_end_pos
+                dot = v1.dot(v2)
+                det = v1.x * v2.y - v1.y * v2.x
+                diff_obj.angle = abs(math.atan2(det, dot))
+
+        diff_objects.appead(diff_obj)
+        skills.process(diff_obj, diff_objects)
+
+    aim_rating = OsuRatingCalculator.calculate_difficulty_rating(skills.aim.difficulty_value())
+    speed_rating = OsuRatingCalculator.calculate_difficulty_rating(skills.speed.difficulty_value())
+    flashlight_rating = OsuRatingCalculator.calculate_difficulty_rating(skills.flashlight.difficulty_value())
+
+    stars = calculate_mechanical_difficulty_rating(skills.aim.difficulty_value(), skills.speed.difficulty_value())
+
+    from ..legacy_score_simulator import OsuLegacyScoreSimulator
+    legacy_simulator = OsuLegacyScoreSimulator(osu_objects, map_data, len(osu_objects))
+    legacy_attrs = legacy_simulator.simulate()
+
+    legacy_score_base_multiplier = legacy_attrs.bonus_score_ratio
+    maximum_legacy_combo_score = float(legacy_attrs.combo_score + legacy_attrs.accuracy_score + legacy_attrs.bonus_score)
+
+    return OsuDifficultyAttributes(
+        aim=aim_rating,
+        speed=speed_rating,
+        flashlight=flashlight_rating,
+        stars=stars,
+        max_combo=len(osu_objects),
+        clock_rate=clock_rate,
+        n_circles=n_circles,
+        n_sliders=n_sliders,
+        n_spinners=n_spinners,
+        od=od_value,
+        cs=cs_value,
+        legacy_score_base_multiplier=legacy_score_base_multiplier,
+        maximum_legacy_combo_score=maximum_legacy_combo_score
+    )
+
+class OsuGradualDifficulty(Iterator[OsuDifficultyAttributes]):
+    __slots__ = ("difficulty", "map_data", "idx", "osu_objects", "skills", "scaling_factor")
+
+    def __init__(self, difficulty: Difficulty, map_data: Beatmap):
+        self.difficulty = difficulty
+        self.map_data = map_data
+        self.idx = 0
+        self.scaling = ScalingFactor.new(map_data.circle_size)
+        self.osu_objects = convert_objects(map_data, difficulty._mods.reflection())
+        self.diff_objects = []
+        self.skills = OsuSkills.new(difficulty._mods, self.scaling, 50.0, 600.0)
+
+    def __next__(self) -> OsuDifficultyAttributes:
+        if self.idx >= len(self.osu_objects):
+            raise StopIteration
+
+        current = self.osu_objects[self.idx]
+        last = self.osu_objects[self.idx-1] if self.idx > 0 else current
+        last_diff = self.diff_objects[self.idx-1] if self.idx > 0 else None
+
+        diff_obj = OsuDifficultyObject.new(current, last, last_diff, self.difficulty.get_clock_rate(), self.idx, self.scaling)
+        self.diff_objects.append(diff_obj)
+        self.skills.process(diff_obj, self.diff_objects)
+
+        self.idx += 1
+        return calculate_difficulty(self.difficulty, self.map_data)

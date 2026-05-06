@@ -1,19 +1,47 @@
-import math
+from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Any, TYPE_CHECKING
+import math
+import copy
 
-from osupp.Beatmap.beatmap import Beatmap
 from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.utils import Pos
-from osupp.Mods.game_mods import GameMods
+from ..model.model import GameMods, HitObject as GenericHitObjects, Reflection, ConvertError
+from ..any.any import ScoreState, HitResult, DifficultyAttributes, PerformanceAttributes
 
-from ..any.any import CalculateError
-from ..any.difficulty import Difficulty
-from ..model.model import ConvertError
+if TYPE_CHECKING:
+    from ..model.beatmap.beatmap import Beatmap
 
 
-@dataclass
+PLAYFIELD_BASE_SIZE = Pos(512.0, 384.0)
+
+
+class OsuScoreOrigin(Enum):
+    STABLE = 0
+    WITH_SLIDER_ACC = 1
+    WITHOUT_SLIDER_ACC = 2
+
+
+@dataclass(slots=True)
+class OsuHitResults:
+    n300: int = 0
+    n100: int = 0
+    n50: int = 0
+    misses: int = 0
+    large_tick_hits: int = 0
+    small_tick_hits: int = 0
+    slider_end_hits: int = 0
+
+
+@dataclass(slots=True)
+class OsuScoreState:
+    max_combo: int = 0
+    hitresults: OsuHitResults = field(default_factory=OsuHitResults)
+    legacy_total_score: int | None = None
+
+
+@dataclass(slots=True)
 class OsuDifficultyAttributes:
     aim: float = 0.0
     aim_difficult_slider_count: float = 0.0
@@ -28,132 +56,85 @@ class OsuDifficultyAttributes:
     nested_score_per_object: float = 0.0
     legacy_score_base_multiplier: float = 0.0
     maximum_legacy_combo_score: float = 0.0
+    max_combo: int = 0
     ar: float = 0.0
-    great_hit_window: float = 0.0
-    ok_hit_window: float = 0.0
-    meh_hit_window: float = 0.0
+    cs: float = 0.0
     hp: float = 0.0
+    od: float = 0.0
+    clock_rate: float = 1.0
+    stars: float = 0.0
     n_circles: int = 0
     n_sliders: int = 0
-    n_large_ticks: int = 0
     n_spinners: int = 0
-    stars: float = 0.0
-    max_combo: int = 0
-
-    def max_combo_val(self) -> int:
-        return self.max_combo
-
-    def n_objects(self) -> int:
-        return self.n_circles + self.n_sliders + self.n_spinners
-
-    def od(self) -> float:
-        return (80.0 - self.great_hit_window) / 6.0
-
-    def performance(self):
-        from .performance import OsuPerformance
-        return OsuPerformance()
 
 
-@dataclass
+@dataclass(slots=True)
 class OsuPerformanceAttributes:
-    difficulty: OsuDifficultyAttributes = field(default_factory=OsuDifficultyAttributes)
+    difficulty: OsuDifficultyAttributes
     pp: float = 0.0
     pp_acc: float = 0.0
     pp_aim: float = 0.0
     pp_flashlight: float = 0.0
     pp_speed: float = 0.0
     effective_miss_count: float = 0.0
-    speed_deviation: float | None = None
-    combo_based_estimated_miss_count: float = 0.0
-    score_based_estimated_miss_count: float | None = None
-    aim_estimated_slider_breaks: float = 0.0
-    speed_estimated_slider_breaks: float = 0.0
-
-    def stars(self) -> float:
-        return self.difficulty.stars
-
-    def pp_val(self) -> float:
-        return self.pp
-
-    def max_combo(self) -> int:
-        return self.difficulty.max_combo
-
-    def n_objects(self) -> int:
-        return self.difficulty.n_objects()
-
-    def performance(self):
-        from .performance import OsuPerformance
-        return OsuPerformance(self.difficulty)
 
 
-class OsuScoreOrigin(Enum):
-    Stable = 0
-    WithSliderAcc = 1
-    WithoutSliderAcc = 2
-
-    def tick_scores(
-            self,
-            large_tick_hits: int,
-            small_tick_hits: int,
-            slider_end_hits: int,
-            max_large_ticks: int = 0,
-            max_slider_ends: int = 0,
-            max_small_ticks: int = 0
-    ) -> tuple[int, int]:
-        if self == OsuScoreOrigin.Stable:
-            return (0, 0)
-        elif self == OsuScoreOrigin.WithSliderAcc:
-            return (
-                150 * slider_end_hits + 30 * large_tick_hits,
-                150 * max_slider_ends + 30 * max_large_ticks
-            )
-        elif self == OsuScoreOrigin.WithoutSliderAcc:
-            return (
-                30 * large_tick_hits + 10 * small_tick_hits,
-                30 * max_large_ticks + 10 * max_small_ticks
-            )
-        return (0, 0)
+class NestedSliderObjectKind(Enum):
+    TICK = 0
+    REPEAT = 1
+    TAIL = 2
 
 
-@dataclass
-class OsuHitResults:
-    large_tick_hits: int = 0
-    small_tick_hits: int = 0
-    slider_end_hits: int = 0
-    n300: int = 0
-    n100: int = 0
-    n50: int = 0
-    misses: int = 0
+@dataclass(slots=True)
+class NestedSliderObject:
+    pos: Pos
+    start_time: float
+    kind: NestedSliderObjectKind
 
-    def total_hits(self) -> int:
-        return self.n300 + self.n100 + self.n50 + self.misses
 
-    def accuracy(self, origin: OsuScoreOrigin, max_large_ticks: int = 0, max_sliders_ends: int = 0, max_small_ticks: int = 0) -> float:
-        numerator = float(6 * self.n300 + 2 * self.n100 + self.n50)
-        denominator = float(6 * self.total_hits())
+@dataclass(slots=True)
+class OsuObject:
+    pos: Pos
+    start_time: float
+    stack_height: int = 0
+    stack_offset: Pos = field(default_factory=lambda: Pos(0, 0))
+    kind: Any = None
 
-        if origin == OsuScoreOrigin.Stable:
-            pass
-        elif origin == OsuScoreOrigin.WithSliderAcc:
-            slider_end_hits = min(self.slider_end_hits, max_sliders_ends)
-            large_tick_hits = min(self.large_tick_hits, max_large_ticks)
-            numerator += float(3 * slider_end_hits) + 0.6 * float(large_tick_hits)
-            denominator += float(3 * max_sliders_ends) + 0.6 * float(max_large_ticks)
-        elif origin == OsuScoreOrigin.WithoutSliderAcc:
-            large_tick_hits = min(self.large_tick_hits, max_large_ticks)
-            small_tick_hits = min(self.small_tick_hits, max_small_ticks)
-            numerator += 0.6 * float(large_tick_hits) + 0.2 * float(small_tick_hits)
-            denominator += 0.6 * float(max_large_ticks) + 0.2 * float(max_small_ticks)
+    @property
+    def stacked_pos(self) -> Pos:
+        return self.pos + self.stack_offset
 
-        if denominator == 0.0:
+
+@dataclass(slots=True)
+class OsuStrains:
+    aim: list[float] = field(default_factory=list)
+    aim_no_sliders: list[float] = field(default_factory=list)
+    speed: list[float] = field(default_factory=list)
+    flashlight: list[float] = field(default_factory=list)
+
+
+class OsuLegacyScoreMissCalculator:
+    def __init__(self, state: OsuScoreState, acc: float, mods: GameMods, attrs: OsuDifficultyAttributes):
+        self.state = state
+        self.acc = acc
+        self.mods = mods
+        self.attrs = attrs
+
+    def calculate(self) -> float:
+        if self.attrs.max_combo == 0 or self.state.legacy_total_score is None:
             return 0.0
-        return numerator / denominator
+        return float(self.state.hitresults.misses)
 
 
-@dataclass
-class OsuScoreState:
-    max_combo: int = 0
-    hitresults: OsuHitResults = field(default_factory=OsuHitResults)
-    legacy_total_score: int | None = None
+def prepare_map(difficulty: Any, map_data: Beatmap) -> Beatmap:
+    if map_data.mode != GameMode.Osu:
+        pass
+    return map_data
 
-# TO BE CONTINUED
+
+def convert_objects(map_data: Beatmap, reflection: Reflection) -> list[OsuObject]:
+    osu_objects = []
+    for h in map_data.hit_objects:
+        obj = OsuObject(pos=h.pos, start_time=h.start_time, kind=h.kind)
+        osu_objects.append(obj)
+    return osu_objects

@@ -1,17 +1,21 @@
 import math
+from typing import TypeVar, Any
 from collections.abc import Callable
-from typing import Any, List, TypeVar
+
 
 T = TypeVar("T")
 Comparer = Callable[[T, T], int]
+
 
 def swap(keys: list[T], i: int, j: int) -> None:
     if i != j:
         keys[i], keys[j] = keys[j], keys[i]
 
+
 def swap_if_greater(keys: list[T], comparer: Comparer, a: int, b: int) -> None:
     if a != b and comparer(keys[a], keys[b]) > 0:
         keys[a], keys[b] = keys[b], keys[a]
+
 
 def down_heap(keys: list[T], i: int, n: int, lo: int, comparer: Comparer) -> None:
     while i <= n // 2:
@@ -24,6 +28,7 @@ def down_heap(keys: list[T], i: int, n: int, lo: int, comparer: Comparer) -> Non
         swap(keys, lo + i - 1, lo + child - 1)
         i = child
 
+
 def heap_sort(keys: list[T], lo: int, hi: int, comparer: Comparer) -> None:
     n = hi - lo + 1
     for i in range(n // 2, 0, -1):
@@ -32,13 +37,16 @@ def heap_sort(keys: list[T], lo: int, hi: int, comparer: Comparer) -> None:
         swap(keys, lo, lo + i - 1)
         down_heap(keys, 1, i - 1, lo, comparer)
 
+
 def csharp_sort(keys: list[T], comparer: Comparer) -> None:
     _introspective_sort(keys, 0, len(keys), comparer)
+
 
 def _introspective_sort(keys: list[T], left: int, length: int, comparer: Comparer) -> None:
     if length >= 2:
         depth_limit = 2 * int(math.log2(len(keys))) if len(keys) > 0 else 0
         _intro_sort(keys, left, length + left - 1, depth_limit, comparer)
+
 
 def _intro_sort(keys: list[T], lo: int, hi: int, depth_limit: int, comparer: Comparer) -> None:
     INTRO_SORT_SIZE_THRESHOLD = 16
@@ -68,6 +76,7 @@ def _intro_sort(keys: list[T], lo: int, hi: int, depth_limit: int, comparer: Com
         _intro_sort(keys, p + 1, hi, depth_limit, comparer)
         hi = p - 1
 
+
 def _pick_pivot_and_partition(keys: list[T], lo: int, hi: int, comparer: Comparer) -> int:
     mid = lo + (hi - lo) // 2
     swap_if_greater(keys, comparer, lo, mid)
@@ -96,6 +105,7 @@ def _pick_pivot_and_partition(keys: list[T], lo: int, hi: int, comparer: Compare
     swap(keys, left, hi - 1)
     return left
 
+
 def _insertion_sort(keys: list[T], lo: int, hi: int, comparer: Comparer) -> None:
     for i in range(lo, hi):
         t = keys[i + 1]
@@ -110,12 +120,15 @@ def _insertion_sort(keys: list[T], lo: int, hi: int, comparer: Comparer) -> None
         if shift > 0:
             keys.insert(i + 1 - shift, keys.pop(i + 1))
 
+
 QUICK_SORT_DEPTH_THRESHOLD = 32
+
 
 def osu_legacy_sort(keys: list[T], comparer: Comparer) -> None:
     if len(keys) < 2:
         return
     _depth_limited_quick_sort(keys, 0, len(keys) - 1, comparer, QUICK_SORT_DEPTH_THRESHOLD)
+
 
 def _depth_limited_quick_sort(keys: list[T], left: int, right: int, comparer: Comparer, depth_limit: int) -> None:
     while True:
@@ -161,6 +174,7 @@ def _depth_limited_quick_sort(keys: list[T], left: int, right: int, comparer: Co
 
             if left >= right:
                 break
+
 
 class TandemSorter:
     __slots__ = ("indices", "should_reset")

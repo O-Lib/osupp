@@ -5,11 +5,11 @@ class DotNetRandom:
     INT_MIN = -2147483648
 
     def __init__(self, seed: int):
-        self._seed_array = [0] * 56
+        self._seed_array: list[int] = [0] * 56
         self._initialize(seed)
 
     def _initialize(self, seed: int) -> None:
-        substraction = self.INT_MAX if seed == self.INT_MIN else abs(seed)
+        subtraction = self.INT_MAX if seed == self.INT_MIN else abs(seed)
         mj = 161803398 - subtraction
         self._seed_array[55] = mj
         mk = 1
@@ -17,14 +17,14 @@ class DotNetRandom:
 
         for _ in range(1, 55):
             ii += 21
-            if ii >= 55:
+            if ii > 55:
                 ii -= 55
 
-            self._seed_array[ii] = mk
-            mk = mj - mk
-            if mk < 0:
-                mj += self.INT_MAX
-            mj = self._seed_array[ii]
+                self._seed_array[ii] = mk
+                mk = mj - mk
+                if mk < 0:
+                    mj += self.INT_MAX
+                mj = self._seed_array[ii]
 
         for _ in range(1, 5):
             for i in range(1, 56):
@@ -39,7 +39,7 @@ class DotNetRandom:
                     self._seed_array[i] += self.INT_MAX
 
         self._inext = 0
-        self._inextp = 21
+        self._inextp= 21
 
     def _internal_sample(self) -> int:
         loc_inext = self._inext + 1
