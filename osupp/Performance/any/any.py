@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Protocol
 
 from osupp.Beatmap.section.enums import GameMode
+
 from ..model.beatmap.beatmap import TooSuspiciousError
 from ..model.model import ConvertError
 

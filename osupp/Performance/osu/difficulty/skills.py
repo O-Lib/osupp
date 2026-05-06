@@ -1,10 +1,15 @@
 import math
 from dataclasses import dataclass, field
 
-from ...utils.utils import lerp
 from ...model.model import GameMods
+from ...utils.utils import lerp
 from .difficulty import OsuDifficultyObject, ScalingFactor
-from .evaluators import AimEvaluator, SpeedEvaluator, RhythmEvaluator, FlashlightEvaluator
+from .evaluators import (
+    AimEvaluator,
+    FlashlightEvaluator,
+    RhythmEvaluator,
+    SpeedEvaluator,
+)
 
 
 def calculate_difficulty_value(

@@ -1,7 +1,6 @@
 import math
-from typing import TypeVar, Any
 from collections.abc import Callable
-
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 Comparer = Callable[[T, T], int]

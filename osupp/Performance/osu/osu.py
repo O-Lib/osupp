@@ -1,14 +1,17 @@
 from __future__ import annotations
+
+import copy
+import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, TYPE_CHECKING
-import math
-import copy
+from typing import TYPE_CHECKING, Any
 
 from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.utils import Pos
-from ..model.model import GameMods, HitObject as GenericHitObjects, Reflection, ConvertError
-from ..any.any import ScoreState, HitResult, DifficultyAttributes, PerformanceAttributes
+
+from ..any.any import DifficultyAttributes, HitResult, PerformanceAttributes, ScoreState
+from ..model.model import ConvertError, GameMods, Reflection
+from ..model.model import HitObject as GenericHitObjects
 
 if TYPE_CHECKING:
     from ..model.beatmap.beatmap import Beatmap

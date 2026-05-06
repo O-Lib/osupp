@@ -1,10 +1,10 @@
 import math
 from dataclasses import dataclass
-from typing import Protocol, TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
-from osupp.Mods.game_mods import GameMods
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.beatmap import Beatmap
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Mods.game_mods import GameMods
 
 from ..model.beatmap.attributes import BeatmapAttribute, BeatmapDifficulty
 from .any import DifficultyAttributes
@@ -160,7 +160,9 @@ class Difficulty:
     def calculate(self, map_data: Beatmap) -> DifficultyAttributes:
         match map_data.mode:
             case GameMode.Osu:
-                from ..osu.difficulty.difficulty import difficulty as calc_osu_difficulty
+                from ..osu.difficulty.difficulty import (
+                    difficulty as calc_osu_difficulty,
+                )
                 return calc_osu_difficulty(self, map_data)
             case GameMode.Taiko:
                 raise NotImplementedError("Taiko calculator to be implemented.")

@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
 from collections import Counter
+from dataclasses import dataclass, field
 from enum import Enum
 
 from osupp.Beatmap.section.enums import GameMode
@@ -7,6 +7,7 @@ from osupp.Beatmap.section.events import BreakPeriod
 from osupp.Beatmap.section.timing_points import ControlPoints
 
 from ..model import GameMods, HitObject
+
 
 class TooSuspiciousError(Exception):
     def __init__(self, reason: str):
