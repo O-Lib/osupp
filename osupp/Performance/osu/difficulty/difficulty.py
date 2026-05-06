@@ -1,15 +1,14 @@
 import math
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
-from collections.abc import Iterator
+from typing import Optional, Iterator, List, Any
 
-from ...any.any import DifficultyAttributes
-from ...any.difficulty import Difficulty
-from ...model.beatmap.beatmap import Beatmap
+from ...utils.utils import reverse_lerp, clamp, almost_eq
 from ...model.model import GameMods
-from ...utils.utils import almost_eq, clamp, reverse_lerp
+from ...model.beatmap.beatmap import Beatmap
+from ...any.difficulty import Difficulty
+from ...any.any import DifficultyAttributes
 from ..osu import OsuDifficultyAttributes, OsuObject, convert_objects
-from .skills import OsuSkills
+
 
 STAR_RATING_MULTIPLIER = 0.0265
 DIFFICULTY_MULTIPLIER = 0.0675
@@ -45,7 +44,7 @@ class OsuDifficultyObject:
     travel_time: float
     lazy_travel_dist: float
     lazy_travel_time: float
-    angle: float | None = None
+    angle: Optional[float] = None
     small_circle_bonus: float = 0.0
 
     NORMALIZED_RADIUS: int = 50
@@ -113,7 +112,7 @@ class OsuDifficultyObject:
         delta = next_obj.delta_time
         return reverse_lerp(delta, hit_window * 0.5, hit_window)
 
-def _get_previous_pos(idx: int, steps: int, diff_objects: list[OsuDifficultyObject]) -> Any | None:
+def _get_previous_pos(idx: int, steps: int, diff_objects: list[OsuDifficultyObject]) -> Optional[Any]:
     pos_idx = idx - 1 - steps
     if pos_idx >= 0:
         return diff_objects[pos_idx].base.stacked_pos
@@ -188,11 +187,11 @@ def calculate_difficulty(difficulty_config: Difficulty, map_data: Beatmap) -> Os
     mods = difficulty_config._mods
     clock_rate = difficulty_config.get_clock_rate()
 
-    cs_value = map_data.circle_size
-    od_value = map_data.overall_difficulty
+    cs_value = map_data.cs
+    od_value = map_data.od
 
     scaling = ScalingFactor.new(cs_value)
-    osu_objects = convert_objects(map_data, mods.reflection())
+    osu_objects = convert_objects(map_data, False)
 
     hit_windows = map_data.difficulty.get_hit_windows() if hasattr(map_data, "difficulty") else None
     great_window = (80.0 - 6.0 * od_value) / clock_rate

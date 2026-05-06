@@ -1,5 +1,5 @@
-from collections import Counter
 from dataclasses import dataclass, field
+from collections import Counter
 from enum import Enum
 
 from osupp.Beatmap.section.enums import GameMode
@@ -7,7 +7,6 @@ from osupp.Beatmap.section.events import BreakPeriod
 from osupp.Beatmap.section.timing_points import ControlPoints
 
 from ..model import GameMods, HitObject
-
 
 class TooSuspiciousError(Exception):
     def __init__(self, reason: str):
@@ -58,8 +57,7 @@ class Beatmap:
         return 60000.0 / most_comum_beat_len if most_comum_beat_len != 0 else 0.0
 
     def check_suspicion(self) -> None:
-        obj_count = len(self.hit_objects
-                        )
+        obj_count = len(self.hit_objects)
         if obj_count > 25000:
             raise TooSuspiciousError("Object count exceeds limit (25,000)")
 

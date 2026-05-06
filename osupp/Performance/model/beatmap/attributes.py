@@ -1,11 +1,8 @@
-import math
 from dataclasses import dataclass, field
 from enum import Enum
-
+import math
 from osupp.Beatmap.section.enums import GameMode
-
 from ..model import GameMods
-
 
 class AttributesType(Enum):
     NONE = 0

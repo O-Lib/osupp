@@ -1,13 +1,13 @@
-from typing import TYPE_CHECKING
-from collections.abc import Callable
+import math
+from typing import Callable, TYPE_CHECKING
 
-from osupp.Beatmap.beatmap import Beatmap
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Mods.game_mods import GameMods
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Beatmap.beatmap import Beatmap
 
-from ..model.beatmap.beatmap import TooSuspiciousError
-from .any import CalculateError, HitResultPriority, PerformanceAttributes, ScoreState
+from .any import ScoreState, HitResultPriority, PerformanceAttributes, CalculateError
 from .difficulty import Difficulty
+from ..model.beatmap.beatmap import TooSuspiciousError
 
 
 def _get_mode(obj) -> GameMode:
@@ -72,137 +72,111 @@ class Performance:
         return self
 
     def mods(self, mods: GameMods) -> "Performance":
-        if hasattr(self._inner, "mods"):
-            self._inner = self._inner.mods(mods)
-        return self
+        return self._apply_single("mods", mods)
 
     def difficulty(self, diff: Difficulty) -> "Performance":
-        if hasattr(self._inner, "difficulty"):
-            self._inner = self._inner.difficulty(diff)
-        return self
+        return self._apply_single("difficulty", diff)
 
     def passed_objects(self, passed_objects: int) -> "Performance":
-        if hasattr(self._inner, "passed_objects"):
-            self._inner = self._inner.passed_objects(passed_objects)
-        return self
+        return self._apply_single("passed_objects", passed_objects)
 
     def clock_rate(self, clock_rate: float) -> "Performance":
-        if hasattr(self._inner, "clock_rate"):
-            self._inner = self._inner.clock_rate(clock_rate)
-        return self
+        if math.isnan(clock_rate) or math.isinf(clock_rate):
+            raise ValueError("Clock rate cannot be NaN or Infinity")
+
+        return self._apply_single("clock_rate", clock_rate)
 
     def ar(self, ar: float, fixed: bool) -> "Performance":
-        if hasattr(self._inner, "ar"):
-            self._inner = self._inner.ar(ar, fixed)
-        return self
+        return self._apply_double("ar", ar, fixed)
 
     def cs(self, cs: float, fixed: bool) -> "Performance":
-        if hasattr(self._inner, "cs"):
-            self._inner = self._inner.cs(cs, fixed)
-        return self
+        return self._apply_double("cs", cs, fixed)
 
     def hp(self, hp: float, fixed: bool) -> "Performance":
-        if hasattr(self._inner, "hp"):
-            self._inner = self._inner.hp(hp, fixed)
-        return self
+        return self._apply_double("hp", hp, fixed)
 
     def od(self, od: float, fixed: bool) -> "Performance":
-        if hasattr(self._inner, "od"):
-            self._inner = self._inner.od(od, fixed)
-        return self
+        return self._apply_double("od", od, fixed)
 
     def hardrock_offsets(self, hardrock_offsets: bool) -> "Performance":
-        if hasattr(self._inner, "hardrock_offsets"):
-            self._inner = self._inner.hardrock_offsets(hardrock_offsets)
-        return self
+        return self._apply_single("hardrock_offsets", hardrock_offsets)
 
     def state(self, state: ScoreState) -> "Performance":
-        if hasattr(self._inner, "state"):
-            self._inner = self._inner.state(state)
-        return self
+        return self._apply_single("state", state)
 
     def accuracy(self, acc: float) -> "Performance":
-        if hasattr(self._inner, "accuracy"):
-            self._inner = self._inner.accuracy(acc)
-        return self
+        if math.isnan(acc) or math.isinf(acc):
+            raise ValueError("Accuracy cannot be NaN or Infinity")
+
+        return self._apply_single("accuracy", acc)
 
     def misses(self, n_misses: int) -> "Performance":
-        if hasattr(self._inner, "misses"):
-            self._inner = self._inner.misses(n_misses)
-        return self
+        return self._apply_single("misses", n_misses)
 
     def combo(self, combo: int) -> "Performance":
-        if hasattr(self._inner, "combo"):
-            self._inner = self._inner.combo(combo)
-        return self
+        return self._apply_single("combo", combo)
 
     def hitresult_priority(self, priority: HitResultPriority) -> "Performance":
-        if hasattr(self._inner, "hitresult_priority"):
-            self._inner = self._inner.hitresult_priority(priority)
-        return self
+        return self._apply_single("hitresult_priority", priority)
 
     def hitresult_generator(self, generator: Callable) -> "Performance":
-        if hasattr(self._inner, "hitresult_generator"):
-            self._inner = self._inner.hitresult_generator(generator)
-        return self
+        return self._apply_single("hitresult_generator", generator)
 
     def lazer(self, is_lazer: bool) -> "Performance":
-        if hasattr(self._inner, "lazer"):
-            self._inner = self._inner.lazer(is_lazer)
-        return self
+        return self._apply_single("lazer", is_lazer)
 
     def large_tick_hits(self, large_tick_hits: int) -> "Performance":
-        if hasattr(self._inner, "large_tick_hits"):
-            self._inner = self._inner.large_tick_hits(large_tick_hits)
-        return self
+        return self._apply_single("large_tick_hits", large_tick_hits)
 
     def small_tick_hits(self, small_tick_hits: int) -> "Performance":
-        if hasattr(self._inner, "small_tick_hits"):
-            self._inner = self._inner.small_tick_hits(small_tick_hits)
-        return self
+        return self._apply_single("small_tick_hits", small_tick_hits)
 
     def slider_end_hits(self, slider_end_hits: int) -> "Performance":
-        if hasattr(self._inner, "slider_end_hits"):
-            self._inner = self._inner.slider_end_hits(slider_end_hits)
-        return self
+        return self._apply_single("slider_end_hits", slider_end_hits)
 
     def n300(self, n300: int) -> "Performance":
-        if hasattr(self._inner, "n300"):
-            self._inner = self._inner.n300(n300)
-        return self
+        return self._apply_single("n300", n300)
 
     def n100(self, n100: int) -> "Performance":
-        if hasattr(self._inner, "n100"):
-            self._inner = self._inner.n100(n100)
-        return self
+        return self._apply_single("n100", n100)
 
     def n50(self, n50: int) -> "Performance":
-        if hasattr(self._inner, "n50"):
-            self._inner = self._inner.n50(n50)
-        return self
+        return self._apply_single("n50", n50)
 
     def n_katu(self, n_katu: int) -> "Performance":
-        if hasattr(self._inner, "n_katu"):
-            self._inner = self._inner.n_katu(n_katu)
-        return self
+        return self._apply_single("n_katu", n_katu)
 
     def n_geki(self, n_geki: int) -> "Performance":
-        if hasattr(self._inner, "n_geki"):
-            self._inner = self._inner.n_geki(n_geki)
-        return self
+        return self._apply_single("n_geki", n_geki)
 
     def legacy_total_score(self, legacy_total_score: int) -> "Performance":
-        if hasattr(self._inner, "legacy_total_score"):
-            self._inner = self._inner.legacy_total_score(legacy_total_score)
-        return self
+        return self._apply_single("legacy_total_score", legacy_total_score)
 
     def calculate(self) -> PerformanceAttributes:
-        if self._inner is not None and hasattr(self._inner, "calculate"):
-            return self._inner.calculate()
+        if self._inner is None:
+            raise NotImplementedError("Performance calculation for this mode is not implemnted yet")
+        if hasattr(self._inner, "calculate"):
+            try:
+                return self._inner.calculate()
+            except TypeError as e:
+                if "'attrs'" in str(e):
+                    from .any import DifficultyAttributes
+                    map_or_attrs = getattr(self._inner, "map_or_attrs", None)
+                    if isinstance(map_or_attrs, DifficultyAttributes):
+                        attrs = map_or_attrs
+                    elif hasattr(map_or_attrs, "mode"):
+                        attrs = Difficulty().calculate(map_or_attrs)
+                    else:
+                        attrs = DifficultyAttributes()
+                    return self._inner.calculate(attrs)
+                raise e
         return PerformanceAttributes()
 
     def checked_calculate(self) -> PerformanceAttributes:
-        if self._inner is not None and hasattr(self._inner, "map_or_attrs"):
+        if self._inner is None:
+            raise NotImplementedError("Performance calculation for this mode is not implemnted yet")
+
+        if hasattr(self._inner, "map_or_attrs"):
             map_or_attrs = self._inner.map_or_attrs
             if hasattr(map_or_attrs, "check_suspicion"):
                 try:
@@ -210,8 +184,21 @@ class Performance:
                 except TooSuspiciousError as e:
                     raise CalculateError(e)
 
-        if self._inner is not None and hasattr(self._inner, "calculate"):
-            return self._inner.calculate()
+        if hasattr(self._inner, "calculate"):
+            try:
+                return self._inner.calculate()
+            except TypeError as e:
+                if "'attrs'" in str(e):
+                    from .any import DifficultyAttributes
+                    map_or_attrs = getattr(self._inner, "map_or_attrs", None)
+                    if isinstance(map_or_attrs, DifficultyAttributes):
+                        attrs = map_or_attrs
+                    elif hasattr(map_or_attrs, "mode"):
+                        attrs = Difficulty().calculate(map_or_attrs)
+                    else:
+                        attrs = DifficultyAttributes()
+                    return self._inner.calculate(attrs)
+                raise e
         return PerformanceAttributes()
 
     def generate_state(self) -> ScoreState:

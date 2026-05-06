@@ -1,6 +1,6 @@
 import math
-from bisect import bisect_right
 from dataclasses import dataclass
+from bisect import bisect_right
 
 
 @dataclass(slots=True)

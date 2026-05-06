@@ -5,22 +5,21 @@ from typing import Optional, Tuple
 from ...any.any import HitResultPriority
 from ..osu import OsuHitResults, OsuScoreOrigin
 
-
 @dataclass(slots=True)
 class InspectOsuPerformance:
     total_hits: int
     misses: int
-    acc: float | None = None
-    n300: int | None = None
-    n100: int | None = None
-    n50: int | None = None
+    acc: Optional[float] = None
+    n300: Optional[int] = None
+    n100: Optional[int] = None
+    n50: Optional[int] = None
     large_tick_hits: int = 0
     small_tick_hits: int = 0
     slider_end_hits: int = 0
     origin: OsuScoreOrigin = OsuScoreOrigin.STABLE
     priority: HitResultPriority = HitResultPriority.BEST_CASE
 
-    def tick_scores(self) -> tuple[int, int]:
+    def tick_scores(self) -> Tuple[int, int]:
         if self.origin == OsuScoreOrigin.STABLE:
             return 0, 0
 
@@ -161,3 +160,5 @@ class HitResultGenerator:
             inspect.small_tick_hits,
             inspect.slider_end_hits
         )
+
+    

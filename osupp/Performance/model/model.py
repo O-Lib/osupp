@@ -1,11 +1,9 @@
-import copy
-from dataclasses import dataclass
 from enum import Enum
 from typing import Any
-
+from dataclasses import dataclass
 from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.utils import Pos
-
+import copy
 
 class ConvertError(Exception):
     def __init__(self, from_mode: GameMode | None = None, to_mode: GameMode | None = None):

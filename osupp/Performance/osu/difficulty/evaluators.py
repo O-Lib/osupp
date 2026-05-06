@@ -1,18 +1,10 @@
 import math
 from dataclasses import dataclass
-
 from ...utils.utils import (
-    bpm_to_milliseconds,
-    clamp,
-    logistic,
-    milliseconds_to_bpm,
-    reverse_lerp,
-    smootherstep,
-    smoothstep,
-    smoothstep_bell_curve,
+    milliseconds_to_bpm, bpm_to_milliseconds, reverse_lerp, smootherstep, smoothstep, smoothstep_bell_curve,
+    logistic, clamp
 )
 from .difficulty import OsuDifficultyObject
-
 
 def _get_previous(idx: int, steps_back: int, diff_objects: list[OsuDifficultyObject]) -> OsuDifficultyObject | None:
     pos = idx - 1 - steps_back
@@ -217,7 +209,7 @@ class FlashlightEvaluator:
 
 
 class SpeedEvaluator:
-    SINGLE_SPACING_THRESHOLD = float(OsuDifficultyObject.NORMALIZED_RADIUS * 2) * 1.25
+    SINGLE_SPACING_THRESHOLD = 125.0
     MIN_SPEED_BONUS = 200.0
     SPEED_BALACING_FACTOR = 40.0
     DIST_MULTIPLIER = 0.8
