@@ -1,5 +1,5 @@
 import math
-from typing import TypeVar, Generic
+from typing import Generic, TypeVar
 
 EPSILON = 1e-7
 

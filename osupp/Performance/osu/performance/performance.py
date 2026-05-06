@@ -1,13 +1,19 @@
 import math
 from dataclasses import dataclass
-from typing import Optional, Any, Callable
+from typing import Any, Optional
+from collections.abc import Callable
 
-from ...utils.utils import reverse_lerp, smoothstep, logistic, erf, erf_inv, clamp
-from ...model.model import GameMods
 from ...any.any import HitResultPriority
-from ..osu import OsuDifficultyAttributes, OsuScoreState, OsuHitResults, OsuScoreOrigin, OsuPerformanceAttributes
-from .hitresult_generator import InspectOsuPerformance, HitResultGenerator
-
+from ...model.model import GameMods
+from ...utils.utils import clamp, erf, erf_inv, logistic, reverse_lerp, smoothstep
+from ..osu import (
+    OsuDifficultyAttributes,
+    OsuHitResults,
+    OsuPerformanceAttributes,
+    OsuScoreOrigin,
+    OsuScoreState,
+)
+from .hitresult_generator import HitResultGenerator, InspectOsuPerformance
 
 PERFORMANCE_BASE_MULTIPLIER = 1.14
 
@@ -104,7 +110,7 @@ class OsuPerformanceCalculator:
         aim_value *= self.acc
         return aim_value
 
-    def _compute_speed_value(self, speed_deviation: Optional[float], effective_miss_count: float, speed_estimated_slider_breaks: list[float], total_hits: float) -> float:
+    def _compute_speed_value(self, speed_deviation: float | None, effective_miss_count: float, speed_estimated_slider_breaks: list[float], total_hits: float) -> float:
         if self.mods.rx: return 0.0
 
         speed_value = 25.0 * math.pow(self.attrs.speed, 2.0)
@@ -174,7 +180,7 @@ class OsuPerformanceCalculator:
 
         return min(miss_count, self._total_imperfect_hits())
 
-    def _calculate_speed_deviation(self) -> Optional[float]:
+    def _calculate_speed_deviation(self) -> float | None:
         if self.mods.rx or self.state.hitresults.n300 + self.state.hitresults.n100 + self.state.hitresults.n50 == 0:
             return None
 
@@ -287,7 +293,7 @@ class OsuGradualPerformance:
         self.difficulty_iter = difficulty_iter
         self.attrs = None
 
-    def next(self, state: OsuScoreState) -> Optional[OsuPerformanceAttributes]:
+    def next(self, state: OsuScoreState) -> OsuPerformanceAttributes | None:
         try:
             self.attrs = next(self.difficulty_iter)
         except StopIteration:

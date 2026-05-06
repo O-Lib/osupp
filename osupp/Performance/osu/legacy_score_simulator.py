@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, Any
+from typing import Any, List, Optional
 
 
 class AddScoreComboMultiplier(Enum):
@@ -42,7 +42,7 @@ class LegacyScoreSimulatorInner:
             increase_combo: IncreaseCombo,
             score_increase: int,
             bonus_base_score: int
-    ) -> Optional[float]:
+    ) -> float | None:
         factor = None
 
         if add_score == AddScoreComboMultiplier.YES:

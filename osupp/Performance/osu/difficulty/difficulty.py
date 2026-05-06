@@ -1,14 +1,14 @@
 import math
 from dataclasses import dataclass, field
-from typing import Optional, Iterator, List, Any
+from typing import Any, List, Optional
+from collections.abc import Iterator
 
-from ...utils.utils import reverse_lerp, clamp, almost_eq
-from ...model.model import GameMods
-from ...model.beatmap.beatmap import Beatmap
-from ...any.difficulty import Difficulty
 from ...any.any import DifficultyAttributes
+from ...any.difficulty import Difficulty
+from ...model.beatmap.beatmap import Beatmap
+from ...model.model import GameMods
+from ...utils.utils import almost_eq, clamp, reverse_lerp
 from ..osu import OsuDifficultyAttributes, OsuObject, convert_objects
-
 
 STAR_RATING_MULTIPLIER = 0.0265
 DIFFICULTY_MULTIPLIER = 0.0675
@@ -44,7 +44,7 @@ class OsuDifficultyObject:
     travel_time: float
     lazy_travel_dist: float
     lazy_travel_time: float
-    angle: Optional[float] = None
+    angle: float | None = None
     small_circle_bonus: float = 0.0
 
     NORMALIZED_RADIUS: int = 50
@@ -112,7 +112,7 @@ class OsuDifficultyObject:
         delta = next_obj.delta_time
         return reverse_lerp(delta, hit_window * 0.5, hit_window)
 
-def _get_previous_pos(idx: int, steps: int, diff_objects: list[OsuDifficultyObject]) -> Optional[Any]:
+def _get_previous_pos(idx: int, steps: int, diff_objects: list[OsuDifficultyObject]) -> Any | None:
     pos_idx = idx - 1 - steps
     if pos_idx >= 0:
         return diff_objects[pos_idx].base.stacked_pos

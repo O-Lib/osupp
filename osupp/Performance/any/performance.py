@@ -1,13 +1,14 @@
 import math
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 
-from osupp.Mods.game_mods import GameMods
-from osupp.Beatmap.section.enums import GameMode
 from osupp.Beatmap.beatmap import Beatmap
+from osupp.Beatmap.section.enums import GameMode
+from osupp.Mods.game_mods import GameMods
 
-from .any import ScoreState, HitResultPriority, PerformanceAttributes, CalculateError
-from .difficulty import Difficulty
 from ..model.beatmap.beatmap import TooSuspiciousError
+from .any import CalculateError, HitResultPriority, PerformanceAttributes, ScoreState
+from .difficulty import Difficulty
 
 
 def _get_mode(obj) -> GameMode:
