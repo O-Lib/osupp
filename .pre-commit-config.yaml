@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: '\.md$'
@@ -15,27 +15,27 @@ repos:
       - id: detect-private-key
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.10
+    rev: v0.15.12
     hooks:
       - id: ruff
         args: [--fix, --select, I]
         exclude: '\.md$'
 
   - repo: https://github.com/PyCQA/bandit
-    rev: "1.7.8"
+    rev: "1.9.4"
     hooks:
       - id: bandit
         args: ["-q"]
         exclude: '(tests/|\.md$)'
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+    rev: v3.21.2
     hooks:
       - id: pyupgrade
         args: ["--py310-plus"]
         exclude: '\.md$'
 
   - repo: https://github.com/python-poetry/poetry
-    rev: "1.8.3"
+    rev: "2.4.1"
     hooks:
       - id: poetry-check
