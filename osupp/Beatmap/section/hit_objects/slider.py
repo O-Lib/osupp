@@ -445,7 +445,7 @@ def generate_slider_events(
     tick_dist: float,
     total_dist: float,
     span_count: int,
-) -> Generator[SliderEvent]:
+) -> Generator[SliderEvent, None, None]:
     """Generate all slider events (head, ticks, repeats, last tick, tail).
 
     Yields events in chronological order.
