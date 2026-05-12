@@ -25,9 +25,9 @@ SOFTWARE.
 import bisect
 import math
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
-from collections.abc import Sequence
 
 from .attributes import AdjustedBeatmapAttributes
 from .hit_objects import HitObject, HoldNote, Pos, Slider, Spinner
