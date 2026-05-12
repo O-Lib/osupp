@@ -25,6 +25,7 @@ SOFTWARE.
 from dataclasses import dataclass, field
 from typing import Any
 
+
 @dataclass(slots=True)
 class Pos:
     x: float

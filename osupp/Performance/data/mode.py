@@ -24,6 +24,7 @@ SOFTWARE.
 
 from enum import IntEnum
 
+
 class GameMode(IntEnum):
     OSU = 0
     TAIKO = 1
