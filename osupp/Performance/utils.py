@@ -283,6 +283,9 @@ class CSharpRandom:
     def next_max(self, maximum: int) -> int:
         return int(self._sample() * float(maximum))
 
+    def _sample(self) -> float:
+        return float(self._internal_sample()) * (1.0 / float(INT_MAX))
+
     def _internal_sample(self) -> int:
         loc_inext = self.inext + 1
         if loc_inext >= 56:

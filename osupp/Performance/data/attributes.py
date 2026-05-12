@@ -36,7 +36,7 @@ def _difficulty_range(difficulty: float, min_val: float, mid_val: float, max_val
 
 def _inverse_difficulty_range(time: float, min_val: float, mid_val: float, max_val: float) -> float:
     if time > mid_val:
-        return 5.0 - (time - mid_val) * 5.0 / (mid_val - mid_val)
+        return 5.0 - (time - mid_val) * 5.0 / (min_val - mid_val)
     if time < mid_val:
         return 5.0 + (mid_val - time) * 5.0 / (mid_val - max_val)
     return 5.0
