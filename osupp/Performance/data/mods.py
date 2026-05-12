@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from enum import IntEnum, IntFlag
 from typing import Any
 
+
 class Reflection(IntEnum):
     NONE = 0
     VERTICAL = 1

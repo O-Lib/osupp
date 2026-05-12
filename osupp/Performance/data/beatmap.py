@@ -24,13 +24,15 @@ SOFTWARE.
 
 import bisect
 import math
-from dataclasses import dataclass
-from typing import TypeVar, Sequence, Any
 from collections import defaultdict
-from .hit_objects import HitObject, Pos, Slider, Spinner, HoldNote
+from dataclasses import dataclass
+from typing import Any, TypeVar
+from collections.abc import Sequence
+
+from .attributes import AdjustedBeatmapAttributes
+from .hit_objects import HitObject, HoldNote, Pos, Slider, Spinner
 from .mode import GameMode
 from .mods import PerformanceMods
-from .attributes import AdjustedBeatmapAttributes
 
 T = TypeVar("T")
 

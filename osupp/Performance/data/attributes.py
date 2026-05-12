@@ -24,8 +24,10 @@ SOFTWARE.
 
 from dataclasses import dataclass
 from typing import ClassVar
+
 from .mode import GameMode
 from .mods import PerformanceMods
+
 
 def _difficulty_range(difficulty: float, min_val: float, mid_val: float, max_val: float) -> float:
     if difficulty > 5.0:

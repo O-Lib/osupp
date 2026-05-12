@@ -23,7 +23,9 @@ SOFTWARE.
 """
 
 from dataclasses import dataclass
+
 from .mode import GameMode
+
 
 @dataclass(slots=True)
 class ScoreState:

@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import sys
 import math
-from typing import Protocol, Generic, TypeVar, Any
+import sys
 from collections import deque
 from collections.abc import Callable
+from typing import Any, Generic, Protocol, TypeVar
 
 EPSILON: float = sys.float_info.epsilon
 T = TypeVar("T")
