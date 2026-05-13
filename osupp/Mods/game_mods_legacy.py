@@ -60,6 +60,7 @@ _SCOREV2 = 1 << 29
 _MIRROR = 1 << 30
 
 _VALID_LEGACY_MASK = _MIRROR | (_MIRROR - 1)
+_FROM_BITS_MASK = (2**32 - 1) >> 2
 
 
 _NAMED_BITS: dict[str, int] = {
@@ -260,7 +261,7 @@ class GameModsLegacy:
         Returns:
             A GameModsLegacy instance.
         """
-        return cls(bits)
+        return cls(int(bits) & _FROM_BITS_MASK)
 
     @classmethod
     def parse(cls, s: str) -> GameModsLegacy:
